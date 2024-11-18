@@ -62,7 +62,7 @@ class Person extends Conn{
         $body = str_replace('%link%', $dati['link'], $body);
       break;
     }
-    $mailParams = parse_ini_file('config/mail.ini');
+    $mailParams = parse_ini_file('config/.env');
     if ($mailParams === false) {
       throw new \Exception("Error reading mail configuration file",0);
     }
@@ -71,13 +71,13 @@ class Person extends Conn{
     // only for testing, print messages only in the console, do not use in production!!!!
     // $this->mail->SMTPDebug = SMTP::DEBUG_SERVER; 
     
-    $this->mail->Host = $mailParams['host'];
-    $this->mail->Port = $mailParams['port'];
     $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
     $this->mail->SMTPAuth = true;
-    $this->mail->Username = $mailParams['usr'];
-    $this->mail->Password = $mailParams['pwd'];
-    $this->mail->setFrom('omeka-ADC@ark.lu.se', 'Dynamic Collection Crew');
+    $this->mail->Host = $mailParams['MAILHOST'];
+    $this->mail->Port = $mailParams['MAILPORT'];
+    $this->mail->Username = $mailParams['MAILUSER'];
+    $this->mail->Password = $mailParams['MAILPASSWORD'];
+    $this->mail->setFrom($mailParams['MAILSETFROM'], $mailParams['MAILSETFROMNAME']);
     $this->mail->addAddress($dati['email'], $dati['name']);
     $this->mail->Subject = $titolo;
     $this->mail->msgHTML($body, __DIR__);
@@ -180,9 +180,7 @@ class Person extends Conn{
 
   public function getUsrObjects(int $usr){
     $out=[];
-    // $artifactStatSql = "select count(*) tot from artifact inner join user on artifact.author = user.id where artifact.author = ".$usr.";";
     $artifactStatSql = "select id, name, status, description from artifact where author = ".$usr.";";
-    // $modelStatSql = "select count(*) tot from model_object inner join user on model_object.author = user.id where model_object.author = ".$usr.";";
     $modelStatSql = "SELECT m.id, m.name, m.description, m.status, o.thumbnail, o.create_at FROM model m LEFT JOIN (SELECT o1.* FROM model_object o1 INNER JOIN ( SELECT model, MIN(id) AS obj_id FROM model_object GROUP BY model ) o2 ON o1.id = o2.obj_id ) o ON m.id = o.model where o.author = ".$usr.";";
     $out['artifacts'] = $this->simple($artifactStatSql);
     $out['models'] = $this->simple($modelStatSql);

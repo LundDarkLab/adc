@@ -4,17 +4,17 @@ use PDO;
 class Conn {
   public $conn;
   public function connect() {
-    $params = parse_ini_file('config/db.ini');
+    $params = parse_ini_file('config/.env');
     if ($params === false) {
       throw new \Exception("Error reading database configuration file");
     }
     $conStr = sprintf(
       "mysql:host=%s;port=%d;dbname=%s;user=%s;password=%s",
-      $params['host'],
-      $params['port'],
-      $params['dbname'],
-      $params['user'],
-      $params['password']
+      $params['DBHOST'],
+      $params['DBPORT'],
+      $params['DBDBNAME'],
+      $params['DBUSER'],
+      $params['DBPASSWORD']
     );
 
     $this->conn = new \PDO($conStr);

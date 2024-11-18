@@ -203,7 +203,7 @@ class User extends Conn{
         $body = str_replace('%link%', $dati['link'], $body);
       break;
     }
-    $mailParams = parse_ini_file('config/mail.ini');
+    $mailParams = parse_ini_file('config/.env');
     if ($mailParams === false) {
       throw new \Exception("Error reading mail configuration file",0);
     }
@@ -212,13 +212,13 @@ class User extends Conn{
     // only for testing, print messages only in the console, do not use in production!!!!
     // $this->mail->SMTPDebug = SMTP::DEBUG_SERVER; 
     
-    $this->mail->Host = $mailParams['host'];
-    $this->mail->Port = $mailParams['port'];
     $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
     $this->mail->SMTPAuth = true;
-    $this->mail->Username = $mailParams['usr'];
-    $this->mail->Password = $mailParams['pwd'];
-    $this->mail->setFrom('omeka-ADC@ark.lu.se', 'Dynamic Collection Crew');
+    $this->mail->Host = $mailParams['MAILHOST'];
+    $this->mail->Port = $mailParams['MAILPORT'];
+    $this->mail->Username = $mailParams['MAILUSER'];
+    $this->mail->Password = $mailParams['MAILPASSWORD'];
+    $this->mail->setFrom($mailParams['MAILSETFROM'], $mailParams['MAILSETFROMNAME']);
     $this->mail->addAddress($dati['email'], $dati['name']);
     $this->mail->Subject = $titolo;
     $this->mail->msgHTML($body, __DIR__);
