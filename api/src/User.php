@@ -120,6 +120,19 @@ class User extends Conn{
     return $this->simple($sql);
   }
 
+  public function activeUsers(?int $institution = null, ?int $role = null, ?string $string = null){
+    $filters = ["user.is_active = true", "person.institution is not null"];
+    if($institution !== null){$filters[]="person.institution = ".$institution;}
+    if($role !== null){$filters[]="user.role = = ".$role;}
+    if($string !== null){$filters[]="(person.first_name like '%".$string."%' or person.last_name like '%".$string."%' or person.email like '%".$string."%')";}
+
+    $conditions = implode(" and ",$filters);
+
+    $sql = "select concat(person.first_name,' ', person.last_name) user, person.email, person.institution, user.role from person inner join user on user.person = person.id where ".$conditions." order by 1,2 asc;";
+
+    return $this->simple($sql);
+  }
+
   public function login(array $dati){
     try {
       $usr = $this->checkEmail($dati['email']);

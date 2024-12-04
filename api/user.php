@@ -19,6 +19,12 @@ function login($obj){ return json_encode($obj->login($_POST)); }
 function rescuePwd($obj){ return json_encode($obj->rescuePwd($_POST['email'])); }
 function resetPassword($obj){ return json_encode($obj->resetPassword($_POST)); }
 
+function activeUsers($obj){return json_encode($obj->activeUsers(
+  institution: $_POST['institution'] ?? null,
+  role: $_POST['role'] ?? null,
+  string: $_POST['string'] ?? null
+));}
+
 
 
 
