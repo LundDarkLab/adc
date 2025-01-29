@@ -144,6 +144,16 @@ class User extends Conn{
     }
   }
 
+  private function setSession(array $dati){
+    $_SESSION['id'] = $dati['id'];
+    $_SESSION['person'] = $dati['person'];
+    $_SESSION['role'] = $dati['role'];
+    $_SESSION['email'] = $dati['email'];
+    $_SESSION['institution'] = $dati['institution'];
+    return true;
+  }
+
+
   public function rescuePwd(string $email){
     try {
       // check if email exists and if it's active, and get user id
@@ -191,15 +201,81 @@ class User extends Conn{
     }
   }
 
-  private function setSession(array $dati){
-    $_SESSION['id'] = $dati['id'];
-    $_SESSION['person'] = $dati['person'];
-    $_SESSION['role'] = $dati['role'];
-    $_SESSION['email'] = $dati['email'];
-    $_SESSION['institution'] = $dati['institution'];
-    return true;
+  public function fetchMailTemplate(string $type) :array{
+    try {
+      $templates = $this->simple("select * from mail_template where type = '$type' order by object asc;");
+      return ["error" => 0, "message" => "ok, email templates fetched", "templates"=>$templates];
+    } catch (\Throwable $th) {
+      return ["error"=>1, "message"=>$th->getMessage(), "dati"=>$type];
+    }
   }
 
+  public function createRecord(array $post){
+    try {
+      $post['values']['created_by'] = $_SESSION['id'];
+      $this->create($post['table'], $post['values']);
+      return ["error"=>0, "message" => "Record has been successfully created", "post"=>$post];
+    } catch (\Throwable $th) {
+      return ["error"=>1, "message"=>$th->getMessage(), "dati"=>$post];
+    }
+  }
+
+  public function readRecord(array $post) :array{
+    try {
+      $items = $this->read($post['table'],$post['conditions']);
+      return ["error"=>0, "items" => $items];
+    } catch (\Throwable $th) {
+      return ["error"=>1, "message"=>$th->getMessage(), "dati"=>$post];
+    }
+  }
+
+  public function updateRecord(array $post){
+    try {
+      $this->update($post['table'], $post['values'], $post['conditions']);
+      return ["error"=>0, "message" => "Record has been successfully updated", "post"=>$post];
+    } catch (\Throwable $th) {
+      return ["error"=>1, "message"=>$th->getMessage(), "dati"=>$post];
+    }
+  }
+
+  public function deleteRecord(array $post) :array{
+    try {
+      return $this->delete($post['table'],$post['conditions']);
+    } catch (\Throwable $th) {
+      return ["error"=>1, "message"=>$th->getMessage(), "dati"=>$post];
+    }
+  }
+
+
+  public function sendCustomMail(array $dati) :array{
+    try {
+      $mailParams = parse_ini_file('config/.env');
+      if ($mailParams === false) {throw new \Exception("Error reading mail configuration file",1);}
+      $this->mail->isSMTP();
+      // only for testing, print messages only in the console, do not use in production!!!!
+      // $this->mail->SMTPDebug = SMTP::DEBUG_SERVER; 
+    
+      $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+      $this->mail->SMTPAuth = true;
+      $this->mail->Host = $mailParams['MAILHOST'];
+      $this->mail->Port = $mailParams['MAILPORT'];
+      $this->mail->Username = $mailParams['MAILUSER'];
+      $this->mail->Password = $mailParams['MAILPASSWORD'];
+      $this->mail->setFrom($mailParams['MAILSETFROM'], $mailParams['MAILSETFROMNAME']);
+      
+      $this->mail->CharSet = 'UTF-8';
+      $this->mail->Encoding = 'base64';
+      $this->mail->Subject = $dati['object'];
+      $this->mail->Body = $dati['body'];
+      $this->mail->AltBody = $this->htmlToPlainText($dati['body']);
+
+      foreach ($dati['recipients'] as $recipient) { $this->mail->addBCC($recipient, $recipient);}
+      if(!$this->mail->send()){throw new \Exception('Mailer Error: '. $this->mail->ErrorInfo,0);}
+      return ["error" => 0, "message" => "Email has been sent correctly"];
+    } catch (\Throwable $th) {
+      return ["error"=>1, "message"=>$th->getMessage()];
+    }
+  }
 
   public function sendMail(array $dati){
     switch ($dati['mailBody']) {

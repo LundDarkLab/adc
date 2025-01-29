@@ -25,13 +25,12 @@ function activeUsers($obj){return json_encode($obj->activeUsers(
   string: $_POST['string'] ?? null
 ));}
 
+// function mailTemplate($obj){ return json_encode($obj->mailTemplate($_POST)); }
+function sendCustomMail($obj){ return json_encode($obj->sendCustomMail($_POST)); }
+function fetchMailTemplate($obj){ return json_encode($obj->fetchMailTemplate($_POST['type'])); }
 
-
-
-// function getUsr($obj){
-//   $usr = isset($_POST['usr']) ? $_POST['usr'] : null;
-//   return json_encode($obj->getUsr($usr));
-// }
-// function updateUsr($obj){ return json_encode($obj->updateUsr($_POST)); }
-// function updatePrivacy($obj){ return json_encode($obj->updatePrivacy($_POST)); }
+function createRecord($obj){ return json_encode($obj->createRecord($_POST)); }
+function readRecord($obj){ return json_encode($obj->readRecord($_POST)); }
+function updateRecord($obj){ return json_encode($obj->updateRecord($_POST)); }
+function deleteRecord($obj){ return json_encode($obj->deleteRecord($_POST)); }
 ?>

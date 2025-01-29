@@ -24,6 +24,8 @@
         <span class="mdi mdi-book-account"></span>
         person
       </a>
+
+      <?php if($_SESSION['role'] < 3){ ?>
       <span class="titleSection">admin</span>
       <a href='#' class='animated'>
         <span class="mdi mdi-format-list-bulleted-square"></span>
@@ -33,6 +35,8 @@
         <span class="mdi mdi-email-fast"></span>
         compose email
       </a>
+      <?php } ?>
+      
       <span class="titleSection">my account</span>
       <a href='settings.php' class='animated'>
         <span class="mdi mdi-cog"></span>

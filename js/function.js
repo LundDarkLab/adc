@@ -664,3 +664,94 @@ function copy_to_clipboard(el) {
   navigator.clipboard.writeText(link);
   console.log(link);
 }
+
+
+////////////////////////////////////////////////////////////
+///////////  NEW FUNCTIONS             /////////////////////
+////////////////////////////////////////////////////////////
+
+function createRecord(endpoint, trigger, table, values, callback = null){
+  ajaxSettings.url = API+endpoint;
+  ajaxSettings.data = {trigger: trigger, table:table, values:values}
+  $.ajax(ajaxSettings)
+  .done(function(response){
+    console.log(response);
+    
+    let toastClass = response.error === 0 ? "success" : "danger";
+    showToast(response.message, toastClass, callback);
+  })
+  .fail(function (jqXHR) {
+    const errorMessage = jqXHR.responseJSON?.message || "An unexpected error occurred.";
+    showToast(errorMessage, "danger");
+  });
+}
+
+function readRecord(endpoint, trigger, table, conditions = {}, callback){
+  ajaxSettings.url=API+endpoint;
+  ajaxSettings.data = {trigger: trigger, table:table, conditions:conditions}
+  $.ajax(ajaxSettings)
+  .done(callback)
+  .fail(function (jqXHR) {
+    const errorMessage = jqXHR.responseJSON?.message || "An unexpected error occurred.";
+    showToast(errorMessage, "danger");
+  });
+}
+
+function updateRecord(endpoint, trigger, table, values, conditions, callback = null) {
+  ajaxSettings.url=API+endpoint;
+  ajaxSettings.data = {trigger: trigger, table:table, values:values, conditions:conditions};
+  $.ajax(ajaxSettings)
+  .done(function(response){
+    console.log(response);
+    let toastClass = response.error === 0 ? "success" : "danger";
+    showToast(response.message, toastClass, callback);
+  })
+  .fail(function (jqXHR) {
+    const errorMessage = jqXHR.responseJSON?.message || "An unexpected error occurred.";
+    showToast(errorMessage, "danger");
+  });
+}
+
+function deleteRecord(endpoint, trigger, table, id, callback = null){
+  ajaxSettings.url=API+endpoint;
+  ajaxSettings.data = {trigger: trigger, table:table, conditions:{id:id}}
+  $.ajax(ajaxSettings)
+  .done(function(response){
+    let toastClass = response.error === 0 ? "success" : "danger";
+    showToast(response.message, toastClass, callback);
+  })
+  .fail(function (jqXHR) {
+    const errorMessage = jqXHR.responseJSON?.message || "An unexpected error occurred.";
+    showToast(errorMessage, "danger");
+  });
+}
+
+
+function showToast(message, type, callback = null) {
+  const toastId = `toast-${Date.now()}`;
+  const toastHTML = `
+    <div id="${toastId}" class="toast align-items-center text-bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="d-flex">
+        <div class="toast-body">${message}</div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+      </div>
+    </div>
+  `;
+
+  const toastContainer = document.getElementById("toast-container");
+  toastContainer.innerHTML = toastHTML;
+
+  const toastElement = document.getElementById(toastId);
+  const toastInstance = new bootstrap.Toast(toastElement);
+  toastInstance.show();
+  toastElement.addEventListener("hidden.bs.toast", () => { 
+    toastElement.remove(); 
+    if (typeof callback === "function") { callback(); }
+    // how to use it
+    // showToast('Message', 'success', () => location.reload());
+    // showToast('Redirecting...', 'info', () => { window.location.href = 'link.php?id=123'; });
+    // showToast('Custom message', 'danger', customFunction);
+  });
+}
+
+
