@@ -5,7 +5,7 @@ FROM composer:latest AS composer
 
 WORKDIR /app
 # Install deps for production only
-COPY ./api/composer.lock ./api/composer.json ./
+COPY app/api/composer.lock app/api/composer.json ./
 #RUN composer install --no-ansi --no-dev --no-interaction --no-progress --no-scripts --optimize-autoloader #Without development tools
 
 RUN composer install --no-ansi --no-interaction --no-progress --no-scripts --optimize-autoloader
@@ -22,12 +22,12 @@ RUN install-php-extensions pdo_mysql pdo_pgsql \
 	&& rm -rf /tmp/* /var/lib/apt/lists/*
 
 WORKDIR /var/www/html
-COPY . .
+COPY app/ .
 COPY --from=composer /app/vendor ./api/vendor
 
-COPY ./config/server.crt /etc/apache2/ssl/server.crt
-COPY ./config/server.key /etc/apache2/ssl/server.key
-COPY ./config/dev.conf /etc/apache2/sites-enabled/dev.conf
+COPY app/config/server.crt /etc/apache2/ssl/server.crt
+COPY app/config/server.key /etc/apache2/ssl/server.key
+COPY app/config/dev.conf /etc/apache2/sites-enabled/dev.conf
 #RUN docker-php-ext-install mysqli pdo pdo_mysql zip mbstring
 RUN a2enmod rewrite
 RUN a2enmod ssl
