@@ -7,16 +7,17 @@ class Institution extends Conn{
   public $logoFolder;
   function __construct(){
     $this->fileCls = new File();
-    $this->logoFolder = $_SERVER['DOCUMENT_ROOT']."/prototype/img/logo/";
+    $this->logoFolder = $_SERVER['DOCUMENT_ROOT']."/plus/img/logo/";
   }
 
   public function catList(){
     return $this->simple("select distinct c.id, c.value from list_institution_category c inner join institution i on i.category = c.id order by 2 asc;");
   }
 
-  public function getInstitutions(array $search){
+  public function getInstitutions(array $search = null){
     $filters = [];
-    $search['cat'] = (int) $search['cat'];
+    $search = $search ?? [];
+    $search['cat'] = isset($search['cat']) ? (int) $search['cat'] : 0;
     array_push($filters, $search['cat'] == 0 ? 'cat.id > 0' : 'cat.id = '.$search['cat']);
     if(isset($search['name'])){
       $searchByName = [];
@@ -82,7 +83,7 @@ class Institution extends Conn{
       $this->prepared($sql, $dati);
       return ["res"=>1, "output"=>'Ok, the item has been successfully updated'];
     } catch (\Exception $e) {
-      return ["res"=>0, "output"=>$e->getMessage()];
+      return ["res"=>0, "output"=>$e->getMessage(), "logofolder"=>$this->logoFolder];
     }
   }
 

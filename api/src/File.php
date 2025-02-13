@@ -1,6 +1,9 @@
 <?php
 namespace Adc;
 use Ramsey\Uuid\Uuid;
+
+ini_set('upload_tmp_dir', '/tmp');
+
 class File extends Conn{
   public $uuid;
   public $imageDir;
@@ -108,8 +111,11 @@ class File extends Conn{
   protected function moveFile($file, $folder, $name){
     $fileLoc = $folder.$name;
     if(!move_uploaded_file($file["tmp_name"], $fileLoc)){ 
+      error_log("Failed to move uploaded file. Source: " . $file["tmp_name"] . " Destination: " . $fileLoc . " Error: " . print_r(error_get_last(), true));
+      error_log("File permissions: " . substr(sprintf('%o', fileperms($file["tmp_name"])), -4));
+      error_log("Destination directory permissions: " . substr(sprintf('%o', fileperms($folder)), -4));
       throw new \Exception("Sorry but there was an error while uploading the file to the server, please try again or contact the system administrator", 1); 
-    }
+  }
     chmod($fileLoc, 0666);
     return true;
   }
