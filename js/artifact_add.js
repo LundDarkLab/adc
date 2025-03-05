@@ -1,5 +1,4 @@
 const listTrigger='getSelectOptions';
-const citySuggested = $("#citySuggested");
 const form = $("[name='newArtifactForm']");
 const toastToolBar = $('#toastBtn');
 let dati={}
@@ -49,25 +48,14 @@ let listLicense = {
   htmlEl: 'license',
   label: 'name'
 }
-let listCounty = {
-  settings: {trigger:listTrigger, list:'county', orderBy:'name', filter:''},
-  htmlEl: 'county',
-  label: 'name'
-}
-let listCity = {
-  settings: {trigger:listTrigger, list:'city', orderBy:'name', filter:''},
-  htmlEl: 'city',
-  label: 'name'
-}
-let jsonCity = {
-  settings: {trigger:listTrigger, list:'', orderBy:'1', filter:''},
-}
-citySuggested.hide()
+
+levelOptions(0)
+
 $("#resetMapDiv").hide();
 mapInit()
-map.fitBounds(mapExt)
+map.fitWorld()
 
-listArray.push(listCatClass,listMaterial,listStoragePlace,listConservationState,listObjectCondition,listAuthor,listOwner,listLicense, listCounty)
+listArray.push(listCatClass,listMaterial,listStoragePlace,listConservationState,listObjectCondition,listAuthor,listOwner,listLicense)
 listArray.forEach((item, i) => {getList(item.settings,item.htmlEl,item.label)});
 
 $("[name=checkNameBtn]").on('click', function(){
@@ -97,36 +85,34 @@ $("#is_museum_copy").on('click',function(){
   $("label[for='is_museum_copy").text(label)
 });
 
-$("#county").on('change', function(){
-  $("[name=city]").val('').attr({"data-cityid":''})
-  $("#longitude, #latitude").val('')
-  setMapExtent('jsonCounty',$(this).val())
-  $("#resetMapDiv").show();
-})
-
-$("[name=city]").on({
-  keyup: function(){
-    let v = $(this).val()
-    if(v.length >= 2){
-      getCity(v)
-    }else{
-      citySuggested.html('').fadeOut('fast')
-    }
-  }
-})
-
-$(document).on('click', (event) => {
-  if(!$(event.target).closest('#citySuggested').length &&
-  $('#citySuggested').is(":visible")) {
-    let city = $("[name=city]").val()
-    $('#citySuggested').fadeOut('fast');
-    if(city && !autocompleted){
-      $("[name=city]").val('').attr({"data-cityid":''})
-    }
-  }
-})
-
 $("[name='newArtifact']").on('click', function(el){ newArtifact(el) })
+
+document.querySelectorAll('.gadm').forEach((item, i) => {
+  item.addEventListener('change', function(){
+    const gid = parseInt(this.id.split('_')[1])
+    handleBoundariesChange(gid+1)
+    let value = this.value
+    if(value == ''){
+      handleBoundariesChange(gid)
+    }else{
+      levelOptions(gid, value)
+      administrativeBoundaries(gid, value, 'collection')
+    }
+    if (marker) { map.removeLayer(marker)};
+    document.getElementById('latitude').value = '';
+    document.getElementById('longitude').value = '';
+  })
+});
+
+function handleBoundariesChange(idx){
+  for (let i = idx+1 ; i <= 7; i++) {
+    const sel = document.getElementById('gid_' + i + '_container');
+    if (sel) { sel.classList.add('hide'); }
+  }
+  const parentID = parseInt(idx) - 1;
+  const parent = document.getElementById('gid_'+parentID).value
+  administrativeBoundaries(parentID,parent,'collection')
+}
 
 function checkMaterialArray(){
   const mt = materialTechniqueArray.length
@@ -148,13 +134,13 @@ function newArtifact(el){
     buildData()
     dati.trigger = 'addArtifact';
     dati.artifact_material_technique = materialTechniqueArray;
-    if ($("#city").val()) {
-      dati.artifact_findplace.city = $("#city").data('cityid')
-    }
+    if ($("#city").val()) { dati.artifact_findplace.city = $("#city").data('cityid')}
     ajaxSettings.url=API+"artifact.php";
     ajaxSettings.data = dati
     $.ajax(ajaxSettings)
     .done(function(data) {
+      console.log(data);
+      return false;
       if (data.res==0) {
         $("#toastDivError .errorOutput").text(data.output);
         $("#toastDivError").removeClass("d-none");
@@ -169,4 +155,38 @@ function newArtifact(el){
       $("#toastDivContent").removeClass('d-none')
     });
   }
+}
+
+function levelOptions(gid, filter, selected) {
+  ajaxSettings.url = API + "geom.php";
+  ajaxSettings.data = { trigger: 'getAdminList', payload: { gid: gid } };
+  if (filter && filter != null) { ajaxSettings.data.payload.filter = filter; }
+
+  $.ajax(ajaxSettings).done(function (data) {
+    const parent = document.getElementById('gid_' + gid);
+    if(selected){ parent.value = selected; }
+    if (data.items.length === 0) { return false; }
+    let current = parseInt(gid);
+    if (current <= 6 && filter) { current = (current + 1); }
+    const selContainer = document.getElementById('gid_' + current + '_container');
+    const sel = document.getElementById('gid_' + current);
+    if(sel){
+      sel.innerHTML = '';
+      const opt = document.createElement('option');
+      opt.value = '';
+      opt.text = '-- select value --';
+      if (current === 0) {
+        if (!selected) { opt.selected = true; }
+        opt.disabled = true;
+      }
+      sel.appendChild(opt);
+      data.items.forEach((item, i) => {
+        const opt = document.createElement('option');
+        opt.value = item.gid;
+        opt.text = item.name;
+        sel.appendChild(opt);
+      });
+      if (current > 0) { selContainer.classList.remove('hide'); }
+    }
+  });
 }

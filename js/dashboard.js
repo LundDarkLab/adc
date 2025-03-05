@@ -4,7 +4,7 @@ const usrInst = $("[name=usrInst]").val()
 let issues = 0;
 
 catList()
-mapInit()
+mapInit('dashboard')
 getArtifacts()
 getModels()
 getInstitutions(0)

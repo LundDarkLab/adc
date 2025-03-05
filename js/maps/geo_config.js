@@ -6,24 +6,15 @@ const gSatTile = 'http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}';
 const gHybridTile = 'http://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}';
 const gTerrainTile = 'http://{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}';
 const gSubDomains = ['mt0','mt1','mt2','mt3'];
-let nominatim = 'https://nominatim.openstreetmap.org/search?&format=geocodejson&addressdetails=1&featureType=city&city='
-let nominatimReverse = 'https://nominatim.openstreetmap.org/reverse?format=jsonv2&'
-//osm reverse param
-//append to api -> lat=x.xx&lon=x.xx
-//json variables to use -> address.road, address.house_number
-
-let geoNamesReverse = 'http://api.geonames.org/addressJSON?username=darklab&'
-//geoNames reverse param
-//append to api -> lat=x.xx&lng=x.xx
-//json variables to use -> address.street, address.houseNumber
+let nominatim = "https://nominatim.openstreetmap.org/search?city=Milano&country=Italia&format=jsonv2&polygon_geojson=1&extratags=1&addressdetails=1"
+let nominatimReverse = 'https://nominatim.openstreetmap.org/reverse?format=jsonv2&extratags=1&'
 
 let baseLayers, osm, gStreets, gSat, gTerrain, layerControl;
 let overlayMaps = {}
 let mapClick = false;
 
-// const mapExt = [[60,5],[70,30]];
 const mapExt = [[72,63],[51,-11]];
-let map, map2, marker, countyGroup, cityGroup;
+let map, map2, marker, countyGroup, cityGroup, boundaries;
 let countyStyle = {
   weight: 2,
   color: 'rgb(51,136,255)',

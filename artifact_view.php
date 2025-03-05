@@ -36,7 +36,7 @@
                 <li id="editModelBtn"><a href="" class="dropdown-item">model metadata</a></li>
               </ul>
             </div>
-            <button type="button" name="delete" id="delete" class="btn btn-light"><i class="mdi mdi-delete-forever"></i> delete</button>
+            <button type="button" name="delete" id="delete" class="btn btn-light" data-bs-toggle="modal" data-bs-target="#deleteModal"><i class="mdi mdi-delete-forever"></i> delete</button>
           </div>  
           <?php } ?>
         </div>
@@ -174,29 +174,45 @@
               <div id="findplaceSection" class="accordion-collapse collapse" aria-labelledby="findplace-data" data-bs-parent="#accordionArtifact">
                 <div class="accordion-body">
                   <ul class="list-group list-group-flush">
-                    <li class="list-group-item">
+                    <li id="findplace_gid0" class="list-group-item hide">
                       <span>Nation</span>
-                      <span id="findplace_nation"></span>
+                      <span id="fpgid0"></span>
                     </li>
-                    <li class="list-group-item">
-                      <span>County</span>
-                      <span id="findplace_county"></span>
+                    <li id="findplace_gid1" class="list-group-item hide">
+                      <span>County,Provinces,Communes</span>
+                      <span id="fpgid1"></span>
                     </li>
-                    <li class="list-group-item">
-                      <span>City</span>
-                      <span id="findplace_city"></span>
+                    <li id="findplace_gid2" class="list-group-item hide">
+                      <span>City, Districts and equivalent</span>
+                      <span id="fpgid2"></span>
                     </li>
-                    <li class="list-group-item">
+                    <li id="findplace_gid3" class="list-group-item hide">
+                      <span>Communes, Municipalities</span>
+                      <span id="fpgid3"></span>
+                    </li>
+                    <li id="findplace_gid4" class="list-group-item hide">
+                      <span>Sub-national administrative</span>
+                      <span id="fpgid4"></span>
+                    </li>
+                    <li id="findplace_gid5" class="list-group-item hide">
+                      <span>Sub-national administrative</span>
+                      <span id="fpgid5"></span>
+                    </li>
+                    <li id="findplace_parish" class="list-group-item hide">
                       <span>Parish</span>
-                      <span id="findplace_parish"></span>
+                      <span id="fpparish"></span>
                     </li>
-                    <li class="list-group-item">
+                    <li id="findplace_toponym" class="list-group-item hide">
                       <span>Toponym</span>
-                      <span id="findplace_toponym"></span>
+                      <span id="fptoponym"></span>
                     </li>
-                    <li class="list-group-item">
+                    <li id="findplace_coordinates" class="list-group-item hide">
+                      <span>Latitude / Longitude</span>
+                      <span id="fpcoordinates"></span>
+                    </li>
+                    <li id="findplace_notes" class="list-group-item hide">
                       <span>Notes</span>
-                      <span id="findplace_notes"></span>
+                      <span id="fpnotes"></span>
                     </li>
                   </ul>
                 </div>
@@ -330,8 +346,12 @@
     </div>
   </div>
 </div>
+
+<div id="toast-container" class="toast-container position-fixed top-0 start-50 translate-middle-x p-3"></div>
+
     <?php 
       require("assets/menu.php");
+      require("assets/deleteModal.html");
       require("assets/toastDiv.html"); 
       require("assets/js.html"); 
     ?>

@@ -1,7 +1,7 @@
 google.charts.load('current', {'packages':['corechart']});
 let classid, classtype, storagePlaceMarker, findplaceMarker;
 let markerArr={}
-let polyArr={}
+let polyArr=[]
 if($("[name=logged]").val() == 0){
   $("#itemTool, #statWrap").addClass('large');
 }else{
@@ -78,22 +78,33 @@ $.ajax(ajaxSettings).done(function(data) {
   markerArr.storage = [parseFloat(institution.lat), parseFloat(institution.lon)]
 
   if (data.artifact_findplace) {
-    let findplace = data.artifact_findplace;
-    if(findplace.county_id){polyArr.county=findplace.county_id}
-    if(findplace.city_id){polyArr.city = findplace.city_id}
-    if(findplace.latitude){
-    markerArr.findplace = [parseFloat(findplace.latitude), parseFloat(findplace.longitude)]
-    }
-    Object.keys(findplace).forEach(function(key) {
-      if(findplace[key]){
-        if(key == 'notes'){ artifact[key] = nl2br(artifact[key])}
-        $("#findplace_"+key).html(findplace[key])
-      }else{
-        $("#findplace_"+key).parent().remove()
+    const findplace = data.artifact_findplace;
+      Object.keys(findplace).forEach(function(key) {
+        if(findplace[key]){
+          if (key.includes('bounds')) {
+            const gidValue = parseInt(key.split('_')[1]);
+            if (!isNaN(gidValue) && gidValue > 0) { polyArr = [gidValue,findplace[key]] }
+          }
+          
+          const idEl = key === 'latitude' ? 'coordinates' : key;
+          const row = document.getElementById("findplace_"+idEl);
+          if(row){
+            row.classList.remove("hide");
+            if(key === 'latitude'){
+              const lat = parseFloat(findplace['latitude']).toFixed(4)
+              const lon = parseFloat(findplace['longitude']).toFixed(4)
+              document.getElementById("fpcoordinates").innerText = `${lat} / ${lon}`;
+              markerArr.findplace = [parseFloat(lat), parseFloat(lon)];
+          }
+          else if(idEl === 'notes'){
+            document.getElementById("fpnotes").innerHTML = nl2br(findplace['notes']);
+          }
+          else{
+            document.getElementById(`fp${idEl}`).innerHTML = findplace[key];
+          }
+        } 
       }
     })
-  }else{
-    if(!role){$("#findplaceAccordionSection").remove()}
   }
 
   if (typeof data.artifact_measure != "undefined") {
@@ -146,16 +157,13 @@ $.ajax(ajaxSettings).done(function(data) {
     let navTabs = $("<ul/>",{class:'nav nav-tabs', id:'mediaTabs', role:'tablist'}).appendTo("#media")
     let navPanes =$("<div/>",{class:"tab-content", id:"mediaContent"}).appendTo("#media")
     const type = groupBy(['type']);
-    let group = type(data.media);
-    
+    let group = type(data.media);   
     Object.entries(group).forEach(function(element,idx) {
       let active = idx == 0 ? 'active' : '';
       let show = idx == 0 ? 'show' : '';
       let elTab = $("<li/>", {class:'nav-item', role:'presentation'}).appendTo(navTabs)
       $("<button/>",{class:'nav-link '+active, id: element[0]+'Tab', type:'button', role:'tab'}).attr({"data-bs-toggle":'tab', "data-bs-target":'#'+element[0]+'Pane'}).text(element[0]).appendTo(elTab)
-
       let panes = $("<div/>", {class:'bg-light p-3 tab-pane fade '+show+' '+active, id: element[0]+'Pane', role:'tabpanel'}).appendTo(navPanes)
-
       if(element[0] == 'image'){
         let imgDiv = $("<div/>",{id:'imgDiv'}).appendTo('#imagePane')
         element[1].forEach(img => {
@@ -168,9 +176,9 @@ $.ajax(ajaxSettings).done(function(data) {
           if (activeUser) {
             $("<button/>",{type:'button', class:'btn btn-sm btn-adc-blue'}).html('<span class="mdi mdi-file-document-edit"></span>').appendTo(toolImage).on('click', function(){ imageMetadataEdit(img) })
             $("<button/>",{type:'button', class:'btn btn-sm btn-danger'}).html('<span class="mdi mdi-delete-forever"></span>').appendTo(toolImage).on('click',function(){
-              let deleteImgAlert = 'Are you sure you want to delete the image? If you confirm the image will be permanently deleted from the server and it will not be possible to restore it'
-              if (confirm(deleteImgAlert)) {
-                deleteImage(img.file,img.path)
+              let deleteAlert = 'Are you sure you want to delete the image? If you confirm the image will be permanently deleted from the server and it will not be possible to restore it'
+              if (confirm(deleteAlert)) {
+                deleteMedia(img.file,img.path)
                 return false;
               }
             })
@@ -181,7 +189,7 @@ $.ajax(ajaxSettings).done(function(data) {
       if(element[0] == 'document'){
         let ul = $("<ul/>", {class:"list-group list-group-flush"}).appendTo("#documentPane")
         element[1].forEach(doc => {
-          let li = $("<li/>",{class:'list-group-item'}).appendTo(ul)
+          let li = $("<li/>",{class:'list-group-item overflow-hidden'}).appendTo(ul)
           if(doc.path && doc.path != ''){
             let divFile = $("<div/>",{class:'d-block'}).appendTo(li)
             $("<span/>",{text:'download file: '}).appendTo(divFile)
@@ -194,6 +202,17 @@ $.ajax(ajaxSettings).done(function(data) {
           }
           let divText = $("<div/>",{class:'d-block'}).appendTo(li)
           $("<small/>",{class:'text-secondary',text:doc.text}).appendTo(divText)
+          if (activeUser) {
+            let toolDoc = $("<div/>", {class:'btn-group btn-group-sm mt-3 text-end', role:'group'}).appendTo(li);
+            $("<button/>",{type:'button', class:'btn btn-sm btn-adc-blue'}).html('<span class="mdi mdi-file-document-edit"></span>').appendTo(toolDoc).on('click', function(){  })
+            $("<button/>",{type:'button', class:'btn btn-sm btn-danger'}).html('<span class="mdi mdi-delete-forever"></span>').appendTo(toolDoc).on('click',function(){
+              let deleteAlert = 'Are you sure you want to delete the media? If you confirm the media will be permanently deleted from the server and it will not be possible to restore it'
+              if (confirm(deleteAlert)) {
+                
+                return false;
+              }
+            })
+          }
         })
       }
 
@@ -202,12 +221,29 @@ $.ajax(ajaxSettings).done(function(data) {
         element[1].forEach(video => {
           let divVideo = $("<div/>",{class:'mb-3 embed-responsive embed-responsive-16by9'}).appendTo(videoDiv)
           $("<iframe/>",{class:'embed-responsive-item', src:video.url.replace('watch?v=','embed/')}).prop('allowfullscreen', true).appendTo(divVideo)
-          $("<small/>",{class:'text-secondary',text:video.text}).appendTo(divVideo)
+          $("<small/>",{class:'text-secondary d-block',text:video.text}).appendTo(divVideo)
+          if (activeUser) {
+            let videoDoc = $("<div/>", {class:'btn-group btn-group-sm mt-1 text-end', role:'group'}).appendTo(divVideo);
+            $("<button/>",{type:'button', class:'btn btn-sm btn-adc-blue'}).html('<span class="mdi mdi-file-document-edit"></span>').appendTo(videoDoc).on('click', function(){  })
+            $("<button/>",{type:'button', class:'btn btn-sm btn-danger'}).html('<span class="mdi mdi-delete-forever"></span>').appendTo(videoDoc).on('click',function(){
+              let deleteAlert = 'Are you sure you want to delete the media? If you confirm the media will be permanently deleted from the server and it will not be possible to restore it'
+              if (confirm(deleteAlert)) {
+                
+                return false;
+              }
+            })
+          }
         })
       }
     })
     
   }
+
+  document.getElementById('deleteConfirmButton').addEventListener('click', function () {
+    deleteRecord('artifact.php', 'deleteRecord', 'artifact', artifactId, () => { window.location.href = 'dashboard.php'; })
+    const modal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
+    modal.hide();
+  });
 
   artifactMap()
   lineChart(classid,classtype)
@@ -253,8 +289,9 @@ function imageMetadataEdit(img){
   })
 }
 
-function deleteImage(id,img){
-  let dati={trigger:'deleteImg', id:id, img:img}
+function deleteMedia(id,file){
+  let dati={trigger:'deleteMedia', id:id}
+  if(file){dati.file=file}
   ajaxSettings.url=API+"file.php";
   ajaxSettings.data = dati
   $.ajax(ajaxSettings)

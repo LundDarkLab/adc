@@ -389,40 +389,6 @@ function getCity(query){
   });
 }
 
-function getCityFromLonLat(ll, zoom){
-  ajaxSettings.url=API+"get.php";
-  ajaxSettings.data={trigger: 'getCityFromLonLat', point:ll};
-  $.ajax(ajaxSettings)
-  .done(function(data) {
-    if(data.length==0){
-      $("#mapAlert")
-        .removeClass()
-        .addClass('alert alert-danger')
-        .text('Attention! You clicked out of the project area!')
-      return false;
-    }
-    if (marker != undefined) { map.removeLayer(marker)};
-    marker = L.marker([ll[1], ll[0]]).addTo(map);
-    if($("#county").length){ $("#county").val(data[0].county).trigger('change'); }
-    $("[name=city]").val(data[0].name).attr({"data-cityId":data[0].id})
-    $("#longitude").val(ll[0].toFixed(4));
-    $("#latitude").val(ll[1].toFixed(4));
-    setMapExtent('jsonCity',data[0].id)
-  })
-
-  //reverse address geocoding
-  if($("#address").length){
-    let geoapi = nominatimReverse+'lat='+ll[1]+'&lon='+ll[0];
-    $.getJSON( geoapi, function( data ) {
-      let addr = data.address.road;
-      if(data.address.house_number && data.address.house_number !== 'undefined'){
-        addr = addr+" "+data.address.house_number;
-      }
-      $("#address").val(addr)
-    });
-  }
-}
-
 function getDate(){
   let data = new Date();
   let d = data.getDate();
@@ -727,6 +693,10 @@ function deleteRecord(endpoint, trigger, table, id, callback = null){
 }
 
 
+// how to use it
+// showToast('Message', 'success', () => location.reload());
+// showToast('Redirecting...', 'info', () => { window.location.href = 'link.php?id=123'; });
+// showToast('Custom message', 'danger', customFunction);
 function showToast(message, type, callback = null) {
   const toastId = `toast-${Date.now()}`;
   const toastHTML = `
@@ -747,10 +717,6 @@ function showToast(message, type, callback = null) {
   toastElement.addEventListener("hidden.bs.toast", () => { 
     toastElement.remove(); 
     if (typeof callback === "function") { callback(); }
-    // how to use it
-    // showToast('Message', 'success', () => location.reload());
-    // showToast('Redirecting...', 'info', () => { window.location.href = 'link.php?id=123'; });
-    // showToast('Custom message', 'danger', customFunction);
   });
 }
 

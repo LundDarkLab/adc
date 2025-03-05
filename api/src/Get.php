@@ -66,10 +66,6 @@ class Get extends Conn{
     return $out;
   }
 
-  public function getCityFromLonLat(array $point){
-    $sql = "select id, name, county from city where st_contains(city.shape, st_srid(st_geomfromtext('POINT(".$point[0]." ".$point[1].")'), 4326));";
-    return $this->simple($sql);
-  }
   public function getCountyByCity(int $city){
     $sql = "select county.id, county.name from county, city where city.id = ".$city." and city.county = county.id;";
     return $this->simple($sql)[0];

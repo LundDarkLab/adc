@@ -15,6 +15,37 @@ class Artifact extends Conn{
     $this->files = new File();
     $this->institution = new Institution();
   }
+
+  public function deleteRecord(array $post) :array{
+    try {
+      //check if the record has related files
+      $sql = "select id, type, path from files where artifact = ".$post['conditions']['id']." and path is not null;";
+      $files = $this->simple($sql);
+      //delete all related files
+      if(count($files) > 0){
+        foreach ($files as $file) {
+          $folder = $file['type'] == 'image' ? $this->files->imageDir : $this->files->documentDir;
+          $path = $folder.$file['path'];
+          $this->files->deleteFile($path);
+        }
+      }
+      $this->delete($post['table'],$post['conditions']);
+      return ["error" => 0, "message" => 'Record and all related files were successfully deleted'];
+    } catch (\Throwable $th) {
+      return ["error"=>1, "message"=>$th->getMessage(), "dati"=>$post];
+    }
+  }
+
+  public function gadm(array $dati){
+    $level = (int)$dati["gid"] == 0 ? $dati["gid"] : (int)$dati["gid"] - 1;
+    $fields = (int)$dati["gid"] == 0 ? "gid_0 gid, country as name" : "gid_".$dati["gid"]." gid, name_".$dati["gid"]." as name, st_asgeojson(`SHAPE`) as geom";
+    $table = "gadm".$dati["gid"];
+    $sql = "select ".$fields." from ".$table;
+    if(isset($dati['value'])){ $sql.= " where gid_".$level. " = '".$dati['value']."'";}
+    $sql .= " order by 2 asc;";
+    return ["query"=>$sql,"items"=>$this->simple($sql), "data"=>$dati];
+  }
+
   public function addArtifact(array $dati){
     try {
       $this->pdo()->beginTransaction();
@@ -141,7 +172,16 @@ class Artifact extends Conn{
   }
 
   private function getArtifactFindplace(int $id){
-    $sql = "select nation.name nation, county.id county_id, county.name county,city.id city_id, city.name city, f.parish, f.toponym, f.latitude, f.longitude, f.findplace_notes notes from artifact_findplace f inner join county on f.county = county.id inner join nation on county.nation = nation.id left join city on f.city = city.id where f.artifact = ".$id.";";
+    // $sql = "select nation.name nation, county.id county_id, county.name county,city.id city_id, city.name city, f.parish, f.toponym, f.latitude, f.longitude, f.findplace_notes notes from artifact_findplace f inner join county on f.county = county.id inner join nation on county.nation = nation.id left join city on f.city = city.id where f.artifact = ".$id.";";
+    $sql = "SELECT gadm0.country gid0, gadm0.gid_0 bounds_0, gadm1.name_1 gid1, gadm1.gid_1 bounds_1, gadm2.name_2 gid2, gadm2.gid_2 bounds_2, gadm3.name_3 gid3, gadm3.gid_3 bounds_3, gadm4.name_4 gid4, gadm4.gid_4 bounds_4, gadm5.name_5 gid5, gadm5.gid_5 bounds_5, a.parish, a.toponym, a.latitude, a.longitude, a.findplace_notes notes
+    FROM artifact_findplace a
+    INNER JOIN gadm0 ON a.gid_0 = gadm0.gid_0
+    LEFT JOIN gadm1 ON a.gid_1 = gadm1.gid_1
+    LEFT JOIN gadm2 ON a.gid_2 = gadm2.gid_2
+    LEFT JOIN gadm3 ON a.gid_3 = gadm3.gid_3
+    LEFT JOIN gadm4 ON a.gid_4 = gadm4.gid_4
+    LEFT JOIN gadm5 ON a.gid_5 = gadm5.gid_5
+    WHERE a.artifact = $id;";
     return $this->simple($sql)[0];
   }
 

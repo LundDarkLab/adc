@@ -2,7 +2,7 @@
 namespace Adc;
 use Ramsey\Uuid\Uuid;
 
-ini_set('upload_tmp_dir', '/tmp');
+ini_set('upload_tmp_dir', $_SERVER['DOCUMENT_ROOT'].'/plus/archive/tmp/');
 
 class File extends Conn{
   public $uuid;
@@ -110,32 +110,40 @@ class File extends Conn{
 
   protected function moveFile($file, $folder, $name){
     $fileLoc = $folder.$name;
+    if (!file_exists($file["tmp_name"])) {
+      throw new \Exception("Temporary file does not exist: " . $file["tmp_name"], 1);
+    }
     if(!move_uploaded_file($file["tmp_name"], $fileLoc)){ 
       error_log("Failed to move uploaded file. Source: " . $file["tmp_name"] . " Destination: " . $fileLoc . " Error: " . print_r(error_get_last(), true));
       error_log("File permissions: " . substr(sprintf('%o', fileperms($file["tmp_name"])), -4));
       error_log("Destination directory permissions: " . substr(sprintf('%o', fileperms($folder)), -4));
       throw new \Exception("Sorry but there was an error while uploading the file to the server, please try again or contact the system administrator", 1); 
-  }
+    }
     chmod($fileLoc, 0666);
     return true;
   }
 
-  public function deleteImg(array $dati){
+  public function deleteMedia(array $dati){
     try {
-      $file = $this->imageDir.$dati['img'];
-      if(!unlink($file)){ throw new \Exception("Error: file has not been deleted", 1); }
+      if(isset($dati['file'])){
+        $file = $this->imageDir.$dati['file'];
+        if (!file_exists($file)){ throw new \Exception("Error: file $file does not exist", 1); }
+        if(!unlink($file)){ throw new \Exception("Error: file $file has not been deleted", 1); }
+      }
       $sql = "delete from files where id = :id;";
       $this->prepared($sql,["id"=>$dati['id']]);
-      return ["error"=> 0, "output"=>'Ok, the image has been successfully removed.'];
+      return ["error"=> 0, "output"=>'Ok, the media has been successfully removed.'];
     } catch (\Throwable $th) {
-      $this->pdo()->rollBack();
       return ["error"=>1, "output"=>$th->getMessage()];
     }
   }
 
   public function deleteFile(string $path){
     try {
-      if(!unlink($path)){ throw new \Exception("Error: file has not been deleted", 1); }
+      if(!unlink($path)){ 
+        error_log("Failed to delete file:" . $path . " Error: " . print_r(error_get_last(), true));
+        throw new \Exception("Error: file has not been deleted", 1); 
+      }
       return ["error"=> 0, "output"=>'Ok, the image has been successfully removed.'];
     } catch (\Throwable $th) {
       return ["error"=>1, "output"=>$th->getMessage()];

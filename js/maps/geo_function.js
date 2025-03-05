@@ -1,56 +1,74 @@
-function osmSearch(city){
-  let api = nominatim+city
-  $.getJSON( api, function( data ) {
-    citySuggested.html('')
-    if (data.features.length > 0) {
-      data.features.forEach((item,i) => {
-        let geom = item.geometry.coordinates;
-        let prop = item.properties.geocoding;
-        $("<button/>", {class:'list-group-item list-group-item-action', type:'button'})
-          .text(prop.country+", "+prop.name)
-          .appendTo(citySuggested)
-          .on('click', function(){
-            $("[name=city]").val(prop.name)
-            map.setView([geom[1],geom[0]],13)
-            citySuggested.fadeOut('fast').html('');
-            autocompleted = true;
-          })
-      })
-    }else{
-      $("<button/>", {class:'list-group-item list-group-item-action', type:'button'})
-        .text('No cities found')
-        .appendTo(citySuggested)
-        .on('click', function(){ citySuggested.fadeOut('fast').html(''); })
+function reverseGeoLocation(ll){
+  if (marker) { map.removeLayer(marker)};
+  marker = L.marker(ll).addTo(map);
+  document.getElementById('latitude').value = ll.lat.toFixed(4);
+  document.getElementById('longitude').value = ll.lng.toFixed(4);
+  ajaxSettings.url = API + "geom.php";
+  ajaxSettings.data = {trigger:'reverseGeoLocation', ll:[ll.lng,ll.lat]};
+  $.ajax(ajaxSettings).done(function (data) {
+    if(data.res == 0){
+      let toast = new bootstrap.Toast(document.getElementById('errorToast'));
+      toast.show();
+      return false;
     }
-    citySuggested.fadeIn('fast')
-  });
-}
-function osmReverseSearch(ll){
-  let api = nominatimReverse+'lat='+ll.lat+'&lon='+ll.lng;
-  $.getJSON( api, function( data ) {
-    if (marker != undefined) { map.removeLayer(marker)};
-    marker = L.marker(ll).addTo(map);
-    let city; 
-    if(data.address.city && data.address.city !== 'undefined'){
-      city = data.address.city;
-    }
-    else if(data.address.town && data.address.town !== 'undefined'){
-      city = data.address.town;
-    }else{
-      city = data.address.village;
-    }
-    $("[name=city]").val(city)
+    let gid = Object.entries(data.data)
+      .filter(([key, value]) => key.includes("gid_") && value !== undefined && value !== null)
+      .reduce((obj, [key, value]) => {
+        obj[key] = value;
+        return obj;
+      }, {});
+      console.log(gid);
+      
+    Object.keys(gid).forEach(key => {
+      const level = document.getElementById(`${key}_container`)
+      const id = key.split('_')[1];
+      setTimeout(()=>{levelOptions(id,gid[key],gid[key])},500);
+    })
 
-    let addr = data.address.road;
-    if(data.address.house_number && data.address.house_number !== 'undefined'){addr = addr+" "+data.address.house_number;}
-    $("#address").val(addr)
-
-    $("#latitude").val(ll.lat.toFixed(4))
-    $("#longitude").val(ll.lng.toFixed(4))
+    let maxGid = getMaxGid(gid)
+    administrativeBoundaries(parseInt(maxGid.split('_')[1]), gid[maxGid], 'marker');
+    
   });
 }
 
-function mapInit(){
+function getMaxGid(obj) {
+  let maxNumber = -Infinity;
+  let maxKey = null;
+  for (let key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      let gid = key.split('_')[1];
+      if (gid) {
+        let number = parseInt(gid, 10);
+        if (!isNaN(number) && number > maxNumber) {
+          maxNumber = number;
+          maxKey = key;
+        }
+      }
+    }
+  }
+  return maxKey;
+}
+
+function administrativeBoundaries(level, filter, type, clear){
+  ajaxSettings.url = API + "geom.php";
+  ajaxSettings.data = { trigger: 'administrativeBoundaries', level:level, filter:filter, type:type };
+  $.ajax(ajaxSettings).done(function (data) {
+    if(data.items.length > 0){
+      if(!clear){boundaries.clearLayers();}
+      data.items.forEach((item, i) => {
+        let geojsonFeature = {
+          "type": "Feature",
+          "properties": {gid:item.gid, name:item.name},
+          "geometry": JSON.parse(item.geom)
+        };
+        L.geoJson(geojsonFeature, {style:countyStyle}).addTo(boundaries);
+      });
+      if(type !== 'marker'){map.fitBounds(boundaries.getBounds());}
+    }
+  });
+}
+
+function mapInit(page){
   map = L.map('map').fitWorld().setZoom(2)
   osm = L.tileLayer(osmTile, { maxZoom: 20, attribution: osmAttrib}).addTo(map);
   gStreets = L.tileLayer(gStreetTile,{maxZoom: 20, subdomains:gSubDomains });
@@ -63,33 +81,45 @@ function mapInit(){
     "Google Street": gStreets
   };
   layerControl = L.control.layers(baseLayers, null,{collapsed:false}).addTo(map);
-  countyGroup = L.featureGroup().addTo(map);
-  cityGroup = L.featureGroup().addTo(map);
+  boundaries = L.featureGroup().addTo(map);
     
   map.on({
     zoomend: handleAlert,
     click:function(e){
+      if(page == 'dashboard'){return false;}
       mapClick = true;
       let zoom = map.getZoom()
       if (zoom<14) { return false;}
       let ll = map.mouseEventToLatLng(e.originalEvent);
-      // getCityFromLonLat([parseFloat(ll.lng),parseFloat(ll.lat)], zoom)
-      osmReverseSearch(ll)
+      reverseGeoLocation(ll)
+      // reverseGeocodeNominatim(ll.lat,ll.lng);
+    },
+    baselayerchange:function (eventLayer) {
+      if (eventLayer.layer) {
+        eventLayer.layer.on({
+          loading: function () {$("#loadingDiv").show()},
+          load: function () {$("#loadingDiv").fadeOut('fast')}
+        });
+      }
     }
   })
+
+  osm.on({
+    loading: function () {$("#loadingDiv").show()},
+    load: function () {$("#loadingDiv").fadeOut('fast')}
+  });
+
   function handleAlert(){
     let alertClass, alertText;
     let zoom = map.getZoom();
     if (zoom>=14) {
       alertClass = 'alert alert-success';
       alertText = 'Ok, you can click on map to create a marker';
-      map.removeLayer(countyGroup);
-      map.removeLayer(cityGroup);
+      map.removeLayer(boundaries);
     }else {
       alertClass = 'alert alert-warning'
       alertText = 'To put a marker on map you have to zoom in';
-      map.addLayer(countyGroup);
-      map.addLayer(cityGroup);
+      map.addLayer(boundaries);
     }
     $("#mapAlert").removeClass().addClass(alertClass).text(alertText)
   }
@@ -137,59 +167,17 @@ function artifactMap(){
   };
 
   layerControl = L.control.layers(baseLayers, overlayMaps).addTo(map);
-  
-  let markerGroup = L.featureGroup().addTo(map);
-
-  storagePlaceMarker = L.marker(markerArr['storage'],{icon:storagePlaceIco}).addTo(markerGroup);
+  // let markerGroup = L.featureGroup().addTo(map);
+  boundaries = L.featureGroup().addTo(map);
+  storagePlaceMarker = L.marker(markerArr['storage'],{icon:storagePlaceIco}).addTo(boundaries);
+  layerControl.addOverlay(storagePlaceMarker, "storage place");
   if(markerArr['findplace']){
-    findPlaceMarker = L.marker(markerArr['findplace'],{icon:findplaceIco}).addTo(markerGroup);
+    findPlaceMarker = L.marker(markerArr['findplace'],{icon:findplaceIco}).addTo(boundaries);
+    layerControl.addOverlay(findPlaceMarker, "findplace");
   }
+  if(polyArr.length > 0){ administrativeBoundaries(polyArr[0], polyArr[1], 'single', 'true') }
 
-  if(Object.keys(polyArr).length>0){
-    ajaxSettings.url=API+"get.php";
-    if(polyArr.county){
-      ajaxSettings.data = {
-        trigger:'getSelectOptions', 
-        list:'jsonCounty', 
-        orderBy:'1', 
-        filter:'id = '+polyArr.county
-      }
-      $.ajax(ajaxSettings)
-      .done(function(data){
-        let geojsonFeature = {
-          "type": "Feature",
-          "properties": {type:data[0].type, name:data[0].name},
-          "geometry": JSON.parse(data[0].geometry)
-        };
-        let county = L.geoJson(geojsonFeature, {style:countyStyle}).addTo(markerGroup);
-        county.bindPopup(data[0].type+': '+data[0].name)
-        layerControl.addOverlay(county, "County");
-        map.fitBounds(markerGroup.getBounds())
-      })
-    }
-    
-    if(polyArr.city){
-      ajaxSettings.data = {
-        trigger:'getSelectOptions', 
-        list:'jsonCity', 
-        orderBy:'1', 
-        filter:'id = '+polyArr.city
-      }
-      $.ajax(ajaxSettings)
-      .done(function(data){
-        let geojsonFeature = {
-          "type": "Feature",
-          "properties": {type:data[0].type, name:data[0].name},
-          "geometry": JSON.parse(data[0].geometry)
-        };
-        let city = L.geoJson(geojsonFeature, {style:cityStyle}).addTo(markerGroup);
-        city.bindPopup(data[0].type+': '+data[0].name)
-        layerControl.addOverlay(city, "City");
-        map.fitBounds(markerGroup.getBounds())
-      })
-    }
-  }
-  map.fitBounds(markerGroup.getBounds());
+  map.fitBounds(boundaries.getBounds());
   let myToolbar = L.Control.extend({
     options: { position: 'topleft'},
     onAdd: function (map) {
@@ -201,7 +189,7 @@ function artifactMap(){
       btnHome.on('click', function (e) {
         e.preventDefault()
         e.stopPropagation()
-        map.fitBounds(markerGroup.getBounds());
+        map.fitBounds(boundaries.getBounds());
       });
       btnFullscreen.on('click', function(e){
         e.preventDefault()
@@ -220,11 +208,6 @@ function mapStat(countyData){
   map2 = L.map('mapChart',{maxBounds:mapExt}).fitBounds(mapExt)
   map2.setMinZoom(3);
   L.maptilerLayer({apiKey: mapTilerKey, style: "dataviz-light"}).addTo(map2)
-  // L.tileLayer(osmTile, { maxZoom: 20, attribution: osmAttrib}).addTo(map2);
-  // L.tileLayer('https://tiles.stadiamaps.com/tiles/stamen_toner_lite/{z}/{x}/{y}{r}.png', {
-  //   maxZoom: 20,
-  //   attribution: '&copy; <a href="https://stadiamaps.com/" target="_blank">Stadia Maps</a> &copy; <a href="https://stamen.com/" target="_blank">Stamen Design</a> &copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>', 
-  // }).addTo(map2);
   let countyGroup = L.featureGroup().addTo(map2);
   let countyJson = {"type":"FeatureCollection", "features": []}
   countyData.forEach(el => {
@@ -268,7 +251,6 @@ function mapStat(countyData){
       let img = $("<img/>",{class:'arrowGroup arrow'+grades[i], src:'img/ico/play.png'}).appendTo(row)
       $("<i/>").css("background-color",getColorByGroup(grades[i] + 1)).appendTo(row)
       $("<small/>").text(grades[i] + (grades[i + 1] ? '-' + grades[i + 1] : '+')).appendTo(row)
-      // div.innerHTML += '<i style="background:' + getColorByGroup(grades[i] + 1) + '"></i> ' + grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
     }
     return div;
   };
@@ -342,26 +324,86 @@ function mapInfo(props){
 function layername(){
 // Ottieni tutti i layer aggiunti alla mappa
 var mapLayers = map._layers;
-
 // Crea un array per memorizzare i nomi dei layers
 var layerNames = [];
-
 // Itera su tutti i layer presenti nella mappa
 for (var layerId in mapLayers) {
     var layer = mapLayers[layerId];
-    
     // Verifica se il layer è un Layer di Leaflet e ha un nome
     if (layer.options && layer.options.name) {
       var layerName = layer.options.name;
-      
       // Assicurati che il nome del layer non sia duplicato
       if (!layerNames.includes(layerName)) {
         layerNames.push(layerName);
       }
     }
   }
-  
   // Ora puoi utilizzare l'array layerNames che contiene i nomi dei layers presenti nella mappa
   console.log(layerNames);
-
 }
+
+
+//ok questa funziona
+async function reverseGeocodeNominatim(lat,lon, detail) {
+  const url = `${nominatimReverse}lat=${lat}&lon=${lon}&addressdetails=1`;
+
+  try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("Errore nella richiesta a Nominatim");
+
+      const data = await response.json();
+
+      console.log("Risultati Nominatim:", data);
+
+      let placeInfo = {
+          country: data.address.country,
+          region: data.address.state || data.address.region,
+          province: data.address.county || data.address.district,
+          city: data.address.city || data.address.town || data.address.village || data.address.municipality,
+      };
+
+      console.log("Località trovata:", placeInfo);
+      return placeInfo;
+
+  } catch (error) {
+      console.error("Errore Nominatim:", error);
+  }
+}
+
+// da rivedere, per ora non funziona
+async function fetchGeoJsonAndNames() {
+  const overpassUrl = 'https://overpass-api.de/api/interpreter';
+  const overpassQuery = `
+[out:json][maxsize:1073741824][timeout:9000];
+nwr["boundary"="administrative"]["admin_level"="2"]["name"="Italy"]; 
+(._;>;);
+out geom;
+  `;
+
+  try {
+    const response = await fetch(overpassUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: `data=${encodeURIComponent(overpassQuery)}`
+    });
+
+    if (!response.ok) {
+      throw new Error('Errore nella richiesta Overpass: ' + response.statusText);
+    }
+
+    const data = await response.json();
+
+    // Esempio di gestione dei dati
+    console.log('Dati ricevuti:', data);
+
+    // Ora puoi lavorare con i dati GeoJSON e i nomi dei luoghi ottenuti
+
+  } catch (error) {
+    console.error('Errore durante il fetch da Overpass:', error);
+  }
+}
+
+// Chiamata alla funzione per eseguire la query
+// fetchGeoJsonAndNames();

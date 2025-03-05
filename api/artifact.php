@@ -15,4 +15,6 @@ function getArtifact($obj){return json_encode($obj->getArtifact($_POST['id']));}
 function getArtifacts($obj){return json_encode($obj->getArtifacts($_POST['search']));}
 function getArtifactName($obj){return json_encode($obj->getArtifactName($_POST['item']));}
 function artifactIssues($obj){return json_encode($obj->artifactIssues());}
+function gadm($obj){return json_encode($obj->gadm($_POST));}
+function deleteRecord($obj){ return json_encode($obj->deleteRecord($_POST)); }
 ?>

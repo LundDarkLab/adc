@@ -1617,18 +1617,13 @@ function view2track(view){
 	return trackState;
 }
 //---------------------------------------------------------------------------------------
-
-
-//EXPERIMENT
-$("#btLight").on('mousedown', openLightControl);
-$(document).on('mouseup', closeLightControl);
-$('#draw-canvas').on('mouseup', closeLightControl);
+///////////////////
+// LIGHT CONTROL //
+///////////////////
+document.getElementById('btLight').addEventListener('mousedown', openLightControl);
+document.getElementById('lightcontroller').addEventListener('mouseup', closeLightControl);
 
 function openLightControl(event){
-  //console.log("openLightControl");
-  //console.log(event);
-  //console.log(event.clientX);
-  //console.log(event.clientY);
   var lightControllerCanvas = document.getElementById("lightcontroller");
   lightControllerCanvas.width = 200;
 	lightControllerCanvas.height = 200;	
@@ -1638,18 +1633,13 @@ function openLightControl(event){
   lightControllerCanvas.style.zIndex = 1000;
   updateLightController(VIEWER_STATE.lightDir[0],VIEWER_STATE.lightDir[1]);
   (event.touches) ? lightControllerCanvas.addEventListener("touchmove", clickLightController, false) : lightControllerCanvas.addEventListener("mousemove", clickLightController, false);
-  //clickLightController(event);
 }
 function closeLightControl(event){
-  var lightControllerCanvas = document.getElementById("lightcontroller");
-  lightControllerCanvas.style.display = "none";
+  const lightControllerCanvas = document.getElementById("lightcontroller");
+  if(lightControllerCanvas){
+    lightControllerCanvas.style.display = "none";
+  }
 }
-//END EXPERIMENT
-
-
-///////////////////
-// LIGHT CONTROL //
-///////////////////
 function resizeLightController(){
 	var lightControllerCanvas = document.getElementById("lightcontroller");
 	var dim = Math.min(150, Math.min(lightControllerCanvas.parentElement.clientWidth,lightControllerCanvas.parentElement.clientHeight));
