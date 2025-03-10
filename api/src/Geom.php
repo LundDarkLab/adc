@@ -36,7 +36,7 @@ class Geom extends Conn{
 
   public function reverseGeoLocation(array $ll){
     $out = [];
-    $condition = "where st_contains(`SHAPE`, ST_SRID(ST_GeomFromText('POINT(".$ll[0]." ".$ll[1].")'), 4326));";
+    $condition = "where st_contains(`SHAPE`, ST_SRID(ST_GeomFromText('POINT(".$ll[0]." ".$ll[1].")'), 4326))";
     $levels = [
       5 => "gid_0, gid_1, gid_2, gid_3, gid_4, gid_5, country, name_1, name_2, name_3, name_4, name_5",
       4 => "gid_0, gid_1, gid_2, gid_3, gid_4, country, name_1, name_2, name_3, name_4",
@@ -46,7 +46,7 @@ class Geom extends Conn{
     ];
 
     foreach ($levels as $level => $fields) {
-      $sql = "select $fields from gadm$level $condition order by country, name_1, name_2, name_3, name_4, name_5 asc;";
+      $sql = "select $fields from gadm$level $condition order by country, name_1 asc;";
       $data = $this->simple($sql);
       if (!empty($data)) {
         $geo = "select gid_$level, name_$level, st_asgeojson(`SHAPE`) as geom from gadm$level $condition;";

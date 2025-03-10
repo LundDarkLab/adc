@@ -94,8 +94,6 @@
                 <label for="timeline" class="fw-bold text-danger">select a timeline map</label>
                 <select name="timeline" id="timeline" class="form-select" data-table="artifact" required>
                   <option value="" disabled selected>-select a timeline-</option>
-                  <option value="1">generic</option>
-                  <option value="2">sweden</option>
                 </select>
                 <div class="mt-3 text-secondary">Please select a timeline map from those available. Each time map will update the chronological filters of the lower and upper bounds by setting them to the specific local time span. </div>
               </div>

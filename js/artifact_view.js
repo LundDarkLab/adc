@@ -19,7 +19,6 @@ ajaxSettings.url=API+"artifact.php";
 ajaxSettings.data={trigger:'getArtifact', id:artifactId};
 $.ajax(ajaxSettings).done(function(data) {
   let artifact = data.artifact;
-  console.log(data);
   classid = artifact.category_class_id;
   classtype = data.artifact.category_class;
   $("h2#title").text(artifact.name)
@@ -124,7 +123,6 @@ $.ajax(ajaxSettings).done(function(data) {
   $("#artifact_license>a").attr("href",metadata.license.link).text(metadata.license.license+" ("+metadata.license.acronym+")")
 
   if(data.model){
-    // console.log(data.model);
     $("[name=editModelBtn],#editModelBtn>a").attr('href','model_edit.php?item='+data.model.model.id);
     let model = data.model.model_object[0];
     if (model.object) {
@@ -284,7 +282,7 @@ function imageMetadataEdit(img){
           setTimeout(function(){location.reload(); }, 3000);
         }
         $("#toastDivContent").removeClass('d-none')
-      }).fail((jqXHR, errorMsg) => {console.log(jqXHR.responseText, errorMsg)});
+      }).fail((jqXHR, errorMsg) => {console.error(jqXHR.responseText, errorMsg)});
     }
   })
 }
@@ -305,7 +303,7 @@ function deleteMedia(id,file){
         setTimeout(function(){ location.reload(); }, 3000);
       }
       $("#toastDivContent").removeClass('d-none')
-    }).fail((jqXHR, errorMsg) => {console.log(jqXHR.responseText, errorMsg)});
+    }).fail((jqXHR, errorMsg) => {console.error(jqXHR.responseText, errorMsg)});
 }
 
 function fullImage(img){
@@ -348,10 +346,9 @@ function mapChart(id,type){
   ajaxSettings.url=API+"stats.php";
   ajaxSettings.data={
     trigger:'artifactByCounty',
-    filter:["artifact.category_class = "+id]
+    filter:["a.category_class = "+id]
   };
-  $.ajax(ajaxSettings)
-  .done(function(data) { mapStat(data); })
+  $.ajax(ajaxSettings).done(function(data) { mapStat(data); })
 }
 
 function lineChart(id,type){

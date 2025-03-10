@@ -153,8 +153,7 @@ function mapInit(page){
 
 function artifactMap(){
   if (map !== undefined) { map.remove(); }
-  map = L.map('map',{maxBounds:mapExt})
-  map.setMinZoom(4);
+  map = L.map('map')
   osm = L.tileLayer(osmTile, { maxZoom: 18, attribution: osmAttrib}).addTo(map);
   gStreets = L.tileLayer(gStreetTile,{maxZoom: 18, subdomains:gSubDomains });
   gSat = L.tileLayer(gSatTile,{maxZoom: 18, subdomains:gSubDomains});
@@ -167,7 +166,6 @@ function artifactMap(){
   };
 
   layerControl = L.control.layers(baseLayers, overlayMaps).addTo(map);
-  // let markerGroup = L.featureGroup().addTo(map);
   boundaries = L.featureGroup().addTo(map);
   storagePlaceMarker = L.marker(markerArr['storage'],{icon:storagePlaceIco}).addTo(boundaries);
   layerControl.addOverlay(storagePlaceMarker, "storage place");
@@ -203,17 +201,16 @@ function artifactMap(){
 }
 
 
-let county;
+
 function mapStat(countyData){
-  map2 = L.map('mapChart',{maxBounds:mapExt}).fitBounds(mapExt)
-  map2.setMinZoom(3);
+  map2 = L.map('mapChart').fitBounds(mapExt)
   L.maptilerLayer({apiKey: mapTilerKey, style: "dataviz-light"}).addTo(map2)
-  let countyGroup = L.featureGroup().addTo(map2);
+  countyGroup = L.featureGroup().addTo(map2);
   let countyJson = {"type":"FeatureCollection", "features": []}
   countyData.forEach(el => {
     countyJson.features.push({
       "type": "Feature",
-      "properties": {area:'county',name:el.name, tot:el.tot},
+      "properties": {area:'county',id:el.gid_1,name:el.name_1, tot:el.tot},
       "geometry": JSON.parse(el.geometry)
     })
   });
@@ -234,7 +231,11 @@ function mapStat(countyData){
       btnHome.on('click', function (e) {
         e.preventDefault()
         e.stopPropagation()
-        map.fitBounds(countyGroup.getBounds())
+        if(window.location.pathname.includes('artifact_view')){
+          map.fitBounds(countyGroup.getBounds())
+        }else{
+          map2.fitBounds(countyGroup.getBounds())
+        }
       });
       return container;
     }
@@ -303,11 +304,23 @@ function resetHighlight(e) {
   $(".arrowGroup").css('visibility','hidden')
 }
 function zoomToFeature(e) {map.fitBounds(e.target.getBounds());}
+function filterElement(e){
+  console.log(e.target.feature.properties);
+  document.getElementById('byCounty').value = e.target.feature.properties.id
+  map2.fitBounds(e.target.getBounds());
+  getFilter();
+};
 function onEachFeature(feature, layer) {
   layer.on({
       mouseover: highlightFeature,
       mouseout: resetHighlight,
-      click: zoomToFeature
+      click: (e) => {
+        if(window.location.pathname.includes('artifact_view')){
+          zoomToFeature(e)
+        }else{
+          filterElement(e)
+        }
+      }
   });
 }
 
@@ -322,23 +335,15 @@ function mapInfo(props){
 }
 
 function layername(){
-// Ottieni tutti i layer aggiunti alla mappa
-var mapLayers = map._layers;
-// Crea un array per memorizzare i nomi dei layers
-var layerNames = [];
-// Itera su tutti i layer presenti nella mappa
-for (var layerId in mapLayers) {
+  var mapLayers = map._layers;
+  var layerNames = [];
+  for (var layerId in mapLayers) {
     var layer = mapLayers[layerId];
-    // Verifica se il layer è un Layer di Leaflet e ha un nome
     if (layer.options && layer.options.name) {
       var layerName = layer.options.name;
-      // Assicurati che il nome del layer non sia duplicato
-      if (!layerNames.includes(layerName)) {
-        layerNames.push(layerName);
-      }
+      if (!layerNames.includes(layerName)) { layerNames.push(layerName); }
     }
   }
-  // Ora puoi utilizzare l'array layerNames che contiene i nomi dei layers presenti nella mappa
   console.log(layerNames);
 }
 

@@ -14,7 +14,7 @@ let overlayMaps = {}
 let mapClick = false;
 
 const mapExt = [[72,63],[51,-11]];
-let map, map2, marker, countyGroup, cityGroup, boundaries;
+let map, map2, marker,county, countyGroup, cityGroup, boundaries;
 let countyStyle = {
   weight: 2,
   color: 'rgb(51,136,255)',

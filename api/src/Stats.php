@@ -45,7 +45,7 @@ class Stats extends Conn{
   public function artifactByCounty(array $filter){
     $where = '';
     if(count($filter)>0){ $where = "where ". join(" and ",$filter); }
-    $sql = "SELECT  county.id, county.name, st_asgeojson(county.shape) AS 'geometry', artifact.tot FROM (SELECT af.county, COUNT(*) AS tot FROM artifact_findplace af inner join artifact on af.artifact = artifact.id ".$where." GROUP BY af.county ) AS artifact JOIN county ON artifact.county = county.id;";
+    $sql = "SELECT g.gid_1, g.name_1, ST_AsGeoJSON(g.`SHAPE`) AS `geometry`, a.tot FROM gadm1 g JOIN (SELECT af.gid_1, COUNT(*) AS tot FROM artifact_findplace af JOIN artifact a ON af.artifact = a.id ".$where." GROUP BY af.gid_1) a ON g.gid_1 = a.gid_1;";
     return $this->simple($sql);
   }
 

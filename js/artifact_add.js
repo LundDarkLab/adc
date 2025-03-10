@@ -49,13 +49,19 @@ let listLicense = {
   label: 'name'
 }
 
+let listTimeline = {
+  settings: {trigger:listTrigger, list:'time_series', orderBy:'definition'},
+  htmlEl: 'timeline',
+  label: 'definition'
+}
+
 levelOptions(0)
 
 $("#resetMapDiv").hide();
 mapInit()
 map.fitWorld()
 
-listArray.push(listCatClass,listMaterial,listStoragePlace,listConservationState,listObjectCondition,listAuthor,listOwner,listLicense)
+listArray.push(listCatClass,listMaterial,listStoragePlace,listConservationState,listObjectCondition,listAuthor,listOwner,listLicense, listTimeline)
 listArray.forEach((item, i) => {getList(item.settings,item.htmlEl,item.label)});
 
 $("[name=checkNameBtn]").on('click', function(){
@@ -140,7 +146,6 @@ function newArtifact(el){
     $.ajax(ajaxSettings)
     .done(function(data) {
       console.log(data);
-      return false;
       if (data.res==0) {
         $("#toastDivError .errorOutput").text(data.output);
         $("#toastDivError").removeClass("d-none");
@@ -163,6 +168,8 @@ function levelOptions(gid, filter, selected) {
   if (filter && filter != null) { ajaxSettings.data.payload.filter = filter; }
 
   $.ajax(ajaxSettings).done(function (data) {
+    console.log(data.query);
+    
     const parent = document.getElementById('gid_' + gid);
     if(selected){ parent.value = selected; }
     if (data.items.length === 0) { return false; }

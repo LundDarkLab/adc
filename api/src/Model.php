@@ -211,6 +211,7 @@ class Model extends Conn{
     INNER JOIN artifact_model am ON artifact.id = am.artifact 
     INNER JOIN model_object obj ON obj.model = am.model 
     LEFT JOIN list_material_specs material ON amt.material = material.id
+    left join artifact_findplace af on af.artifact = artifact.id
     WHERE artifact.status = 2
       AND artifact.id IN (
       SELECT artifact.id

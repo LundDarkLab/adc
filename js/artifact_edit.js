@@ -1,85 +1,153 @@
-const artifact = $("[name=artifact]").val()
-const activeUser = $("[name=usr]").val()
+const artifact = document.getElementsByName("artifact")[0].value;
+const activeUser = document.getElementsByName("usr")[0].value;
+
 getArtifact()
 
-$("[name=editArtifact]").on('click', function(el){updateMeta(el)})
+document.getElementsByName('editArtifact')[0].addEventListener('click', (el)=>{updateMeta(el)})
 
 function getArtifact(){
   ajaxSettings.url=API+"artifact.php";
   ajaxSettings.data={trigger:'getArtifact', id:artifact};
   $.ajax(ajaxSettings)
   .done(function(data) {
-    timelineEditPage({timeline:data.artifact.timeline, chrono:data.crono, years:{start:data.artifact.start, end:data.artifact.end }})
-    $("#pageTitle").text(data.artifact.name)
-    $("#name").val(data.artifact.name)
-    $("#status").val(data.artifact.status_id)
-    $("#description").val(data.artifact.description)
-    $("#notes").val(data.artifact.notes)
-    $.when($("#category_class").val(data.artifact.category_class_id)).then(function(){
-      handleCategoryChange()
-      if(data.artifact.category_specs_id){$("#category_specs").val(data.artifact.category_specs_id)}
-    })
-    $("#type").val(data.artifact.type)
-    $("#timeline").val(data.artifact.timeline)
+    // console.log(data);
+    const { artifact: art, crono, artifact_material_technique: materials, artifact_findplace: findplace, artifact_metadata: meta } = data;
+    const { start, end, name, status_id, description, notes, category_class_id, category_specs_id, type, timeline, storage_place, inventory, conservation_state_id, object_condition_id, is_museum_copy } = art;
 
-    data.artifact_material_technique.forEach(function(v){
-      let t = v.technique ? v.technique : null;
-      let m = v.material_id;
-      materialTechniqueArray.push({m, t});
-      let row = $("<div/>", {class:'row wrapfield mb-3'}).appendTo("#matTechArray");
-      let matDiv = $("<div/>", {class:'material'}).appendTo(row);
-      let techDiv = $("<div/>", {class:'technique'}).appendTo(row);
-      $("<input/>", {class:'form-control', type:'text'}).prop('readonly', true).val(v.material).appendTo(matDiv);
-      let iptGrp = $("<div/>", {class:'input-group'}).appendTo(techDiv)
-      $("<input/>", {class:'form-control', type:'text'}).prop('readonly', true).val(v.technique).appendTo(iptGrp);
-      $("<button/>",{class:'btn btn-danger', type:'button', name:'delRow', title:'delete row'})
-        .attr({"data-bs-toggle":'tooltip'})
-        .html('<span class="mdi mdi-trash-can"></span>')
-        .appendTo(iptGrp)
-        .on('click', function(){
-          let idx = $("#matTechArray .row").index(row);
-          materialTechniqueArray.splice(idx,1)
-          row.remove();
-          $(this).tooltip('hide')
-        })
-        .tooltip()
-    })
-
-    $("#start").val(data.artifact.start)
-    $("#end").val(data.artifact.end)
-    $("#storage_place").val(data.artifact.storage_place)
-    if(data.artifact.inventory){$("#inventory").val(data.artifact.inventory)}
-    $("#conservation_state").val(data.artifact.conservation_state_id)
-    if(data.artifact.object_condition_id){$("#object_condition").val(data.artifact.object_condition_id)}
-    $("#is_museum_copy").prop('checked',data.artifact.is_museum_copy).on('click',function(){
-      let label = $(this).is(':checked') ? 'yes' : 'no';
-      $("label[for='is_museum_copy").text(label)
-    });
-    $("label[for='is_museum_copy").text(data.artifact.is_museum_copy==1?'yes':'no')
-
-    if(data.artifact_findplace !== null){
-      let fp = data.artifact_findplace
-      $("#county").val(fp.county_id)
-      $("#city").val(fp.city).attr("data-cityid",fp.city_id)
-      if (fp.parish) {$("#parish").val(fp.parish)}
-      if (fp.toponym) {$("#toponym").val(fp.toponym)}
-      if (fp.notes) {$("#findplace_notes").val(fp.notes)}
-      if (fp.latitude) {
-        $("#latitude").val(fp.latitude)
-        $("#longitude").val(fp.longitude)
-        let findplace = [parseFloat(fp.latitude), parseFloat(fp.longitude)]
-        marker = L.marker(findplace).addTo(map);
-        map.setView(findplace,15)
-      }
-      let meta = data.artifact_metadata
-      $("#author").val(meta.author.id)
-      $("#owner").val(meta.owner.id)
-      $("#license").val(meta.license.id)
-    }
+    document.getElementById('pageTitle').innerText = name
+    
+    populateArtifactDetails(art);
+    handleCategory(category_class_id, category_specs_id);
+    timelineEditPage({timeline, chrono:crono, years:{start, end }})
+    populateMaterialTechnique(materials);
+    populateMetadata(meta);
+    populateFindplace(findplace);
   })
 }
 
-function updateMeta(btn){
+function populateArtifactDetails(art) {
+  const {name, status_id, description, notes, type, timeline, start, end, storage_place, inventory, conservation_state_id, object_condition_id, is_museum_copy } = art;
+
+  setInputValue('name', name);
+  setInputValue('status', status_id);
+  setInputValue('description', description);
+  setInputValue('notes', notes);
+  setInputValue('type', type);
+  setInputValue('timeline', timeline);
+  setInputValue('start', start);
+  setInputValue('end', end);
+  setInputValue('storage_place', storage_place);
+  setInputValue('inventory', inventory);
+  setInputValue('conservation_state', conservation_state_id);
+  setInputValue('object_condition', object_condition_id);
+  setCheckbox('is_museum_copy', is_museum_copy, 'yes', 'no');
+} 
+
+function populateMetadata(meta) {
+  if (!meta) return;
+  const { author, owner, license } = meta;
+  setInputValue('author', author.id);
+  setInputValue('owner', owner.id);
+  setInputValue('license', license.id);
+}
+
+function populateFindplace(findplace) {
+  if (!findplace) return;
+  console.log(findplace);  
+  const { bounds_0, bounds_1, bounds_2, bounds_3, bounds_4, bounds_5, gid0, gid1, gid2, gid3, gid4, gid5, latitude, longitude, notes, parish, toponym } = findplace;
+  let boudaries = []
+  // setInputValue('gid_0', bounds_0);
+  // levelOptions(0,bounds_0);
+  if(gid0) { 
+    levelOptions(0,bounds_0, bounds_0); 
+    boudaries = [0, bounds_0,'collection',true]
+  }
+  if(gid1) { 
+    levelOptions(1,bounds_1, bounds_1); 
+    boudaries = [1, bounds_1,'single',true]
+  }
+  if(gid2) { 
+    levelOptions(2,bounds_2, bounds_2); 
+    boudaries = [2, bounds_2,'single',true]
+  }
+  if(gid3) { 
+    levelOptions(3,bounds_3, bounds_3);
+    boudaries = [3, bounds_3,'single',true]
+  }
+  if(gid4) { 
+    levelOptions(4,bounds_4, bounds_4);
+    boudaries = [4, bounds_4,'single',true]
+  }
+  if(gid5) { 
+    levelOptions(5,bounds_5, bounds_5);
+    boudaries = [5, bounds_5,'single',true]
+  }
+  setInputValue('parish', parish);
+  setInputValue('toponym', toponym);
+  setInputValue('findplace_notes', notes);
+  if (latitude && longitude) {
+    setInputValue('latitude', latitude);
+    setInputValue('longitude', longitude);
+    const findplaceLatLng = [parseFloat(latitude), parseFloat(longitude)];
+    marker = L.marker(findplaceLatLng).addTo(map);
+    map.setView(findplaceLatLng, 15);
+  }else{
+    administrativeBoundaries(...boudaries)
+  }
+}
+
+function handleCategory(classId, specsId) {
+  const categoryClassElement = document.getElementById("category_class");
+  const categorySpecsElement = document.getElementById("category_specs");
+  if (categoryClassElement) {
+    categoryClassElement.value = classId;
+    Promise.resolve().then(() => {
+      handleCategoryChange();
+      if (specsId && categorySpecsElement) {
+        categorySpecsElement.value = specsId;
+      }
+    });
+  }
+}
+
+function populateMaterialTechnique(materials) {
+  const matTechArray = document.getElementById("matTechArray");
+  matTechArray.innerHTML = '';
+
+  materials.forEach(v => {
+      const { material_id: m, technique: t, material } = v;
+      materialTechniqueArray.push({ m, t });
+
+      const row = createElement('div', 'row wrapfield mb-3', matTechArray);
+      const matDiv = createElement('div', 'material', row);
+      const techDiv = createElement('div', 'technique', row);
+
+      createInput('text', material, true, 'form-control', matDiv);
+
+      const iptGrp = createElement('div', 'input-group', techDiv);
+      const techInput = createInput('text', t, true, 'form-control', iptGrp);
+
+      const deleteButton = createElement('button', 'btn btn-danger', iptGrp);
+      deleteButton.type = 'button';
+      deleteButton.name = 'delRow';
+      deleteButton.title = 'delete row';
+      deleteButton.setAttribute('data-bs-toggle', 'tooltip');
+      deleteButton.innerHTML = '<span class="mdi mdi-trash-can"></span>';
+
+      deleteButton.addEventListener('click', () => {
+          const rows = document.querySelectorAll("#matTechArray .row");
+          const idx = Array.prototype.indexOf.call(rows, row);
+          materialTechniqueArray.splice(idx, 1);
+          const tooltip = bootstrap.Tooltip.getInstance(deleteButton);
+          if (tooltip) { tooltip.hide(); }
+          row.remove();
+      });
+
+      new bootstrap.Tooltip(deleteButton);
+  });
+}
+
+function updateMeta(btn){  
   checkMaterialArray()
   if (form[0].checkValidity()) {
     btn.preventDefault()

@@ -1,1 +1,9 @@
-select gadm0.country gid0, gadm0.gid_0 bounds_0,  gadm1.name_1 gid1, gadm1.gid_1 bounds_1,  gadm2.name_2 gid2, gadm2.gid_2 bounds_2,  gadm3.name_3 gid3, gadm3.gid_3 bounds_3,  gadm4.name_4 gid4, gadm4.gid_4 bounds_4,  gadm5.name_5 gid5, gadm5.gid_5 bounds_5,  a.parish,  a.toponym,  a.latitude,  a.longitude,  a.findplace_notes notes from artifact_findplace a INNER JOIN gadm0 ON a.gid_0 = gadm0.gid_0 LEFT JOIN gadm1 ON a.gid_1 = gadm1.gid_1 LEFT JOIN gadm2 ON a.gid_2 = gadm2.gid_2 LEFT JOIN gadm3 ON a.gid_3 = gadm3.gid_3 LEFT JOIN gadm4 ON a.gid_4 = gadm4.gid_4 LEFT JOIN gadm5 ON a.gid_5 = gadm5.gid_5 where a.artifact = 433\G
+SELECT g.gid_1, g.name_1, ST_AsGeoJSON(g.`SHAPE`) AS `geometry`, a.tot
+FROM gadm1 g
+JOIN (
+  SELECT af.gid_1, COUNT(*) AS tot
+  FROM artifact_findplace af
+  JOIN artifact a ON af.artifact = a.id
+  WHERE a.category_class = 31
+  GROUP BY af.gid_1
+) a ON g.gid_1 = a.gid_1;

@@ -184,6 +184,8 @@ function buildGallery(callback){
   checkActiveFilter()
   ajaxSettings.url=API+"model.php";
   ajaxSettings.data={trigger:'buildGallery', filter:filter2, sort:sort};
+  console.log(ajaxSettings);
+  
   $.ajax(ajaxSettings).done(callback)
 }
 
@@ -246,6 +248,8 @@ function generateRandomPassword(){
 }
 
 function gallery(data){
+  console.log(data);
+  
   wrapDiv = "#wrapGallery";
   $(wrapDiv).html('');
   $("#viewGallery > span").text(data.length)
@@ -401,7 +405,7 @@ function getList(settings,selName,label, callback = null){
   ajaxSettings.url=API+"get.php";
   ajaxSettings.data=settings;
   $.ajax(ajaxSettings)
-  .done(function(data) {
+  .done(function(data) {   
     if(selName=='material'){
       data.class.forEach((opt) => { $("<option/>").val(opt.id).text(opt[label]).appendTo("#material>#matClass")});
       data.specs.forEach((opt) => { $("<option/>").val(opt.id).text(opt[label]).appendTo("#material>#matSpecs")});
@@ -720,4 +724,54 @@ function showToast(message, type, callback = null) {
   });
 }
 
+function createElement(tag, className, parent) {
+  const element = document.createElement(tag);
+  element.className = className;
+  parent.appendChild(element);
+  return element;
+}
 
+function createInput(type, value, readOnly, className, parent, attributes = {}) {
+  const input = document.createElement('input');
+  input.type = type;
+  input.value = value || '';
+  input.readOnly = readOnly;
+  input.className = className;
+  for (const key in attributes) { input.setAttribute(key, attributes[key]); }
+  parent.appendChild(input);
+  return input;
+}
+
+//how to use it: setInputValue('fieldId', value)
+//to add some attributes: setInputValue('fieldId', value, {'attribute': 'value', 'attribute2': 'value2'... })
+function setInputValue(id, value, attributes = {}) {
+  const element = document.getElementById(id);
+  if (element) {
+    element.value = value || '';
+    for (const key in attributes) { element.setAttribute(key, attributes[key]); }
+  }
+}
+
+function setCheckbox(id, checked, checkedText, uncheckedText) {
+  const element = document.getElementById(id);
+  const label = document.querySelector(`label[for="${id}"]`);
+  if (element) {
+    element.checked = checked;
+    if (label) { label.textContent = checked ? checkedText : uncheckedText; }
+    element.addEventListener('click', function() {
+      let newLabel = this.checked ? checkedText : uncheckedText;
+      if (label) { label.textContent = newLabel; }
+    });
+  }
+}
+setElementVisibility('gid_1', true);
+function setElementVisibility(id, visible) {
+  if (typeof visible !== 'boolean') {
+    console.error('"visible" parameter must be a boolean');
+    return;
+  }
+  const element = document.getElementById(id);
+  if (element) { 
+    visible ? element.classList.remove('hide') : element.classList.add('hide') 
+  }
+}
