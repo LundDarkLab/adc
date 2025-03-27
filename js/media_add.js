@@ -1,13 +1,13 @@
 const form = $("[name=newMediaForm]")[0]
 const artifact = $("[name=artifact]").val();
-const type = $("[name=type]").val();
+const type = $("[name=filetype]").val();
 
-if(type == 'image'){
+if(type == 1){
   let settings =  {trigger:'getSelectOptions', list:'license', orderBy:'name'}
   getList(settings,'license','name')
 }
 
-if(type !== 'video'){
+if(type !== 3){
   const path = document.getElementById('path');
   const previewImage = document.getElementById('imgPreview');
   
@@ -30,11 +30,11 @@ function saveMedia(e){
   let dati = new FormData();
   if (form.checkValidity()) {
     e.preventDefault();
-    if(type !== 'image'){ 
+    if(type !== 1){ 
       const url = document.getElementById('url') 
       if(url.value){dati.append('url', url.value);}
     }
-    if(type == 'document'){
+    if(type == 2){
       if(!path.value && !url.value){
         alert('Please, to add a document you have to upload a file or enter a valid url to an external resource')
         return false;
@@ -42,14 +42,14 @@ function saveMedia(e){
     }
     dati.append('trigger','addMedia');
     dati.append('artifact',artifact);
-    dati.append('type',type);
-    if(type !== 'video'){
+    dati.append('filetype',type);
+    if(type !== 3){
       if (path.files.length > 0) {
         dati.append("file", path.files[0], path.files[0].name);
       }
     }
 
-    if(type == 'image'){
+    if(type == 1){
       dati.append('license', $("#license").val())
       var isDownloadable = $('#downloadable').is(':checked') ? 1 : 0;
       dati.append('downloadable',isDownloadable)

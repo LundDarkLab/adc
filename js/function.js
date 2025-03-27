@@ -775,3 +775,21 @@ function setElementVisibility(id, visible) {
     visible ? element.classList.remove('hide') : element.classList.add('hide') 
   }
 }
+
+
+
+// fetch data function, can be used for every fetch call
+
+async function fetchApi(url, method = 'POST', headers = {}, body = null) {
+  try {
+    const options = { method, headers: {'Content-Type': 'application/json', ...headers, }, };
+    if (body) { options.body = JSON.stringify(body); }
+    const response = await fetch(url, options);
+    if (!response.ok) { throw new Error(`Errore HTTP! stato: ${response.status}`); }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Errore durante la chiamata API:', error);
+    throw error;
+  }
+}

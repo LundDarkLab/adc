@@ -24,9 +24,10 @@
               <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="mdi mdi-plus-thick"></i> add</button>
               <ul class="dropdown-menu">
                 <li id="addModelBtn"><a href="models.php?item=<?php echo $_GET['item']; ?>" class="dropdown-item">model</a></li>
-                <li><a href="media_add.php?item=<?php echo $_GET['item']; ?>&t=image" class="dropdown-item">image</a></li>
-                <li><a href="media_add.php?item=<?php echo $_GET['item']; ?>&t=document" class="dropdown-item">document</a></li>
-                <li><a href="media_add.php?item=<?php echo $_GET['item']; ?>&t=video" class="dropdown-item">video</a></li>
+                <li><a href="media_add.php?item=<?php echo $_GET['item']; ?>&t=1" class="dropdown-item">image</a></li>
+                <li><a href="media_add.php?item=<?php echo $_GET['item']; ?>&t=2" class="dropdown-item">document</a></li>
+                <li><a href="media_add.php?item=<?php echo $_GET['item']; ?>&t=3" class="dropdown-item">video</a></li>
+                <li><a href="media_add.php?item=<?php echo $_GET['item']; ?>&t=4" class="dropdown-item">audio</a></li>
               </ul>
             </div>
             <div class="btn-group btn-group-sm" role="group">

@@ -1,8 +1,11 @@
 <?php
 namespace Adc;
 
+use Adc\Traits\ReadSelectParametersTrait;
+
 class Get extends Conn{
   function __construct(){}
+  use ReadSelectParametersTrait;
 
   public function getSelectOptions(string $list, $filter = null, $orderBy=null){
     $where = '';
@@ -92,6 +95,90 @@ class Get extends Conn{
         $out['macro'][$key]['generic'][$key2]['specific'] = $this->simple($specificQuery);
       }
     }
+    return $out;
+  }
+
+  public function getVocabulary(array $payload):array{
+    $out = [];
+    $table = $payload['table'];
+    $defaultJoin = [
+      ["table" => 'artifact', "column" => 'conservation_state', "join" => 'list_conservation_state'],
+      ["table" => 'artifact', "column" => 'license', "join" => 'license'],
+      ["table" => 'artifact', "column" => 'object_condition', "join" => 'list_object_condition'],
+      ["table" => 'files', "column" => 'filetype', "join" => 'list_file_type'],
+      ["table" => 'institution', "column" => 'category', "join" => 'list_institution_category'],
+      ["table" => 'model_param', "column" => 'acquisition_method', "join" => 'list_model_acquisition'],
+      ["table" => 'person', "column" => 'position', "join" => 'list_person_position'],
+      ["table" => 'user', "column" => 'role', "join" => 'list_user_role'],
+    ];
+    switch ($table) {
+      case 'list_category_class':
+        $payload['columns'] = ["{$table}.id", "{$table}.value", "count(artifact.category_class) tot" ]; 
+        $payload['joins']= [
+          ["table" => "artifact", "first" => "artifact.category_class", "operator" => "=", "second" => "{$table}.id","type" => "left"]
+        ]; 
+        $payload['orderBy'] = ["{$table}.value"=>"asc"]; 
+        $payload['groupBy'] = ["{$table}.id", "{$table}.value"];
+        break;
+
+      case 'list_category_specs':
+        $payload['columns'] = ["{$table}.id", "{$table}.category_class", "{$table}.value", "count(artifact.category_specs) tot" ];
+        $payload['joins']= [
+          ["table" => "artifact", "first" => "artifact.category_specs", "operator" => "=", "second" => "{$table}.id","type" => "left"]
+        ];
+        $payload['orderBy'] = ["{$table}.value"=>"asc"];
+        $payload['groupBy'] = ["{$table}.id", "{$table}.category_class", "{$table}.value"];
+        $out['lists'] = $this->read("list_category_class", ['*'], [], [], ['value'=>'asc']);
+        break;
+
+      case 'list_material_class':
+        $payload['columns'] = ["{$table}.id", "{$table}.value", "count(list_material_class.value) tot" ];
+        $payload['joins']= [
+          ["table" => "list_material_specs", "first" => "list_material_specs.material_class", "operator" => "=", "second" => "{$table}.id","type" => "inner"],
+          ["table" => "artifact_material_technique", "first" => "artifact_material_technique.material", "operator" => "=", "second" => "list_material_specs.id","type" => "left"]
+        ];
+        $payload['orderBy'] = ["{$table}.value"=>"asc"];
+        $payload['groupBy'] = ["{$table}.id", "{$table}.value"];
+        break;
+
+      case 'list_material_specs':
+          $payload['columns'] = ["{$table}.id", "{$table}.material_class", "{$table}.value", "count(artifact_material_technique.material) tot" ];
+          $payload['joins']= [
+            ["table" => "artifact_material_technique", "first" => "artifact_material_technique.material", "operator" => "=", "second" => "{$table}.id","type" => "left"]
+          ];
+          $payload['orderBy'] = ["{$table}.value"=>"asc"];
+          $payload['groupBy'] = ["{$table}.id", "{$table}.material_class", "{$table}.value"];
+          $out['lists'] = $this->read("list_material_class", ['*'], [], [], ['value'=>'asc']);
+          break;
+        
+      case 'license':
+          $payload['columns'] = ["{$table}.id", "{$table}.acronym", "{$table}.license", "{$table}.link", "{$table}.file", "count(artifact.license) tot" ];
+          $payload['joins']= [
+            ["table" => "artifact", "first" => "artifact.license", "operator" => "=", "second" => "{$table}.id", "type" => "left"]
+          ];
+          $payload['groupBy'] = ["{$table}.id", "{$table}.acronym", "{$table}.license", "{$table}.link", "{$table}.file" ];
+          $payload['orderBy'] = ["{$table}.acronym"=>"asc", "{$table}.license"=>"asc"];
+        break;
+
+      default:
+        $match = false;
+        foreach ($defaultJoin as $key => $value) {
+          if(trim($table) == trim($value['join'])){
+            $payload['columns'] = ["{$table}.id", "{$table}.value", "count({$value['table']}.{$value['column']}) tot" ];
+            $payload['joins']= [
+              ["table" => $value['table'], "first" => "{$value['table']}.{$value['column']}", "operator" => "=", "second" => "{$table}.id","type" => "left"]
+            ]; 
+            $payload['orderBy'] = ["{$table}.value"=>"asc"]; 
+            $payload['groupBy'] = ["{$table}.id", "{$table}.value"];
+            $match = true;
+            break;
+          }
+        } 
+        if (!$match) {return ['error' => true,'message' => "No matching join found for table: $table"];}
+        break;
+    }
+    $params = $this->extractReadParameters($payload);
+    $out['items'] = $this->read($params['table'], $params['columns'], $params['conditions'], $params['joins'], $params['orderBy'],$params['limit'], $params['offset'], $params['groupBy'],$params['having']);
     return $out;
   }
 }

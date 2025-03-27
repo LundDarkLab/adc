@@ -27,6 +27,106 @@ class Conn {
   }
 
   // NEW FUNCTIONS ////////////////////////////////////////////////////////
+  /**
+   * Executes a SELECT query on a database table.
+   *
+   * @param string $table The name of the table to query.
+   * @param array $columns An array of columns to select (default: ['*']).
+   * @param array $conditions An associative array of WHERE conditions (key => value).
+   * @param array $joins An array of arrays defining JOIN clauses.
+   * Each inner array should have the following structure:
+   * ['table' => string, 'first' => string, 'operator' => string, 'second' => string, 'type' => string ("inner", "left")(optional)].
+   * @param array $orderBy An associative array of ORDER BY clauses (column => direction).
+   * @param int|null $limit The maximum number of results to return (optional).
+   * @param int|null $offset The result offset (optional).
+   * @param array $groupBy An array of columns for the GROUP BY clause (optional).
+   * @param array $having An associative array of HAVING conditions (key => value) (optional).
+   *
+   * @return array An associative array of query results.
+   * @throws Exception If an error occurs during query execution.
+   *
+   * @example
+   * // Example usage:
+   * $results = $this->read(
+   * 'users',
+   * ['id', 'name', 'email'],
+   * ['status' => 'active'],
+   * [
+   * ['table' => 'profiles', 'first' => 'users.id', 'operator' => '=', 'second' => 'profiles.user_id']
+   * ],
+   * ['name' => 'asc'],
+   * 10,
+   * 0,
+   * ['role'],
+   * ['COUNT(*) >' => 5]
+   * );
+   */
+  public function read(
+    string $table,
+    array $columns = ['*'],
+    array $conditions = [],
+    array $joins = [],
+    array $orderBy = [],
+    int $limit = null,
+    int $offset = null,
+    array $groupBy = [],
+    array $having = []
+  ){
+    if (empty($table)) { throw new \Exception('Table name cannot be empty.'); }
+    if (empty($columns)) { throw new \Exception('Columns cannot be empty.'); }
+    $select = implode(', ', $columns);
+  
+    $where = '';
+    if (!empty($conditions)) {
+      $whereClauses = array_map(fn($key) => "$key = :$key", array_keys($conditions));
+      $where = 'WHERE ' . implode(' AND ', $whereClauses);
+    }
+  
+    $join = '';
+    if (!empty($joins)) {
+      $join = implode(' ', array_map(function ($join) {
+        $type = isset($join['type']) ? strtoupper($join['type']) . ' JOIN' : 'INNER JOIN';
+        return "{$type} {$join['table']} ON {$join['first']} {$join['operator']} {$join['second']}";
+      }, $joins));
+    }
+  
+    $order = '';
+    if (!empty($orderBy)) {
+      $orderClauses = array_map(fn($column, $direction) => "$column $direction", array_keys($orderBy), $orderBy);
+      $order = 'ORDER BY ' . implode(', ', $orderClauses);
+    }
+  
+    $limitSql = '';
+    if ($limit !== null) {
+      $limitSql = 'LIMIT ' . $limit;
+      if ($offset !== null) { $limitSql .= ' OFFSET ' . $offset; }
+    }
+  
+    $group = '';
+    if (!empty($groupBy)) { $group = 'GROUP BY ' . implode(', ', $groupBy); }
+  
+    $havingClause = '';
+    if (!empty($having)) {
+      $havingClauses = array_map(fn($key) => "$key = :having_$key", array_keys($having));
+      $havingClause = 'HAVING ' . implode(' AND ', $havingClauses);
+    }
+  
+    $sql = "SELECT {$select} FROM {$table} {$join} {$where} {$group} {$havingClause} {$order} {$limitSql}";
+    $stmt = $this->pdo()->prepare($sql);
+    $params = array_merge(
+      $conditions,
+      array_combine(
+        array_map(fn($key) => "having_$key", array_keys($having)),
+        array_values($having)
+      )
+    );
+  
+    if (!$stmt->execute($params)) { throw new \Exception('Error Processing Request: ' . implode(', ', $stmt->errorInfo())); }
+  
+    error_log("SQL Query: $sql");
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+  }
+
   public function create(string $table, array $data) {
     $columns = implode(", ", array_keys($data));
     $placeholders = implode(", ", array_map(fn($key) => ":$key", array_keys($data)));
@@ -37,19 +137,6 @@ class Conn {
     return true;
   }
 
-  public function read(string $table, array $conditions = []) {
-    $where = "";
-    if (!empty($conditions)) {
-        $whereClauses = array_map(fn($key) => "$key = :$key", array_keys($conditions));
-        $where = "WHERE " . implode(" AND ", $whereClauses);
-    }
-    $sql = "SELECT * FROM {$table} $where";
-    $stmt = $this->pdo()->prepare($sql);
-    if (!$stmt->execute($conditions)) {
-      throw new \Exception("Error Processing Request: " . implode(", ", $stmt->errorInfo()));
-    }
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
-  }
 
   public function update(string $table, array $data, array $conditions) {
     $setClause = implode(", ", array_map(fn($key) => "$key = :$key", array_keys($data)));

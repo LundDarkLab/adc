@@ -13,3 +13,9 @@
 -- alter table files add column license bigint unsigned;
 -- alter table files add column downloadable boolean not null default 1;
 -- alter table files add constraint files_license_fk foreign key (license) references license(id);
+
+
+update files set filetype = 1 where `type` = 'image';
+update files set filetype = 2 where `type` = 'document';
+update files set filetype = 3 where `type` = 'video';
+update files set filetype = 4 where `type` = 'audio';

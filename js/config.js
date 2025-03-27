@@ -1,4 +1,5 @@
 const API = 'api/';
+const ENDPOINT = API+'endpoint_private.php';
 const spinner = "<div><div id='spinnerWrap' class='d-inline-block'><i class='mdi mdi-reload'></i></div> loading...</div>";
 
 const toastEL = document.getElementById('toast')

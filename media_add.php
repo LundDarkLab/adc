@@ -1,8 +1,26 @@
 <?php
   require 'init.php';
   if (!isset($_SESSION['id'])) { header('Location: 403.php');}
-  if($_GET['t']=='image'){$fileType ='image/png, image/jpeg';}
-  if($_GET['t']=='document'){$fileType ='application/pdf, application/msword, application/vnd.oasis.opendocument.text, application/vnd.oasis.opendocument.spreadsheet';}
+  switch ($_GET['t']) {
+    case 1:
+      $type = 'image';
+      $fileType ='image/png, image/jpeg';
+      break;
+    case 2:
+      $type = 'document';
+      $fileType ='application/pdf, application/msword, application/vnd.oasis.opendocument.text, application/vnd.oasis.opendocument.spreadsheet';
+      break;
+    case 3:
+      $type = 'video';
+      $fileType ='video/mp4, video/ogg, video/webm';
+      break;
+    case 4:
+      $type = 'audio';
+      $fileType ='audio/mpeg, audio/ogg, audio/wav';
+      break;
+    default:
+      break;
+  }
   
 ?>
 <!DOCTYPE html>
@@ -15,17 +33,17 @@
   </head>
   <body>
     <?php require("assets/header.php"); ?>
-    <main class="<?php echo $mainClass; ?>">
+    <main>
       <div class="container">
         <form name="newMediaForm">
           <input type="hidden" name="artifact" value="<?php echo $_GET['item']; ?>">
-          <input type="hidden" name="type" value="<?php echo $_GET['t']; ?>">
+          <input type="hidden" name="filetype" value="<?php echo $_GET['t']; ?>">
           <div class="row mb-3">
             <div class="col">
-              <h3 class="border-bottom">Add new <?php echo $_GET['t']; ?> to the <span id="artifactName"></span> artifact</h3>
+              <h3 class="border-bottom">Add new <?php echo $type; ?> to the <span id="artifactName"></span> artifact</h3>
             </div>
           </div>
-          <?php if ($_GET['t'] !== 'video') {?>
+          <?php if ($_GET['t'] !== 3) {?>
             <div class="row mb-3">
               <div class="col">
                 <label for="path" class="form-label">upload a file</label>
@@ -34,7 +52,7 @@
               </div>
             </div>
           <?php } ?>
-          <?php if ($_GET['t'] !== 'image') {?>
+          <?php if ($_GET['t'] !== 1) {?>
           <div class="row mb-3">
             <div class="col">
               <label for="url" class="form-label">insert a valid url</label>
@@ -48,7 +66,7 @@
               <textarea name="text" id="text" rows="10" class="form-control w-75" required></textarea>
             </div>
           </div>
-          <?php if ($_GET['t'] === 'image') {?>
+          <?php if ($_GET['t'] == 1) {?>
           <div class="row mb-3">
             <div class="col">
               <div class="form-check">
@@ -69,7 +87,7 @@
           <?php } ?>
           <div class="row">
             <div class="col">
-              <button type="submit" class="btn btn-adc-dark w-auto d-inline-block me-2">save <?php echo $_GET['t']; ?></button>
+              <button type="submit" class="btn btn-adc-dark w-auto d-inline-block me-2">save <?php echo $type; ?></button>
               <a href="artifact_view.php?item=<?php echo $_GET['item']; ?>" class="btn btn-secondary w-auto d-inline-block">back to artifact</a>
             </div>
           </div>

@@ -9,7 +9,8 @@
     },
     "autoload": {
       "psr-4": {
-        "Adc\\":"src/"
+        "Adc\\":"src/",
+        "Adc\\Traits\\": "src/Traits/"
       }
     }
 }

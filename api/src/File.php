@@ -44,11 +44,11 @@ class File extends Conn{
   public function addMedia($data, $file=null){
     try {
       if($file && $file !== null){
-        $folder = $data['type'] == 'image' ? $this->imageDir : $this->documentDir;
+        $folder = $data['filetype'] == 1 ? $this->imageDir : $this->documentDir;
         $ext = strtolower(pathinfo($file["name"], PATHINFO_EXTENSION));
         $name = $this->uuid.".".$ext;
         $data['path'] = $name;
-        $this->upload($file, $folder, $name, $data['type']);
+        $this->upload($file, $folder, $name, $data['filetype']);
       }
       $sql = $this->buildInsert("files", $data);
       $this->prepared($sql, $data);
@@ -69,11 +69,28 @@ class File extends Conn{
   }
 
   public function getMedia(int $id){
-    return $this->simple("select f.id file, f.type, f.path, f.url, f.text, f.downloadable, l.id license_id, l.license, l.acronym, l.link, l.file deed from files f left join license l on f.license = l.id where f.artifact = ".$id.";");
+    return $this->simple("
+      select f.id file
+        , file.id filetype
+        , file.value type
+        , f.path
+        , f.url
+        , f.text
+        , f.downloadable
+        , l.id license_id
+        , l.license
+        , l.acronym
+        , l.link
+        , l.file deed 
+      from files f 
+      left join license l on f.license = l.id 
+      left join list_file_type file on f.filetype = file.id 
+      where f.artifact = ".$id.";"
+    );
   }
 
   public function upload($file, $folder, $name, $type){
-    $fileAllowed = $type == 'image' ? $this->imageAllowed : $this->documentAllowed;
+    $fileAllowed = $type == 1 ? $this->imageAllowed : $this->documentAllowed;
     $this->checkError($file['error']);
     $this->checkType($file['name'], $file['type'],$fileAllowed);
     $this->checkSize($file['error']);

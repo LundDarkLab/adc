@@ -27,9 +27,13 @@
 
       <?php if($_SESSION['role'] < 3){ ?>
       <span class="titleSection">admin</span>
-      <a href='#' class='animated'>
+      <a href='timeline.php' class='animated'>
+        <span class="mdi mdi-timeline-clock-outline"></span>
+        timeline
+      </a>
+      <a href='vocabularies.php' class='animated'>
         <span class="mdi mdi-format-list-bulleted-square"></span>
-        vocabulary
+        vocabularies
       </a>
       <a href='mailComposer.php' class='animated'>
         <span class="mdi mdi-email-fast"></span>
