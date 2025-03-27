@@ -63,6 +63,7 @@
   }
   #mainContent {
     grid-column: 2;
+    width: fit-content;
     margin: 0 25px 0;
   }
 
