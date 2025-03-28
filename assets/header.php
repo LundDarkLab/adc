@@ -3,6 +3,7 @@
   <div id="headerLogo"></div>
   <div id="headerLink">
     <a href="index.php" class="animated d-none d-lg-inline-block">home</a>
+    <a href="https://www.darklab.lu.se/digital-collections/dynamic-collections/" target="_blank" class="animated d-none d-lg-inline-block">DARKLab</a>
     <a href="map.php" class="animated d-none d-lg-inline-block">map</a>
     <a href="credits.php" class="animated d-none d-lg-inline-block">credits</a>
     <a href="policy.php" class="animated d-none d-lg-inline-block">legal</a>

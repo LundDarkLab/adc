@@ -108,12 +108,12 @@
             <p>Online System: Copyright (C) 2020-<?php echo date("Y"); ?> - Lund University, ISTI-CNR. All rights reserved.</p>
             <!-- <p>The source code of the Dynamic Collections platform (legacy) is available for download and free use from January 2024. You can access it using this link:</p>
             <a href="https://github.com/LundDarkLab/adc"><span class="mdi mdi-github"></span> https://github.com/LundDarkLab/adc</a> -->
-            <p>All copyright information can be found on the artifact page of each object.<br>If the object is available for download, follow the instructions provided on the repository where the model and relative metadata are stored.<br>Models made available for download are typically under CreativeCommons licenses. Note that different datasets may follow different versions of the CC BY license, so always check the specific license assigned to the dataset.</p>
+            <p>All copyright information is listed on each artefact’s page.<br>3D models cannot be downloaded directly through Dynamic Collections.<br>If a model is available, it can be accessed via <a href="https://zenodo.org/communities/darklab_lu/records?q=&l=list&p=1&s=10&sort=newest" title="external link to DARKLab repository hosted by Zenodo" data-bs-toggle="tooltip">Zenodo</a> external repository where it is hosted. Follow the instructions provided there.<br>Downloadable models are typically shared under Creative Commons licenses.<br>License types may vary (e.g., different versions of CC BY), so please check the specific license for each dataset.</p>
             <h4 class='txt-adc-dark fw-bold border-bottom'>License schema</h4>
             <table class="table text-center">
               <thead>
                 <tr>
-                  <th>Text, images and 3d model files</th>
+                  <th>Text and images</th>
                   <th>Database structure</th>
                   <th>Platform Code</th>
                 </tr>
@@ -124,10 +124,12 @@
                     <div class="py-3">
                       <img src="img/ico/cc.png" height="40px" class="d-inline" alt="">
                       <img src="img/ico/cc-by.png" height="40px" class="d-inline" alt="">
-                      <img src="img/ico/cc-nc.png" height="40px" class="d-inline" alt="">
-                      <img src="img/ico/cc-sa.png" height="40px" class="d-inline" alt="">
+                      <img src="img/ico/cc0.png" height="40px" class="d-inline" alt="">
+                      <!-- <img src="img/ico/cc-nc.png" height="40px" class="d-inline" alt=""> -->
+                      <!-- <img src="img/ico/cc-sa.png" height="40px" class="d-inline" alt=""> -->
                     </div>
-                    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="cc-by-nc-sa 4.0 deed">Attribution-NonCommercial-ShareAlike 4.0 International</a>
+                    <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" title="cc-by 4.0 deed" class="d-block">Attribution 4.0 International</a>
+                    <a href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" title="cc0 1.0 deed">CC0 1.0 Universal</a>
                   </td>
                   <td>
                     <div class="py-3"><img src="img/ico/lg-okfn.svg" height="40px" class="d-inline" alt=""></div>
@@ -149,14 +151,9 @@
             <ul>
               <li>Metadata Concerning the Physical Object</li>
               <li>Metadata Concerning the Digital Object (Paradata)</li>
-              <li>3D Model and Relative Metadata</li>
+              <li>Images and animations created through the platform (screenshot produced by 3dhop or by user)</li>
             </ul>
-          </div>
-        </div>
-        <div class="row mb-3">
-          <div class="col">
-            <h4 class='txt-adc-dark fw-bold border-bottom'>Instructions and Guidelines</h4>
-            <p>Instructions are included in the zip file, on the page where the models are made available, and on the artifact web page of the Dynamic Collections.</p>
+            <p>Please note: 3D models are not available for download directly through Dynamic Collections. Instead, datasets are provided by the individual institutions via external repositories (such as Zenodo, SND, or others) and are linked using a DOI. To access a dataset (if available), click the DOI button located at the top right of the artefact’s page.</p>
           </div>
         </div>
         <div class="row mb-3">

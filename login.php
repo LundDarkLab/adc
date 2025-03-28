@@ -8,6 +8,21 @@
     <?php require("assets/header.php"); ?>
     <?php require("assets/menu.php"); ?>
     <main class="d-flex flex-column align-items-center">
+      <div id="disclaimer" class="w-50 my-5 card">
+        <div class="card-body">
+          Dynamic Collections is managed by Lund University to support archaeological research and credit contributors.<br>
+          We collect your name, email, and contributions to:
+          <ul>
+            <li>Provide access</li>
+            <li>Acknowledge your work</li>
+            <li>Meet academic obligations</li>
+          </ul>        
+          Your data is stored securely and not shared, unless required by law.<br>
+          You can update or delete your account. If deleted, your contributions remain public but attributed to your institution.<br>
+          Contact: <a href="mailto:nicolo.dellunto@ark.lu.se" data-bs-toggle="tooltip" title="click to open your mail client">nicolo.dellunto@ark.lu.se</a><br>
+          Full details under <a href="policy.php" title="platform policy" data-bs-toggle="tooltip">Legal</a> and the <a href="https://www.lunduniversity.lu.se/about-university/contact-us/privacy-policy" target="_blank" title="external link" data-bs-toggle="tooltip">Lund University Privacy Policy</a>.
+        </div>
+      </div>
       <form class="" name="login">
         <label class="form-label" for="email">Email</label>
         <input type="email" class="form-control mb-3" id="email" name="email" required>

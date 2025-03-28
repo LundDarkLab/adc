@@ -26,6 +26,7 @@ class Get extends Conn{
       break;
       case 'license':
         $field = "id, concat(acronym, ' - ',license) as name";
+        $filter = 'active = true';
       break;
       case 'city':
         $field = "id, concat(name,' (', iso, ')') name, county";
