@@ -1,23 +1,29 @@
 /* Base styles */
-#mainContentText {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 80%;
-  margin: 25px auto;
-}
-
+#mainContentText {display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; margin: 25px auto; padding:25px;}
 #sidebar { display: none; }
-#mainContent { 
-  width: 100%; 
-  height: fit-content;
-  margin: 150px auto 0;
+#mainContent { width: 100%; height: fit-content; margin: 150px auto 0;}
+.table-responsive{ width: auto; margin:5px;}
+#viewItems{display: none;}
+
+#viewSpecificItems{
+  position: fixed;
+  width: 60%;
+  height: 80%;
+  top: 130px;
+  right: 260px; 
+  background-color: var(--bs-card-bg);
+  border: var(--bs-card-border-width) solid var(--bs-card-border-color);
+  border-radius: var(--bs-card-border-radius);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none; /* Disable interactions when hidden */
+  z-index: 2000;
 }
 
-.table-responsive{
-  width: auto;
-  margin:5px;
+#viewSpecificItems.show {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto; /* Enable interactions when visible */
 }
 
 
@@ -45,27 +51,46 @@
 
 /* Extra large devices (large desktops, 992px and above) */
 @media (min-width: 992px) {
-  #itemTool { display: none; }
 }
 
 /* XLL devices (large desktops, 1200px and up) */
 @media (min-width: 1200px) {
-  .mainSection {
-    display: grid;
-    grid-template-columns: 250px 1fr;
-  }
-  #sidebar {
-    display: block;
-    grid-column: 1;
-    position: fixed;
-    left: 25px;
-    width: 250px;
-  }
+  #viewSpecificItems{ top: 100px; }
+  #itemTool { display: none; }
+  .mainSection { display: grid; grid-template-columns: 250px 1fr; gap:20px;}
+  #sidebar { display: block; grid-column: 1; position: fixed; left: 25px; width: 250px; }
   #mainContent {
+    display: grid;
     grid-column: 2;
-    width: fit-content;
-    margin: 0 25px 0;
+    grid-template-rows: auto auto auto;
+    grid-template-columns: 1fr;
+    width: auto;
+    height: fit-content;
+    margin: 0 auto;
+    gap: 15px;
   }
-
+  #mainContent > #listInfo { grid-row: 1; grid-column: 1;}
+  #mainContent > #newValueDiv {
+    grid-row: 2; 
+    grid-column: 1;
+    width: fit-content !important;
+    max-width: 100%;
+    display: inline-block;
+    margin:5px;
+  }
+  
+  #mainContent > #listContainer {
+    grid-row: 3;
+    grid-column: 1;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    overflow-x: hidden;
+  }
+  #mainContent > #listContainer > #viewItems{ margin:5px;}
+  #mainContent > #mainContentText { grid-row: 3; grid-column: 1; width: 90%; text-align: center; }
 }
 

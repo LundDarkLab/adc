@@ -15,7 +15,7 @@
       require("assets/header.php");
       require("assets/loadingDiv.html");  
     ?>
-    <main class="<?php echo $mainClass; ?>">
+    <main class="animated mainSection">
       <div class="container">
         <input type="hidden" name="usr" value="<?php echo $_SESSION['id']; ?>">
         <div class="text-center border rounded bg-light mb-3 p-3">

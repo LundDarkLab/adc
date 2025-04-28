@@ -78,7 +78,10 @@ class Conn {
   
     $where = '';
     if (!empty($conditions)) {
-      $whereClauses = array_map(fn($key) => "$key = :$key", array_keys($conditions));
+      $whereClauses = array_map(function($key){
+        $placeholder = str_replace('.', '_', $key);
+        return "$key = :$placeholder";
+      }, array_keys($conditions));
       $where = 'WHERE ' . implode(' AND ', $whereClauses);
     }
   
@@ -114,16 +117,20 @@ class Conn {
     $sql = "SELECT {$select} FROM {$table} {$join} {$where} {$group} {$havingClause} {$order} {$limitSql}";
     $stmt = $this->pdo()->prepare($sql);
     $params = array_merge(
-      $conditions,
       array_combine(
-        array_map(fn($key) => "having_$key", array_keys($having)),
-        array_values($having)
+          array_map(fn($key) => str_replace('.', '_', $key), array_keys($conditions)),
+          array_values($conditions)
+      ),
+      array_combine(
+          array_map(fn($key) => "having_$key", array_keys($having)),
+          array_values($having)
       )
     );
   
+    error_log("SQL Query: $sql");
+    error_log("Parameters: " . json_encode($params));
     if (!$stmt->execute($params)) { throw new \Exception('Error Processing Request: ' . implode(', ', $stmt->errorInfo())); }
   
-    error_log("SQL Query: $sql");
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
   }
 
@@ -137,7 +144,26 @@ class Conn {
     return true;
   }
 
-
+  /**
+ * Updates records in a database table.
+ *
+ * @param string $table The name of the table to update.
+ * @param array $data An associative array of column-value pairs to update (e.g., ['column1' => 'value1', 'column2' => 'value2']).
+ * @param array $conditions An associative array of conditions for the WHERE clause (e.g., ['id' => 1]).
+ *
+ * @return bool Returns true if the update is successful.
+ *
+ * @throws \Exception If the query execution fails.
+ *
+ * @example
+ * // Example usage:
+ * $conn = new Conn();
+ * $conn->update(
+ *     'users',
+ *     ['name' => 'John Doe', 'email' => 'john.doe@example.com'],
+ *     ['id' => 1]
+ * );
+ */
   public function update(string $table, array $data, array $conditions) {
     $setClause = implode(", ", array_map(fn($key) => "$key = :$key", array_keys($data)));
     $whereClauses = array_map(fn($key) => "$key = :cond_$key", array_keys($conditions));
@@ -151,7 +177,7 @@ class Conn {
     $exec = $stmt->execute($data);
     if (!$exec) {throw new \Exception("Error Processing Request: ".$exec, 1);}
     return true;
-}
+  }
   public function delete(string $table, array $conditions) {
     $whereClauses = array_map(fn($key) => "$key = :$key", array_keys($conditions));
     $where = implode(" AND ", $whereClauses);

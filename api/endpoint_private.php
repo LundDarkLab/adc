@@ -6,7 +6,8 @@ require 'vendor/autoload.php';
 
 $availableClasses = [
   'Get' => Adc\Get::class,
-  'Timeline' => Adc\Timeline::class
+  'Timeline' => Adc\Timeline::class,
+  'Vocabulary' => Adc\Vocabulary::class,
 ];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

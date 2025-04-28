@@ -3,6 +3,11 @@ namespace Adc;
 
 use Adc\Traits\ReadSelectParametersTrait;
 
+// Enable error reporting for debugging
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 class Get extends Conn{
   function __construct(){}
   use ReadSelectParametersTrait;
@@ -98,7 +103,7 @@ class Get extends Conn{
     }
     return $out;
   }
-
+// NEW FUNCTIONS
   public function getVocabulary(array $payload):array{
     $out = [];
     $table = $payload['table'];
@@ -133,7 +138,7 @@ class Get extends Conn{
         break;
 
       case 'list_material_class':
-        $payload['columns'] = ["{$table}.id", "{$table}.value", "count(list_material_class.value) tot" ];
+        $payload['columns'] = ["{$table}.id", "{$table}.value", "count(artifact_material_technique.id) tot" ];
         $payload['joins']= [
           ["table" => "list_material_specs", "first" => "list_material_specs.material_class", "operator" => "=", "second" => "{$table}.id","type" => "inner"],
           ["table" => "artifact_material_technique", "first" => "artifact_material_technique.material", "operator" => "=", "second" => "list_material_specs.id","type" => "left"]
@@ -182,5 +187,109 @@ class Get extends Conn{
     $out['items'] = $this->read($params['table'], $params['columns'], $params['conditions'], $params['joins'], $params['orderBy'],$params['limit'], $params['offset'], $params['groupBy'],$params['having']);
     return $out;
   }
+
+  public function getItemsFromValue(array $payload):array{
+    $obj = $payload['object'];
+    $id = $payload['value'];
+    unset($payload['object']);
+    unset($payload['value']);
+    $payload['table'] = "artifact";
+    $payload['columns'] = ["artifact.id", "artifact.name", "artifact.description", "artifact.status"];
+    $payload['orderBy'] = ["name"=>"asc"];
+    switch ($obj) {
+      case 'list_category_class':
+        $payload['conditions'] = ["category_class" => $id];
+        break;
+      case 'list_category_specs':
+        $payload['conditions'] = ["category_specs" => $id];
+        break;
+      case 'list_conservation_state':
+        $payload['conditions'] = ["conservation_state" => $id];
+        break;
+      case 'list_material_class':
+        $payload['joins'] = [
+          ["table" => "artifact_material_technique", "first" => "artifact_material_technique.artifact", "operator" => "=", "second" => "artifact.id"],
+          ["table" => "list_material_specs", "first" => " artifact_material_technique.material", "operator" => "=", "second" => "list_material_specs.id"],
+          ["table" => "list_material_class", "first" => "list_material_specs.material_class", "operator" => "=", "second" => "list_material_class.id"]
+        ];
+        $payload['conditions'] = ["list_material_class.id" => $id];
+        break;
+        case "list_material_specs":
+          $payload['joins'] = [
+            ["table" => "artifact_material_technique", "first" => "artifact_material_technique.artifact", "operator" => "=", "second" => "artifact.id"],
+            ["table" => "list_material_specs", "first" => " artifact_material_technique.material", "operator" => "=", "second" => "list_material_specs.id"]
+          ];
+          $payload['conditions'] = ["list_material_specs.id" => $id];
+          break;
+      case "list_file_type":
+        $payload['joins'] = [
+          ["table" => "files", "first" => "files.artifact", "operator" => "=", "second" => "artifact.id"]
+        ];
+        $payload['conditions'] = ["files.filetype" => $id];
+        break;
+      case "list_institution_category":
+        $payload['table'] = "institution";
+        $payload['columns'] = ["institution.id", "institution.name", "institution.abbreviation", "institution.city"];
+        $payload['joins'] = [
+          ["table" => "list_institution_category", "first" => "institution.category", "operator" => "=", "second" => "list_institution_category.id"]
+        ];
+        $payload['conditions'] = ["list_institution_category.id" => $id];
+        $payload['orderBy'] = ["name"=>"asc"];
+        break;
+      case "license":
+        $payload['conditions'] = ["license" => $id];
+        break;
+      
+      case "list_model_acquisition":
+        $payload['table'] = "model";
+        $payload['columns'] = ["model.id","model_object.id as object_id", "model.name", "model.description", "model.status"];
+        $payload['joins'] = [
+          ["table" => "model_object", "first" => "model_object.model", "operator" => "=", "second" => "model.id"],
+          ["table" => "model_param", "first" => "model_param.object", "operator" => "=", "second" => "model_object.id"],
+        ];
+        $payload['conditions'] = ["model_param.acquisition_method" => $id];
+        $payload['orderBy'] = ["name"=>"asc"];
+        break;  
+
+      case "list_object_condition":
+        $payload['conditions'] = ["object_condition" => $id];
+        break;
+
+      case "list_person_position":
+        $payload['table'] = "person";
+        $payload['columns'] = ["person.id", "trim(concat(person.last_name, ' ', person.first_name)) name", "person.email", "institution.name institution"];
+        $payload['joins'] = [
+          ["table" => "institution", "first" => "institution.id", "operator" => "=", "second" => "person.institution"],
+        ];
+        $payload['conditions'] = ["person.position" => $id];
+        $payload['orderBy'] = ["name"=>"asc"];
+        break;
+
+      case "list_user_role":
+        $payload['table'] = "user";
+        $payload['columns'] = ["person.id", "trim(concat(person.last_name, ' ', person.first_name)) name", "person.email", "institution.name institution"];
+        $payload['joins'] = [
+          ["table" => "person", "first" => "person.id", "operator" => "=", "second" => "user.person"],
+          ["table" => "institution", "first" => "institution.id", "operator" => "=", "second" => "person.institution"],
+        ];
+        $payload['conditions'] = ["user.role" => $id];
+        break;
+
+      default:
+        # code...
+        break;
+    }
+    $params = $this->extractReadParameters($payload);
+    error_log("Before calling read()");
+    try {
+      $query = $this->read($params['table'], $params['columns'], $params['conditions'], $params['joins'], $params['orderBy'], $params['limit'], $params['offset'], $params['groupBy'], $params['having']);
+      $out['items'] = $query;
+      return $out;
+    } catch (\Exception $e) {
+      error_log("Error in read(): " . $e->getMessage());
+      return ['error' => true, 'message' => $e->getMessage()];
+    }
+  }
+
 }
 ?>

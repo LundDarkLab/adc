@@ -1,8 +1,8 @@
-select 
-  list_object_condition.id, 
-  list_object_condition.value,
-  count(artifact.object_condition) as tot
-from list_object_condition
-left join artifact on artifact.object_condition = list_object_condition.id
-group by list_object_condition.id, list_object_condition.value
-order by list_object_condition.value
+-- SELECT TABLE_NAME, COLUMN_NAME, CONSTRAINT_NAME
+-- FROM information_schema.KEY_COLUMN_USAGE
+-- WHERE REFERENCED_TABLE_NAME = 'list_model_acquisition' AND REFERENCED_COLUMN_NAME = 'id';
+
+SELECT user.id, trim(concat(person.last_name, ' ', person.first_name)) name, person.email, institution.name institution
+FROM person
+JOIN institution ON institution.id = person.institution
+WHERE person.position = 4;
