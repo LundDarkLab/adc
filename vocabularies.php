@@ -39,7 +39,7 @@ if (!isset($_SESSION['id'])) { header('Location: 403.php');}
         </div>
         <div id="mainContentText" class="card">
           <div class="w-75">
-            <h2 class="text-center">Select a vocabulary from the list, the values in the vocabulary will be shown here</h2>
+            <h2 class="text-center">Select a vocabulary from the list, the values will be shown here</h2>
           </div>
         </div>
         <div id="viewSpecificItems" class="card animated">
