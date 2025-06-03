@@ -8,14 +8,78 @@ class Timeline{
     $this->pdo = new Conn();
   }
 
+  public function saveTimeline(array $payload):array{
+    try {
+      $this->pdo->beginTransaction();
+
+      // inserisci la serie
+      $this->pdo->create(
+        table:'time_series',
+        data:['definition'=>$payload['name'], 'state'=>$payload['state'], 'author'=>$_SESSION['id']]
+      );
+
+      // recupera l'id della serie
+      $serieId = $this->pdo->lastInsertId();
+
+      // associa id serie e inserisci macro
+      $macroMap = [];
+      foreach ($payload['data'] as $row) {
+        $macro = $row['macro_id'];
+        $txt = $row['macro_text'];
+        if (!isset($macroMap[$macro])) {
+          $this->pdo->create(
+            table:'time_series_macro',
+            data:['serie'=>$serieId, 'macro'=>$macro, 'definition'=>$txt]
+          );
+          $macroMap[$macro] = $this->pdo->lastInsertId();
+        }
+      }
+
+      // associa id macro e inserisci generic
+      $genericMap = [];
+      foreach ($payload['data'] as $row) {
+        $macro_id = $macroMap[$row['macro_id']];
+        $key = $macro_id . "|" . $row['generic'];
+        if (!isset($genericMap[$key])) {
+          $this->pdo->create(
+            table:'time_series_generic',
+            data:['macro'=>$macroMap[$row['macro_id']], 'definition'=>$row['generic']]
+          );
+          $genericMap[$key] = $this->pdo->lastInsertId();
+        }
+      }
+
+      // associa id generic e inserisci specific
+      foreach ($payload['data'] as $row) {
+        $macro_id = $macroMap[$row['macro_id']];
+        $key = $macro_id . "|" . $row['generic'];
+        $generic_id = $genericMap[$key];
+        $this->pdo->create(
+          table:'time_series_specific',
+          data:[
+            'generic' => $generic_id,
+            'definition' => $row['specific'],
+            'start' => $row['start'],
+            'end' => $row['end']
+          ]
+        );
+      }
+      $this->pdo->commit();
+      return ['error' => 0, 'message' => 'Timeline created successfully'];
+    } catch (\Throwable $th) {
+      $this->pdo->rollBack();
+      return ['error' => 1, 'message' => $th->getMessage()];
+    }
+  }
+
   public function getTimelineList():array{
     $payload = [
       "table"=>'time_series',
-      "columns"=>['time_series.id', 'time_series.definition', 'concat(person.first_name," ",person.last_name) as `author`'],
+      "columns"=>['time_series.id', 'time_series.definition', 'time_series.state'],
       "conditions"=>[],
       "joins"=>[
-        ['table' => 'user', 'first' => 'user.id', 'operator' => '=', 'second' => 'time_series.author'],
-        ['table' => 'person', 'first' => 'person.id', 'operator' => '=', 'second' => 'user.person']
+        // ['table' => 'user', 'first' => 'user.id', 'operator' => '=', 'second' => 'time_series.author'],
+        // ['table' => 'person', 'first' => 'person.id', 'operator' => '=', 'second' => 'user.person']
       ],
       "orderBy"=>["time_series.definition"=>'ASC']
     ];

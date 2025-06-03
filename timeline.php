@@ -27,7 +27,7 @@ if (!isset($_SESSION['id'])) { header('Location: 403.php');}
           <thead>
             <tr>
               <th>name</th>
-              <th>author</th>
+              <th>state</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -35,7 +35,7 @@ if (!isset($_SESSION['id'])) { header('Location: 403.php');}
             <tr>
               <th colspan="2">
                 Click on a row to view the details.<br>
-                Only the author can edit the timeline.
+                Only the author and administrator can edit the timeline.
               </th>
             </tr>
           </tfoot>
@@ -45,7 +45,7 @@ if (!isset($_SESSION['id'])) { header('Location: 403.php');}
         <div id="mainContentText" class="card">
           <h2 class="text-center">Select a timeline from the list, the values will be shown here</h2>
         </div>
-        <div id="toolbar" class="hidden border-bottom border-top bg-dark"></div>
+        <div id="toolbar" class="hidden border-bottom bg-light"></div>
         <div id="listInfo" class="alert alert-info hidden"></div>
         <div id="dataWrap" class="hidden"></div>
       </div>

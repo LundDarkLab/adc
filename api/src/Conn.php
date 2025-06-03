@@ -3,6 +3,26 @@ namespace Adc;
 use PDO;
 class Conn {
   public $conn;
+  
+  /**
+   * Magic method to handle dynamic method calls.
+   *
+   * This method intercepts calls to undefined methods on the current class.
+   * If the method exists on the PDO instance, it delegates the call to the PDO object,
+   * passing along the provided arguments.
+   *
+   * @param string $name The name of the method being called.
+   * @param array $arguments The arguments passed to the method.
+   * 
+   * @return mixed The result of the method call on the PDO instance.
+   */
+  public function __call($name, $arguments) {
+    if (method_exists($this->pdo(), $name)) {
+      return call_user_func_array([$this->pdo(), $name], $arguments);
+    }
+    throw new \BadMethodCallException("Method $name does not exist on Conn or PDO.");
+  }
+  /******************************************************************/
   public function connect() {
     $params = parse_ini_file('config/.env');
     if ($params === false) {
@@ -134,6 +154,18 @@ class Conn {
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
   }
 
+
+  /**
+   * Inserts a new record into the specified database table.
+   *
+   * @param string $table The name of the table where the record will be inserted.
+   * @param array $data An associative array of column names and their corresponding values to insert.
+   *                    Example: ['column1' => 'value1', 'column2' => 'value2']
+   *
+   * @throws \Exception If the SQL execution fails, an exception is thrown with the error message.
+   *
+   * @return bool Returns true if the record is successfully inserted.
+   */
   public function create(string $table, array $data) {
     $columns = implode(", ", array_keys($data));
     $placeholders = implode(", ", array_map(fn($key) => ":$key", array_keys($data)));
@@ -178,6 +210,22 @@ class Conn {
     if (!$exec) {throw new \Exception("Error Processing Request: ".$exec, 1);}
     return true;
   }
+
+
+  /**
+   * Deletes a record from the specified table based on the given conditions.
+   *
+   * @param string $table The name of the table from which the record should be deleted.
+   * @param array $conditions An associative array of conditions where the keys are column names 
+   *                          and the values are the corresponding values to match.
+   *                          Example: ['id' => 1, 'status' => 'active']
+   *
+   * @throws \Exception If the deletion fails, an exception is thrown with an error message.
+   *
+   * @return array An associative array containing:
+   *               - "error" (int): 0 if the deletion was successful.
+   *               - "message" (string): A success message indicating the record was deleted.
+   */
   public function delete(string $table, array $conditions) {
     $whereClauses = array_map(fn($key) => "$key = :$key", array_keys($conditions));
     $where = implode(" AND ", $whereClauses);

@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 function createToggle(){
   const toggleInfoBtn = document.createElement('button');
   toggleInfoBtn.innerText = 'toggle Info';
-  toggleInfoBtn.classList.add('btn','btn-sm','btn-dark', 'float-end');
+  toggleInfoBtn.classList.add('btn','btn-sm','btn-light', 'float-end');
   toggleInfoBtn.setAttribute('id', 'toggleAlert');
   toggleInfoBtn.setAttribute('type', 'button');
   toggleInfoBtn.addEventListener('click', function() {
@@ -63,11 +63,14 @@ async function buildTimelineList() {
     const result = await fetchApi(ENDPOINT, 'POST', {}, payload);
     if (result && result.data) {
       const timelines = result.data;
+      console.log("timelines", timelines);
+      
       const rows = timelines.map(timeline => {
+        const color = timeline.state === 'draft' ? 'text-danger' : 'text-success';
         return `
           <tr data-id="${timeline.id}">
             <td>${timeline.definition}</td>
-            <td>${timeline.author}</td>
+            <td class="${color}">${timeline.state}</td>
           </tr>
         `;
       }).join('');
@@ -76,7 +79,7 @@ async function buildTimelineList() {
       const options = [
         `<option value="" selected disabled>-- Select an option --</option>`,
         ...timelines.map(timeline => {
-          return `<option value="${timeline.id}">${timeline.definition}</option>`;
+          return `<option value="${timeline.id}">${timeline.definition} (${timeline.state})</option>`;
         })
       ];
       timeLineSelect.innerHTML = options.join('');
@@ -107,6 +110,10 @@ async function newTimeLine() {
     const formElement = await newTimelineForm();
     dataWrap.appendChild(formElement);
   }
+  if(timeLineTable){
+    const rows = timeLineTable.querySelectorAll('td');
+    rows.forEach(row => { row.classList.remove('selectedRow'); });
+  }
 }
 
 async function getTimelineDetails(timelineId) {
@@ -124,7 +131,7 @@ async function getTimelineDetails(timelineId) {
       ['name','macro','generic','specific'].forEach((field) => {
         const button = document.createElement('a');
         button.innerText = field;
-        button.classList.add('btn','btn-sm','btn-dark');
+        button.classList.add('btn','btn-sm','btn-light');
         button.style.margin = '5px';
         button.setAttribute('href', `#${field}`);
         button.setAttribute('role','button');
@@ -148,65 +155,11 @@ async function getTimelineDetails(timelineId) {
 
 // Main function to create the new timeline form
 async function newTimelineForm() {
-  const newTimelineForm = document.createElement('div');
-  newTimelineForm.innerHTML = buildForm();
-
+  const newTimelineForm = buildForm();
   const macroSelect = newTimelineForm.querySelector('#macro');
   await populateMacroDropdown(macroSelect);
-
   newTimelineForm.querySelector('#addTimeRowBtn').addEventListener('click', handleAddRow);
-
   return newTimelineForm;
-}
-
-function buildForm(){
-  return `<div class="mb-3">
-      <label for="name" class="form-label">Timeline name</label>
-      <input type="text" class="form-control form-control-sm w-auto" id="name" placeholder="timeline name" required>
-    </div>
-    <form id="timelineForm" class="row row-cols-lg-auto g-3 align-items-center">
-      <div class="col-12 col-lg-auto">
-        <label for="macro" class="form-label">Macro:</label>
-        <select id="macro" name="macro" class="form-select form-select-sm" required></select>
-      </div>
-      <div class="col-12 col-lg-auto">
-        <label for="generic" class="form-label">Generic:</label>
-        <input class="form-control form-control-sm" list="genericList" id="generic" name="generic" required>
-        <datalist id="genericList"></datalist>
-      </div>
-      <div class="col-12 col-lg-auto">
-        <label for="specific" class="form-label">Specific:</label>
-        <input class="form-control form-control-sm" type="text" id="specific" name="specific" required>
-      </div>
-      <div class="col-12 col-lg-auto">
-        <label for="start" class="form-label">Start:</label>
-        <input class="form-control form-control-sm" type="number" id="start" name="start" required>
-      </div>
-      <div class="col-12 col-lg-auto">
-        <label for="end" class="form-label">End:</label>
-        <input class="form-control form-control-sm" type="number" id="end" name="end" required>
-      </div>
-      <div class="col-12 col-lg-auto align-self-end">
-        <button class="form-control btn btn-adc-blue btn-sm" type="submit" id="addTimeRowBtn">Add Item</button>
-      </div>
-    </form>
-    <div id="newTimelineTable" class="table-responsive">
-      <table class="table table-striped table-sm table-hover caption-top">
-        <caption>Timeline</caption>
-        <thead class="table-primary">
-          <tr>
-            <th scope="col">Macro</th>
-            <th scope="col">Generic</th>
-            <th scope="col">Specific</th>
-            <th scope="col">Start</th>
-            <th scope="col">End</th>
-            <th scope="col">#</th>
-          </tr>
-        </thead>
-        <tbody id="newTimeLineTableBody"></tbody>
-      </table>
-    </div>
-  `;
 }
 
 // Function to fetch and populate the macro dropdown
@@ -253,11 +206,13 @@ function handleAddRow(event) {
   };
 
   if(!validateData(data)){return false;}
-  const tbody = document.querySelector('#newTimeLineTableBody');
+
+  const tbody = document.getElementById('newTimeLineTableBody');
   tbody.innerHTML = "";
   rowsData.forEach(row => {
     const tr = document.createElement("tr");
     tr.innerHTML = `<td>${row.macro_text}</td><td>${row.generic}</td><td>${row.specific}</td><td>${row.start}</td><td>${row.end}</td><td><button class="btn btn-sm btn-adc-blue">remove</button></td>`;
+
     tr.querySelector('button').addEventListener('click', function() {
       tr.remove();
       const index = rowsData.findIndex(r => r.specific === row.specific);
@@ -272,6 +227,8 @@ function handleAddRow(event) {
         'genericList',
         'generic'
       );
+
+      countRows();
     });
     tbody.appendChild(tr);
   });
@@ -287,7 +244,7 @@ function handleAddRow(event) {
 function validateData(data) {
   const { macro_id, macro_text, generic, specific, start, end } = data;
 
-  if (!generic || !specific || !start || !end) {
+  if (!macro_id || !generic || !specific || !start || !end) {
     showToast('All fields are required. Please fill in Generic, Specific, Start, and End.', 'warning');
     return false;
   }
@@ -333,14 +290,14 @@ function validateData(data) {
     return false;
   });
 
-  if (overlap) {
-    return false;
-  }
+  if (overlap) { return false; }
 
   rowsData.push({ macro_id, macro_text, generic, specific, start, end });
   rowsData.sort((a, b) => a.start - b.start);
   genericSet.add(generic);
   specificSet.add(specific);
+
+  countRows();  
 
   return true;
 }
@@ -418,4 +375,117 @@ function timelineComplete(timelineDetails){
   footerCell.innerHTML = `Author: <strong>${timelineDetails.timeline[0].author}</strong>`;
 
   tableDiv.appendChild(table);
+}
+
+function countRows() {
+  const tfoot = document.getElementById('newTimeLineTableFoot');
+  if (!tfoot) {
+    console.warn('tfoot element not found');
+    return; // Exit the function if tfoot is null
+  }
+  rowsData.length > 0
+    ? tfoot.classList.remove('hidden')
+    : tfoot.classList.add('hidden');
+}
+
+function buildForm() {
+  // Create a container element to hold the HTML
+  const container = document.createElement('div');
+  container.innerHTML = `
+    <div class="mb-3">
+      <label for="name" class="form-label">Timeline name</label>
+      <input type="text" class="form-control form-control-sm w-auto" id="name" placeholder="timeline name" required>
+    </div>
+    <form id="timelineForm" class="row row-cols-lg-auto g-3 align-items-center">
+      <div class="col-12 col-lg-auto">
+        <label for="macro" class="form-label">Macro:</label>
+        <select id="macro" name="macro" class="form-select form-select-sm" required></select>
+      </div>
+      <div class="col-12 col-lg-auto">
+        <label for="generic" class="form-label">Generic:</label>
+        <input class="form-control form-control-sm" list="genericList" id="generic" name="generic" required>
+        <datalist id="genericList"></datalist>
+      </div>
+      <div class="col-12 col-lg-auto">
+        <label for="specific" class="form-label">Specific:</label>
+        <input class="form-control form-control-sm" type="text" id="specific" name="specific" required>
+      </div>
+      <div class="col-12 col-lg-auto">
+        <label for="start" class="form-label">Start:</label>
+        <input class="form-control form-control-sm" type="number" id="start" name="start" required>
+      </div>
+      <div class="col-12 col-lg-auto">
+        <label for="end" class="form-label">End:</label>
+        <input class="form-control form-control-sm" type="number" id="end" name="end" required>
+      </div>
+      <div class="col-12 col-lg-auto align-self-end">
+        <button class="form-control btn btn-adc-blue btn-sm" type="submit" id="addTimeRowBtn">Add Item</button>
+      </div>
+    </form>
+    <div id="newTimelineTable" class="table-responsive">
+      <table class="table table-striped table-sm table-hover caption-top">
+        <caption>Timeline</caption>
+        <thead class="table-primary">
+          <tr>
+            <th scope="col">Macro</th>
+            <th scope="col">Generic</th>
+            <th scope="col">Specific</th>
+            <th scope="col">Start</th>
+            <th scope="col">End</th>
+            <th scope="col">#</th>
+          </tr>
+        </thead>
+        <tbody id="newTimeLineTableBody"></tbody>
+        <tfoot id="newTimeLineTableFoot" class="table-primary table-group-divider hidden">
+          <tr>
+            <td colspan="6">
+              <button class="btn btn-sm btn-adc-blue" id="draft">Save as Draft</button>
+              <button class="btn btn-sm btn-adc-blue" id="complete">Save and public</button>
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>`;
+
+  // Add event listeners to the buttons
+  const saveDraftBtn = container.querySelector('#draft');
+  const saveCompleteBtn = container.querySelector('#complete');
+
+  saveDraftBtn.addEventListener('click', saveRows);
+  saveCompleteBtn.addEventListener('click', saveRows);
+
+  return container;
+}
+
+async function saveRows(el){
+  const name = document.getElementById('name').value;
+  if (!name) {
+    showToast('Please provide a name for the timeline.', 'warning');
+    return false;
+  }
+  const payload = {
+    class: 'Timeline',
+    action: 'saveTimeline',
+    name: name,
+    state: el.target.id,
+    data: rowsData
+  };
+  console.log("save timeline payload",payload);
+  
+  try {
+    const result = await fetchApi(ENDPOINT, 'POST', {}, payload);
+    if(result && result.data){
+      const toastClass = result.data.error === 0 ? "success" : "danger";
+      showToast(result.data.message, toastClass, null);
+      console.log("save timeline endpoint result",result);
+      
+    }else {
+      console.error('Invalid data:', result);
+      showToast(result, "danger", null);
+    }
+  } catch (error) {
+    showToast('Error during API call:'+error, "danger", null);
+    console.error('Error during API call:', error);
+    throw error;
+  }
 }
