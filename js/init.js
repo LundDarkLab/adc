@@ -8,6 +8,8 @@ $(document).ready(function() {
 });
 
 function initNav(){
+  console.log(checkDevice());
+  
   if($("[name=logged]").val() == 0){
     $("#userMenu").addClass('closed');
     $("body>main").addClass('large');
@@ -33,7 +35,8 @@ function initNav(){
 function toggleNav(){
   $("nav").toggleClass('open closed');
   if (
-    screen.width < 1368
+    // screen.width < 1368
+    checkDevice()!=='pc'
   ) {
     $("#backdrop").fadeToggle('250');
     ["wheel", "touchmove"].forEach(event => {
@@ -41,7 +44,6 @@ function toggleNav(){
     })
   }else{
     $(".mainSection").toggleClass('large small')
-    // if(document.getElementById("userMenu")){ $(".viewArtifactsBtn").toggleClass('smallCard')}
   }
 }
 function preventScroll(e){

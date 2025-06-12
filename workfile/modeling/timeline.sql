@@ -44,3 +44,13 @@
 -- update time_series_generic set start =   330, end =  1204 where id = 27;
 
 -- commit;
+
+ALTER TABLE time_series_macro DROP FOREIGN KEY FK_MACRO_SERIE;
+ALTER TABLE time_series_macro ADD CONSTRAINT FK_MACRO_SERIE FOREIGN KEY (serie) REFERENCES time_series(id) ON DELETE CASCADE;
+
+ALTER TABLE time_series_generic DROP FOREIGN KEY FK_GENERIC_MACRO;
+ALTER TABLE time_series_generic ADD CONSTRAINT FK_GENERIC_MACRO FOREIGN KEY (macro) REFERENCES time_series_macro(id) ON DELETE CASCADE;
+
+ALTER TABLE time_series_specific DROP FOREIGN KEY FK_SPECIFIC_GENERIC;
+ALTER TABLE time_series_specific ADD CONSTRAINT FK_SPECIFIC_GENERIC FOREIGN KEY (generic) REFERENCES time_series_generic(id) ON DELETE CASCADE;
+

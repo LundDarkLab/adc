@@ -33,20 +33,18 @@ if (!isset($_SESSION['id'])) { header('Location: 403.php');}
           <tbody></tbody>
           <tfoot class="table-light">
             <tr>
-              <th colspan="2">
-                Click on a row to view the details.<br>
-                Only the author and administrator can edit the timeline.
-              </th>
+              <th colspan="2">Click on a row to view the details.<br>Only the author and administrator can edit the timeline.</th>
             </tr>
           </tfoot>
         </table>
       </div>
       <div id="mainContent">
-        <div id="mainContentText" class="card">
-          <h2 class="text-center">Select a timeline from the list, the values will be shown here</h2>
+        <div id="toolbar" class="border rounded p-2 mb-3">
+          <div class="text-end">
+            <button class="btn btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#userGuide" aria-expanded="false" aria-controls="collapseExample">toggle user guide</button>
+          </div>
+          <div class="collapse show border-top p-3 mt-2 text-center fs-3" id="userGuide">Select a timeline from the list to view its values or to edit it.<br>Or click the “create a new timeline” button to create a new one, the system will guide you through the steps for correct creation</div>
         </div>
-        <div id="toolbar" class="hidden border-bottom bg-light"></div>
-        <div id="listInfo" class="alert alert-info hidden"></div>
         <div id="dataWrap" class="hidden"></div>
       </div>
     </main>
