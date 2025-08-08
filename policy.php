@@ -62,6 +62,9 @@
         </div>
       </div>
     </main>
-    <?php require("assets/js.html"); ?>
+    <?php 
+    require("assets/footer.php");
+    require("assets/js.html"); 
+    ?>
   </body>
 </html>

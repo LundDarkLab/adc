@@ -15,8 +15,8 @@
       require("assets/loadingDiv.html"); 
     ?>
     <input type="hidden" name="modelId" value="<?php echo $_GET['item']; ?>">
-    <input type="hidden" name="activeUsr" value="<?php echo $_SESSION['id']; ?>">
-    <input type="hidden" name="role" value="<?php echo $_SESSION['role']; ?>">
+    <input type="hidden" name="activeUsr" value="<?php echo $_SESSION['id'] ?? 'unregistered'; ?>">
+    <input type="hidden" name="role" value="<?php echo $_SESSION['role'] ?? 'unregistered'; ?>">
     <main class="animated mainSection">
       <div id="mainContent">
         <?php require('assets/canvas.html'); ?>

@@ -1,6 +1,8 @@
 <?php
 namespace Adc;
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 use \PHPMailer\PHPMailer\PHPMailer;
 use \PHPMailer\PHPMailer\SMTP;
 use \PHPMailer\PHPMailer\Exception;

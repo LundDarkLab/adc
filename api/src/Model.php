@@ -1,6 +1,6 @@
 <?php
 namespace Adc;
-session_start();
+// session_start();
 use Ramsey\Uuid\Uuid;
 
 class Model extends Conn{
@@ -172,11 +172,26 @@ class Model extends Conn{
   }
 
   public function buildGallery(string $sortBy, $filterArr = []){
+    // Debug temporaneo - aggiungi questo all'inizio
+    error_log('=== buildGallery Debug ===');
+    error_log('sortBy: ' . var_export($sortBy, true));
+    error_log('filterArr: ' . var_export($filterArr, true));
+    error_log('filterArr type: ' . gettype($filterArr));
+    error_log('filterArr is_array: ' . (is_array($filterArr) ? 'yes' : 'no'));
+    
     $filterMaterial="";
-    // $filterArtifact=["artifact.id IN (SELECT artifact_id FROM ArtifactsWithMaterial)"];
     $filterArtifact=[];
     if(!empty($filterArr)){
       foreach ($filterArr as $index => $filter) {
+        error_log('Processing filter index ' . $index . ': ' . var_export($filter, true));
+        error_log('Filter type: ' . gettype($filter));
+        
+        // Controllo di sicurezza
+        if (!is_array($filter)) {
+          error_log('WARNING: filter at index ' . $index . ' is not an array, skipping');
+          continue;
+        }
+        
         if (array_key_exists('material.id', $filter)) {
           $filterMaterial = "WHERE material.id ".$filter['material.id'];
           unset($filterArr[$index]['material.id']);
@@ -187,12 +202,18 @@ class Model extends Conn{
         }
       }
       foreach ($filterArr as $index => $filter) {
+        if (!is_array($filter)) {
+          error_log('WARNING: filter at index ' . $index . ' is not an array in second loop, skipping');
+          continue;
+        }
         foreach ($filter as $key => $value) {
           $filterArtifact[] = $key . $value;
         }
       }
     }
     $filter = !empty($filterArtifact) ? " AND " . join(" and ", $filterArtifact) : "";
+    
+    error_log('Final SQL filter: ' . $filter);
     $sql="
     SELECT 
       artifact.id,

@@ -7,8 +7,8 @@ let domContentLoaded = false;
 var DEFAULTCOLLECTION = {
   type: "DC_COLL",
   version: "2.0",
-  id: self.crypto.randomUUID(),
-  user: $("[name=activeUsr]").val() || "unregistered", //active user id
+  id: crypto?.randomUUID?.() || generateFallbackUUID(),
+  user: getUserId(),
   time: new Date().toISOString(),
   email: 'john.doe@nowhere.nw',
   author: 'John Doe',
@@ -18,6 +18,22 @@ var DEFAULTCOLLECTION = {
 };
 
 var COLLECTIONDATA = {};
+
+// Funzione helper per ottenere l'ID utente
+function getUserId() {
+  const userId = $("[name=activeUsr]").val();
+  // Gestisce tutti i possibili valori "vuoti"
+  if (!userId || userId === '' || userId === 'unregistered' || userId === 'guest') { return 'unregistered'; }
+  return userId;
+}
+
+function generateFallbackUUID() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    var r = Math.random() * 16 | 0,
+        v = c == 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
 
 function resetCollection(){
   COLLECTIONDATA = structuredClone(DEFAULTCOLLECTION);
@@ -77,7 +93,7 @@ function importCollection(){
 }
 function getJSON(files){
 	if((files)&&(files.length>0)){
-	    var reader = new FileReader();
+	  var reader = new FileReader();
 		reader.onload = importJSON;
 		reader.readAsText(files[0]);
 	}
@@ -86,8 +102,8 @@ function importJSON(event){
   var newColl = JSON.parse(event.target.result);
   if(!validateCollection(newColl)) return;  // check if the imported data is a valid collection
   COLLECTIONDATA = newColl;
-  COLLECTIONDATA.user = $("[name=activeUsr]").val() || "unregistered"; //no matter who saved them, they are now of the current user
-  storeCollectionData();  
+  COLLECTIONDATA.user = getUserId(); //no matter who saved them, they are now of the current user
+  storeCollectionData();    
   updateCollection();
 }
 
@@ -181,12 +197,32 @@ function buildData(){
 }
 
 function buildGallery(callback){
+  console.log('=== buildGallery function called ===');
+  console.log('callback:', callback);
+
   checkActiveFilter()
+
+  console.log('filter2:', filter2);
+  console.log('sort:', sort);
+  console.log('API:', API);
+
   ajaxSettings.url=API+"model.php";
   ajaxSettings.data={trigger:'buildGallery', filter:filter2, sort:sort};
-  console.log(ajaxSettings);
+  console.log('buildGallery called with:', ajaxSettings);
   
-  $.ajax(ajaxSettings).done(callback)
+  $.ajax(ajaxSettings)
+    .done(function(data) {
+      console.log('buildGallery success:', data);
+      callback(data);
+    })
+    .fail(function(xhr, status, error) {
+      console.error('buildGallery failed:', {
+        status: status,
+        error: error,
+        response: xhr.responseText,
+        ajaxSettings: ajaxSettings
+      });
+    });
 }
 
 function checkDevice(){
@@ -263,9 +299,21 @@ function gallery(data){
       }
     }
     let div = $("<div/>",{class:'card m-1 itemCard'}).attr("data-item",item.id).appendTo(wrapDiv);
+    
+    // Per test: usa placeholder se l'immagine non esiste
+    const imageUrl = `archive/thumb/${item.thumbnail}`;
+    const placeholderUrl = `https://via.placeholder.com/300x200?text=Item+${item.id}`;
+    
     let header = $("<div/>", {class:'card-header'})
-    .css({"background-image":"url('archive/thumb/"+item.thumbnail+"')"})
+    .css({
+      "background-image": `url('${imageUrl}'), url('${placeholderUrl}')`,
+      "background-color": "#f8f9fa",
+      "background-size": "cover",
+      "background-position": "center",
+      "min-height": "150px"
+    })
     .appendTo(div);
+    
     $("<p/>",{class:'txt-adc-dark fw-bold'}).html(item.id).appendTo(header);
     let body = $("<div/>",{class:'card-body'}).appendTo(div);
     $("<h3/>",{class:'card-title txt-adc-dark fw-bold'}).text(item.category).appendTo(body);

@@ -17,7 +17,17 @@ $("body").on('click',"#btWidescreen", function(){
 
 ajaxSettings.url=API+"artifact.php";
 ajaxSettings.data={trigger:'getArtifact', id:artifactId};
+console.log('Fetching artifact data for ID:', artifactId);
+
 $.ajax(ajaxSettings).done(function(data) {
+  console.log('Artifact data received:', data);
+  // Verifica se i dati sono validi
+  if (!data || !data.artifact) {
+    console.error('Invalid data structure received:', data);
+    showErrorMessage('Invalid data received from server');
+    return;
+  }
+
   let artifact = data.artifact;
   classid = artifact.category_class_id;
   classtype = data.artifact.category_class;
@@ -247,7 +257,41 @@ $.ajax(ajaxSettings).done(function(data) {
   lineChart(classid,classtype)
   columnChart(classid,classtype)
   mapChart(classid,classtype)
+}).fail(function(xhr, status, error) {
+  console.error('AJAX request failed:', {
+    status: status,
+    error: error,
+    statusCode: xhr.status,
+    responseText: xhr.responseText,
+    artifactId: artifactId
+  });
+  
+  let errorMessage;
+  switch(xhr.status) {
+    case 404:
+      errorMessage = `Artifact with ID ${artifactId} not found`;
+      break;
+    case 500:
+      errorMessage = 'Server error while loading artifact data';
+      break;
+    case 0:
+      errorMessage = 'Network error - please check your connection';
+      break;
+    default:
+      errorMessage = `Error loading artifact data (${xhr.status}: ${error})`;
+  }
+  
+  showErrorMessage(errorMessage);
 });
+function showErrorMessage(message) {
+  const errorDiv = document.createElement('div');
+  errorDiv.className = 'alert alert-danger';
+  errorDiv.textContent = message;
+  document.body.appendChild(errorDiv);
+  setTimeout(() => {
+    errorDiv.remove();
+  }, 5000);
+}
 
 function imageMetadataEdit(img){
   $("#text").val(img.text);

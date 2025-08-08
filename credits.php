@@ -3,6 +3,7 @@
 <html lang="en" dir="ltr">
   <head>
     <?php require("assets/meta.php"); ?>
+    <link rel="stylesheet" href="css/credits.css">
   </head>
   <body>
     <?php require("assets/header.php"); ?>
@@ -110,38 +111,31 @@
             <a href="https://github.com/LundDarkLab/adc"><span class="mdi mdi-github"></span> https://github.com/LundDarkLab/adc</a> -->
             <p>All copyright information is listed on each artefact’s page.<br>3D models cannot be downloaded directly through Dynamic Collections.<br>If a model is available, it can be accessed via <a href="https://zenodo.org/communities/darklab_lu/records?q=&l=list&p=1&s=10&sort=newest" title="external link to DARKLab repository hosted by Zenodo" data-bs-toggle="tooltip">Zenodo</a> external repository where it is hosted. Follow the instructions provided there.<br>Downloadable models are typically shared under Creative Commons licenses.<br>License types may vary (e.g., different versions of CC BY), so please check the specific license for each dataset.</p>
             <h4 class='txt-adc-dark fw-bold border-bottom'>License schema</h4>
-            <table class="table text-center">
-              <thead>
-                <tr>
-                  <th>Text and images</th>
-                  <th>Database structure</th>
-                  <th>Platform Code</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>
-                    <div class="py-3">
-                      <img src="img/ico/cc.png" height="40px" class="d-inline" alt="">
-                      <img src="img/ico/cc-by.png" height="40px" class="d-inline" alt="">
-                      <img src="img/ico/cc0.png" height="40px" class="d-inline" alt="">
-                      <!-- <img src="img/ico/cc-nc.png" height="40px" class="d-inline" alt=""> -->
-                      <!-- <img src="img/ico/cc-sa.png" height="40px" class="d-inline" alt=""> -->
-                    </div>
-                    <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" title="cc-by 4.0 deed" class="d-block">Attribution 4.0 International</a>
-                    <a href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" title="cc0 1.0 deed">CC0 1.0 Universal</a>
-                  </td>
-                  <td>
-                    <div class="py-3"><img src="img/ico/lg-okfn.svg" height="40px" class="d-inline" alt=""></div>
-                    <a href="https://opendatacommons.org/licenses/odbl/1-0/" target="_blank" title="ODbL">Open Data Commons Open Database License (ODbL)</a>
-                  </td>
-                  <td>
-                    <div class="py-3"><img src="img/ico/agplv3.png" height="40px" class="d-inline" alt=""></div>
-                    <a href="https://www.gnu.org/licenses/agpl-3.0.en.html" target="_blank" title="Affero GPL 3.0 deed">GNU Affero General Public License</a>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            <div id="licenseInfo">
+              <div id="licenseText">
+                <h5>Text and images</h5>
+                <div class="py-3">
+                  <img src="img/ico/cc.png" height="40px" class="d-inline" alt="">
+                  <img src="img/ico/cc-by.png" height="40px" class="d-inline" alt="">
+                </div>
+                <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" title="cc-by 4.0 deed" class="d-block">Attribution 4.0 International</a>
+                <a href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" title="cc0 1.0 deed">CC0 1.0 Universal</a>
+              </div>
+              <div id="licenseDatabase">
+                <h5>Database structure</h5>
+                <div class="py-3">
+                  <img src="img/ico/lg-okfn.svg" height="40px" class="d-inline" alt="">
+                </div>
+                <a href="https://opendatacommons.org/licenses/odbl/1-0/" target="_blank" title="ODbL">Open Data Commons Open Database License (ODbL)</a>
+              </div>
+              <div id="licenseCode">
+                <h5>Platform Code</h5>
+                <div class="py-3">
+                  <img src="img/ico/agplv3.png" height="40px" class="d-inline" alt="">
+                </div>
+                <a href="https://www.gnu.org/licenses/agpl-3.0.en.html" target="_blank" title="Affero GPL 3.0 deed">GNU Affero General Public License</a>
+              </div>
+            </div>
           </div>
         </div>
         <div class="row mb-3">
@@ -166,6 +160,9 @@
         </div>
       </div>
     </main>
-    <?php require("assets/js.html"); ?>
+    <?php 
+      require("assets/footer.php");
+      require("assets/js.html"); 
+    ?>
   </body>
 </html>

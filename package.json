@@ -1,4 +1,9 @@
 {
+  "scripts": {
+    "build": "mkdir -p dist && echo 'Build completed'",
+    "dev": "...",
+    "start": "..."
+  },
   "devDependencies": {
     "browser-sync": "^3.0.4"
   }

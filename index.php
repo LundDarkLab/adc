@@ -120,6 +120,7 @@
     </main>
     <?php
       require("assets/menu.php");
+      require("assets/footer.php");
       require("assets/js.html"); 
     ?>
   </body>

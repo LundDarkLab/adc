@@ -1,5 +1,5 @@
 <?php
-require 'vendor/autoload.php';
+require __DIR__ . '/vendor/autoload.php';
 use \Adc\User;
 $obj = new User();
 $funzione = $_POST['trigger'];

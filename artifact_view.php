@@ -51,8 +51,8 @@
 
     <main class="animated mainSection">
       <input type="hidden" name="artifactId" value="<?php echo $_GET['item']; ?>">
-      <input type="hidden" name="activeUsr" value="<?php echo $_SESSION['id']; ?>">
-      <input type="hidden" name="role" value="<?php echo $_SESSION['role']; ?>">
+      <input type="hidden" name="activeUsr" value="<?php echo $_SESSION['id'] ?? 'unregistered'; ?>">
+      <input type="hidden" name="role" value="<?php echo $_SESSION['role'] ?? 'unregistered'; ?>">
 
 
 

@@ -1,8 +1,8 @@
 checkAdmin()
 currentPageActiveLink('login.php');
 $("form").css({"width":"350px"})
-$("[name=rescuePwd]").hide();
-$("[name=toggleRescue]").on('click', () => { $("[name=rescuePwd]").fadeToggle('fast'); })
+$("#rescuePwdCard").hide();
+$("[name=toggleRescue]").on('click', () => { $("#rescuePwdCard").fadeToggle('fast'); })
 
 $("#toggle-pwd").click(function() {
   $(this).find('i').toggleClass("mdi-eye mdi-eye-off");
@@ -30,11 +30,21 @@ function login(el){
     ajaxSettings.data = dati
     $.ajax(ajaxSettings)
     .done(function(data) {
+      console.log('Login response:', data);
+      console.log('data[0]:', data[0]);
+      console.log('data[1]:', data[1]);
       form.find(".outputMsg").removeClass('text-success text-danger');
       let classe = data[1] == 0 ? 'text-success' : 'text-danger';
+      console.log('CSS class:', classe);
       form.find(".outputMsg").addClass(classe).html(data[0]);
-      if(data[1] == 0){window.setTimeout(function(){location.href = "dashboard.php";}, 3000);}
-    }).fail(function(data){form.find(".outputMsg").html(data);});
+      if(data[1] == 0){
+        console.log('Login successful, redirecting in 3 seconds...');
+        window.setTimeout(function(){location.href = "dashboard.php";}, 3000);
+      }
+    }).fail(function(data){
+      console.log('Login failed:', data);
+      form.find(".outputMsg").html(data);
+    });
   }
 }
 

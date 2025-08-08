@@ -8,12 +8,13 @@ $(document).ready(function() {
 });
 
 function initNav(){
-  console.log(checkDevice());
+  const loggedValue = $("[name=logged]").val();
+  const device = checkDevice();
   
-  if($("[name=logged]").val() == 0){
+  if(loggedValue == 0){
     $("#userMenu").addClass('closed');
     $("body>main").addClass('large');
-    switch (checkDevice()) {
+    switch (device) {
       case 'tablet-landscape': $("#toggleMenu").hide(); break;
       case 'tablet-portrait': $("#toggleMenu").show(); break;
       case 'pc': 
@@ -23,12 +24,12 @@ function initNav(){
       default: $("#toggleMenu").show(); break;
     }
   }else{
-    if(checkDevice()=='pc'){
+    if(device=='pc'){
       $("#userMenu").addClass('open');
     }else{
       $("#userMenu").addClass('closed');
     }
-    $("body>main").addClass(checkDevice()=='pc' ? 'small' :'large');
+    $("body>main").addClass(device=='pc' ? 'small' :'large');
     $("#toggleMenu").show()
   }
 }

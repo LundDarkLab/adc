@@ -1,6 +1,6 @@
 <?php
 namespace Adc;
-session_start();
+// session_start();
 
 use \Adc\Model;
 use \Adc\File;

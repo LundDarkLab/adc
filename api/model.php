@@ -11,7 +11,10 @@ if(isset($funzione) && function_exists($funzione)) {
 }
 
 function saveModel($obj){return json_encode($obj->saveModel($_POST, $_FILES));}
-function buildGallery($obj){return json_encode($obj->buildGallery($_POST['sort'], $_POST['filter']));}
+function buildGallery($obj){
+  error_log('buildGallery function called in model.php');
+  return json_encode($obj->buildGallery($_POST['sort'], $_POST['filter'] ?? []));
+}
 function getModel($obj){return json_encode($obj->getModel($_POST['id']));}
 function getModels($obj){return json_encode($obj->getModels($_POST['search']));}
 function saveModelParam($obj){return json_encode($obj->saveModelParam($_POST));}

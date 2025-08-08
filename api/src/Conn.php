@@ -1,6 +1,7 @@
 <?php
 namespace Adc;
 use PDO;
+use Dotenv\Dotenv;
 class Conn {
   public $conn;
   
@@ -24,21 +25,33 @@ class Conn {
   }
   /******************************************************************/
   public function connect() {
-    $params = parse_ini_file('config/.env');
-    if ($params === false) {
-      throw new \Exception("Error reading database configuration file");
+    $dotenvPath = __DIR__ . '/../config';
+    if (!file_exists($dotenvPath . '/.env')) {
+      error_log('Missing .env file at ' . realpath($dotenvPath . '/.env'));
+      return null;
     }
-    $conStr = sprintf(
-      "mysql:host=%s;port=%d;dbname=%s;user=%s;password=%s",
-      $params['DBHOST'],
-      $params['DBPORT'],
-      $params['DBDBNAME'],
-      $params['DBUSER'],
-      $params['DBPASSWORD']
-    );
+    $dotenv = Dotenv::createImmutable($dotenvPath);
+    $dotenv->load();
+    $dotenv->required(['DBHOST', 'DBPORT', 'DBDBNAME', 'DBUSER', 'DBPASSWORD']);
+    $host =     $_ENV['DBHOST'];
+    $port =     $_ENV['DBPORT'];
+    $dbname =   $_ENV['DBDBNAME'];
+    $username = $_ENV['DBUSER'];
+    $password = $_ENV['DBPASSWORD'];
 
+    $conStr = sprintf(
+      'mysql:host=%s;port=%d;dbname=%s;user=%s;password=%s',
+      $host,
+      $port,
+      $dbname,
+      $username,
+      $password
+    );
     $this->conn = new \PDO($conStr);
     $this->conn->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+    $this->conn->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
+    // Impostazioni aggiuntive per MySQL
+    $this->conn->setAttribute(\PDO::MYSQL_ATTR_INIT_COMMAND, "SET NAMES utf8mb4");
   }
 
   public function pdo(){

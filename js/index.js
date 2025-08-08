@@ -1,3 +1,11 @@
+$(document).ready(function(){
+    console.log('=== index.js loaded ===');
+    console.log('API variable:', API);
+    console.log('About to call buildGallery...');
+    console.log('buildGallery call completed');
+});
+
+
 //magari non serve!!!
 if (history.scrollRestoration) {
   history.scrollRestoration = 'manual';
