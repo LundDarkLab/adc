@@ -3,19 +3,6 @@ let ajaxCallsCompleted = true;
 let pageLoaded = false;
 let domContentLoaded = false;
 
-/// infinite scroll on buildGallery
-let currentPage = 1;
-let itemsPerPage = 10;
-let isLoading = false;
-let hasMoreItems = true;
-
-// gallery 
-let btnHome, btnFullscreen;
-let items = [];
-let filter = [];
-let sort = "artifact.id DESC";
-
-
 /////////////// COLLECTION DATA STRUCTURE ///////////////
 var DEFAULTCOLLECTION = {
   type: "DC_COLL",
@@ -175,7 +162,11 @@ $(window).on('load', function() {
 });
 
 
-
+let btnHome, btnFullscreen;
+let items = [];
+let filter = [];
+let filter2 = [];
+let sort = "rand()";
 
 function buildData(){
   $("[data-table]").each(function(){
@@ -205,26 +196,24 @@ function buildData(){
   $.each(val,function(i,v){ dati[v.tab][v.field]=v.val })
 }
 
-function buildGallery(callback, page = 1, append = false){
-  if (isLoading) return; // Avoid multiple calls
-  isLoading = true;
+function buildGallery(callback){
+  console.log('=== buildGallery function called ===');
+  console.log('callback:', callback);
 
   checkActiveFilter()
 
+  console.log('filter2:', filter2);
+  console.log('sort:', sort);
+  console.log('API:', API);
+
   ajaxSettings.url=API+"model.php";
-  ajaxSettings.data={
-    trigger:'buildGallery',
-    filter:filter, 
-    sort:sort,
-    page: page,
-    limit: itemsPerPage
-  };
+  ajaxSettings.data={trigger:'buildGallery', filter:filter2, sort:sort};
+  console.log('buildGallery called with:', ajaxSettings);
   
   $.ajax(ajaxSettings)
     .done(function(data) {
-      isLoading = false;
-      hasMoreItems = data.gallery.length === itemsPerPage;
-      callback(data, append);
+      console.log('buildGallery success:', data);
+      callback(data);
     })
     .fail(function(xhr, status, error) {
       console.error('buildGallery failed:', {
@@ -233,24 +222,17 @@ function buildGallery(callback, page = 1, append = false){
         response: xhr.responseText,
         ajaxSettings: ajaxSettings
       });
-      isLoading = false;
     });
 }
 
-function gallery(data, append = false) { 
-  console.log("Gallery data:", data);
+function gallery(data){
+  console.log(data);
   
   wrapDiv = "#wrapGallery";
-  if (!append) {
-    $(wrapDiv).html('');
-    items = [];
-    $("#end-message").remove();
-  }
-  $("#viewGallery > span").text(items.length + data.gallery.length + ' / ' + data.tot.length);
-
-  data.gallery.forEach((item) => {
+  $(wrapDiv).html('');
+  $("#viewGallery > span").text(data.length)
+  data.forEach((item) => {
     items.push(item)
-
     var materialObject = JSON.parse(item.material);
     var materialValues = [];
     for (var key in materialObject) {
@@ -277,15 +259,11 @@ function gallery(data, append = false) {
     $("<p/>",{class:'txt-adc-dark fw-bold'}).html(item.id).appendTo(header);
     let body = $("<div/>",{class:'card-body'}).appendTo(div);
     $("<h3/>",{class:'card-title txt-adc-dark fw-bold'}).text(item.category).appendTo(body);
-    $("<small/>",{class:'d-block'}).html("Find place: <span class='fw-bold'>"+`${item.nation} / ${item.county}`+"</span>").appendTo(body);
-    $("<small/>",{class:'d-block'}).html("Institution: <span class='fw-bold'>"+item.institution+"</span>").appendTo(body);
-    $("<small/>",{class:'d-block'}).html("material: <span class='fw-bold'>"+materialValues.join(', ')+"</span>").appendTo(body);
-    $("<small/>",{class:'d-block'}).html("chronology: <span class='fw-bold'>"+item.start+" / "+item.end+"</span>").appendTo(body);
-    $("<small/>",{class:'d-block mt-3'}).html(cutString(item.description, 70)).appendTo(body);
-
+    $("<p/>",{class:'mb-1'}).html("material: <span class='fw-bold'>"+materialValues.join(', ')+"</span>").appendTo(body);
+    $("<p/>",{class:'mb-2'}).html("chronology: <span class='fw-bold'>"+item.start+" / "+item.end+"</span>").appendTo(body);
+    $("<p/>",{class:'mb-2'}).html(cutString(item.description, 80)).appendTo(body);
     let footer = $("<div/>",{class:'card-footer'}).appendTo(div);
     $("<a/>",{class:'btn btn-sm btn-adc-blue ms-3', href:'artifact_view.php?item='+item.id}).text('View').appendTo(footer);
-
     let collectBtn = $("<button/>",{class:'btn btn-sm btn-adc-blue ms-3 addItemBtn', id: 'addItem'+item.id}).text('Collect').appendTo(footer);
     let uncollectBtn = $("<button/>",{class:'btn btn-sm btn-danger ms-3 removeItemBtn', id: 'removeItem'+item.id}).text('Remove').appendTo(footer).hide();
 
@@ -301,75 +279,7 @@ function gallery(data, append = false) {
       removeFromCollection(item.id)
     })
   });
-
-  if (!append) { updateCollection(); }
-
-  toggleLoadingSpinner(false);
-  if (!hasMoreItems && data.gallery.length < itemsPerPage) {
-    console.log('Showing end message');
-    showEndMessage();
-  }
-}
-
-function showEndMessage() {
-  if ($("#end-message").length === 0) {
-    $("<div/>", {
-      id: 'end-message',
-      class: 'text-center my-4 text-muted w-100 fs-2'
-    }).html(`
-      <i class="mdi mdi-check-circle text-success"></i>
-      <p>You've reached the end of the collection!</p>
-    `).appendTo("#wrapGallery");
-  }
-}
-
-function resetPagination() {
-  currentPage = 1;
-  hasMoreItems = true;
-  isLoading = false;
-}
-
-function loadNextPage() {
-  if (!hasMoreItems || isLoading) return;
-  
-  currentPage++;
-  buildGallery(gallery, currentPage, true);
-}
-
-function toggleLoadingSpinner(show) {
-  if (show) {
-    if ($("#infinite-loader").length === 0) {
-      $("<div/>", {
-        id: 'infinite-loader',
-        class: 'text-center my-4'
-      }).html(`
-        <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">Loading...</span>
-        </div>
-        <p class="mt-2">Loading more items...</p>
-      `).appendTo("#wrapGallery");
-    }
-  } else {
-    $("#infinite-loader").remove();
-  }
-}
-
-// Gestione dello scroll infinito
-function initInfiniteScroll() {
-  $(window).on('scroll', function() {
-    if ($(window).scrollTop() + $(window).height() >= $(document).height() - 200) {
-      if (hasMoreItems && !isLoading) {
-        toggleLoadingSpinner(true);
-        loadNextPage();
-      }
-    }
-  });
-}
-
-// Funzione per ricaricare completamente la galleria
-function reloadGallery() {
-  resetPagination();
-  buildGallery(gallery, 1, false);
+  updateCollection(); // MC: I moved outside of the loop to avoid updating the collection for each item
 }
 
 
@@ -592,6 +502,32 @@ function handleCategoryChange(){
     $("#category_specs option").length == 1 ? $("#catSpecsMsg").fadeIn('fast') : $("#catSpecsMsg").hide();
   }
   setTimeout(showMsgList, 500)
+}
+
+function chronoFilter(){
+  ajaxSettings.url=API+"get.php";
+  ajaxSettings.data={trigger:'chronoFilter'};
+  $.ajax(ajaxSettings).done(function(data) {
+    data.macro.forEach(macro => {
+      let macroLi = $("<li/>").appendTo("#macroList")
+      let macroBtn = $("<button/>", {class:'dropdown-item'}).html(macro.definition + '<span class="mdi mdi-chevron-right float-end"></span>').val(macro.start+"|"+macro.end).appendTo(macroLi)
+      let genericSubMenu = $("<ul/>", {class:'dropdown-menu dropdown-submenu'}).appendTo(macroLi)
+      macro.generic.forEach(generic => {
+        let genericLi = $("<li/>").appendTo(genericSubMenu)
+        let genericBtn = $("<button/>", {class:'dropdown-item'}).html(generic.definition + '<span class="mdi mdi-chevron-right float-end"></span>').val(generic.start+"|"+generic.end).appendTo(genericLi)
+        let specificSubMenu = $("<ul/>", {class:'dropdown-menu dropdown-submenu'}).appendTo(genericLi)
+        generic.specific.forEach(specific => {
+          if(generic.definition !== specific.definition){
+            let specificLi = $("<li/>").appendTo(specificSubMenu)
+            let specificBtn = $("<button/>", {class:'dropdown-item'}).html(specific.definition).val(specific.start+"|"+specific.end).appendTo(specificLi)
+          }else{
+            specificSubMenu.remove()
+            genericBtn.find('span').remove();
+          }
+        })
+      })
+    });
+  })
 }
 
 function handleMaterialTechnique(){

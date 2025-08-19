@@ -1,3 +1,4 @@
+// === TILES ===
 const mapTilerKey = 'CMQ8bWOfjncCKWV3MfHg';
 const osmTile = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 const osmAttrib='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
@@ -6,29 +7,33 @@ const gSatTile = 'http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}';
 const gHybridTile = 'http://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}';
 const gTerrainTile = 'http://{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}';
 const gSubDomains = ['mt0','mt1','mt2','mt3'];
+
+// === EXTERNAL SERVICES ===
 let nominatim = "https://nominatim.openstreetmap.org/search?city=Milano&country=Italia&format=jsonv2&polygon_geojson=1&extratags=1&addressdetails=1"
 let nominatimReverse = 'https://nominatim.openstreetmap.org/reverse?format=jsonv2&extratags=1&'
 
-let baseLayers, osm, gStreets, gSat, gTerrain, layerControl;
-let overlayMaps = {}
-let mapClick = false;
-
+// === MAPS CONFIG ===
 const mapExt = [[72,63],[51,-11]];
-let map, map2, marker,county, countyGroup, cityGroup, boundaries;
-let countyStyle = {
+const defaultZoom = 2;
+const maxZoom = 20;
+
+// === LAYERS STYLES ===
+const countyStyle = {
   weight: 2,
   color: 'rgb(51,136,255)',
   opacity: 0.8,
   fillColor: 'rgb(51,136,255)',
   fillOpacity: 0.1
 }
-let cityStyle = {
+const cityStyle = {
   weight: 2,
   color: 'rgb(220,53,69)',
   opacity: 1,
   fillColor: 'rgb(220,53,69)',
   fillOpacity: 0.2
 }
+
+// == ICONS ===
 const storagePlaceIco = L.icon({
   iconUrl: 'img/ico/storagePlace.png',
   iconSize:     [30, 30],
@@ -41,3 +46,12 @@ const findplaceIco = L.icon({
   iconAnchor:   [15, 15],
   popupAnchor:  [-3, -76]
 });
+
+// == GLOBAL VARIABLES ===
+let map, map2, marker,county, countyGroup, cityGroup, boundaries;
+let baseLayers, osm, gStreets, gSat, gTerrain, layerControl;
+let overlayMaps = {}
+let mapClick = false;
+
+// === VARIABILI PER GEOJSON ===
+let countyJson = { type: "FeatureCollection", features: [] };

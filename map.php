@@ -22,7 +22,6 @@
   ?>
   <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js" integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM=" crossorigin=""></script>
   <script src="js/maps/geo_config.js" charset="utf-8"></script>
-  <!-- <script src="js/maps/geo_function.js" charset="utf-8"></script> -->
   <script src="js/maps/mapScale/mapScale.js"></script>
   <script src="js/maps/mousePosition/mousePosition.js"></script>
   <script src="js/map.js" charset="utf-8"></script>

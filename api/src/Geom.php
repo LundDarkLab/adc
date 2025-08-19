@@ -16,6 +16,29 @@ class Geom extends Conn{
     return ["query"=>$sql,"items"=>$this->simple($sql)];
   }
 
+  public function getBoundaries(int $level, string $filter): array {
+    try {
+      $fields = "gid_$level, st_asgeojson(`SHAPE`) as geom";
+      $fields .= $level == 0 ? ", country" : ", name_$level";
+
+      $table = 'artifact_findplace af';
+
+      $join = "inner join artifact a on af.artifact = a.id";
+      $join .= "inner join gadm_$level g on af.gid_$level = g.gid_$level";
+
+      $where = "WHERE a.status = 2";
+
+      if (!empty($filter)) {
+        $where .= $level == 0 ? " and g.country = '$filter'" : " and g.gid_$level = '$filter'";
+      }
+           
+      $sql = "select $fields from $table $join $where ;";
+      return ["query"=>$sql,"items"=>$this->simple($sql)];
+    } catch (\Throwable $th) {
+      return ["error" => "API Error: " . $th->getMessage()];
+    }
+  }
+
   /**
  * Returns administrative areas according to the specified level.
  * @param int $level The level of the administrative area to be searched 0-5.

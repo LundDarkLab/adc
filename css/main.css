@@ -111,9 +111,13 @@ footer a:hover{
   justify-content: space-between;
   align-items: center;
 }
-/* #itemTool > .itemToolBlock{display: inline-block; margin:0;width:calc(100% / 3);} */
 
-main{position: relative; min-height:calc(100vh - 100px); margin:80px 0; z-index:1}
+main{
+  position: relative; 
+  /* min-height:calc(100vh - 100px);  */
+  margin:80px 0; 
+  z-index:1
+}
 
 .animated{transition: all 0.25s linear;}
 .open{right: 0;}

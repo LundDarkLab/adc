@@ -92,7 +92,6 @@ function mapInit(page){
       if (zoom<14) { return false;}
       let ll = map.mouseEventToLatLng(e.originalEvent);
       reverseGeoLocation(ll)
-      // reverseGeocodeNominatim(ll.lat,ll.lng);
     },
     baselayerchange:function (eventLayer) {
       if (eventLayer.layer) {
@@ -306,22 +305,71 @@ function resetHighlight(e) {
 function zoomToFeature(e) {map.fitBounds(e.target.getBounds());}
 function filterElement(e){
   console.log(e.target.feature.properties);
-  document.getElementById('byCounty').value = e.target.feature.properties.id
+  document.getElementsByName('byCounty')[0].value = e.target.feature.properties.id
   map2.fitBounds(e.target.getBounds());
+  resetPagination();
   getFilter();
 };
+
 function onEachFeature(feature, layer) {
-  layer.on({
+  const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  
+  if (isTouchDevice) {
+    let touchTimeout;
+    let isHighlighted = false;
+    layer.on({
+      touchstart: function(e) {
+        e.originalEvent.preventDefault();
+        
+        // Simula hover dopo un breve delay
+        touchTimeout = setTimeout(() => {
+          if (!isHighlighted) {
+            isHighlighted = true;
+            highlightFeature(e);
+          }
+        }, 200);
+      },
+      
+      touchend: function(e) {
+        clearTimeout(touchTimeout);
+        
+        if (isHighlighted) {
+          setTimeout(() => {
+            resetHighlight(e);
+            isHighlighted = false;
+            
+            // Esegui l'azione click
+            if(window.location.pathname.includes('artifact_view')){
+              zoomToFeature(e);
+            } else {
+              filterElement(e);
+            }
+          }, 300);
+        }
+      },
+      
+      touchcancel: function(e) {
+        clearTimeout(touchTimeout);
+        if (isHighlighted) {
+          resetHighlight(e);
+          isHighlighted = false;
+        }
+      }
+    });
+    
+  } else {
+    layer.on({
       mouseover: highlightFeature,
       mouseout: resetHighlight,
       click: (e) => {
         if(window.location.pathname.includes('artifact_view')){
-          zoomToFeature(e)
-        }else{
-          filterElement(e)
+          zoomToFeature(e);
+        } else {
+          filterElement(e);
         }
       }
-  });
+    });
+  }
 }
 
 function mapInfo(props){
@@ -376,39 +424,39 @@ async function reverseGeocodeNominatim(lat,lon, detail) {
 }
 
 // da rivedere, per ora non funziona
-async function fetchGeoJsonAndNames() {
-  const overpassUrl = 'https://overpass-api.de/api/interpreter';
-  const overpassQuery = `
-[out:json][maxsize:1073741824][timeout:9000];
-nwr["boundary"="administrative"]["admin_level"="2"]["name"="Italy"]; 
-(._;>;);
-out geom;
-  `;
+// async function fetchGeoJsonAndNames() {
+//   const overpassUrl = 'https://overpass-api.de/api/interpreter';
+//   const overpassQuery = `
+// [out:json][maxsize:1073741824][timeout:9000];
+// nwr["boundary"="administrative"]["admin_level"="2"]["name"="Italy"]; 
+// (._;>;);
+// out geom;
+//   `;
 
-  try {
-    const response = await fetch(overpassUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: `data=${encodeURIComponent(overpassQuery)}`
-    });
+//   try {
+//     const response = await fetch(overpassUrl, {
+//       method: 'POST',
+//       headers: {
+//         'Content-Type': 'application/x-www-form-urlencoded'
+//       },
+//       body: `data=${encodeURIComponent(overpassQuery)}`
+//     });
 
-    if (!response.ok) {
-      throw new Error('Errore nella richiesta Overpass: ' + response.statusText);
-    }
+//     if (!response.ok) {
+//       throw new Error('Errore nella richiesta Overpass: ' + response.statusText);
+//     }
 
-    const data = await response.json();
+//     const data = await response.json();
 
-    // Esempio di gestione dei dati
-    console.log('Dati ricevuti:', data);
+//     // Esempio di gestione dei dati
+//     console.log('Dati ricevuti:', data);
 
-    // Ora puoi lavorare con i dati GeoJSON e i nomi dei luoghi ottenuti
+//     // Ora puoi lavorare con i dati GeoJSON e i nomi dei luoghi ottenuti
 
-  } catch (error) {
-    console.error('Errore durante il fetch da Overpass:', error);
-  }
-}
+//   } catch (error) {
+//     console.error('Errore durante il fetch da Overpass:', error);
+//   }
+// }
 
 // Chiamata alla funzione per eseguire la query
 // fetchGeoJsonAndNames();

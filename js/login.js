@@ -1,8 +1,18 @@
 checkAdmin()
 currentPageActiveLink('login.php');
-$("form").css({"width":"350px"})
 $("#rescuePwdCard").hide();
-$("[name=toggleRescue]").on('click', () => { $("#rescuePwdCard").fadeToggle('fast'); })
+
+$("[name=toggleRescue]").on('click', () => { 
+  $("#loginCard").fadeToggle('fast', function() {
+    $("#rescuePwdCard").fadeToggle('fast');
+  });
+})
+
+$("[name=toggleLogin]").on('click', () => { 
+  $("#rescuePwdCard").fadeToggle('fast', function() {
+    $("#loginCard").fadeToggle('fast');
+  });
+})
 
 $("#toggle-pwd").click(function() {
   $(this).find('i').toggleClass("mdi-eye mdi-eye-off");

@@ -171,53 +171,62 @@ class Model extends Conn{
     //prima di scalare l'immagine devo caricarla sul server
   }
 
-  public function buildGallery(string $sortBy, $filterArr = []){
-    // Debug temporaneo - aggiungi questo all'inizio
-    error_log('=== buildGallery Debug ===');
-    error_log('sortBy: ' . var_export($sortBy, true));
-    error_log('filterArr: ' . var_export($filterArr, true));
-    error_log('filterArr type: ' . gettype($filterArr));
-    error_log('filterArr is_array: ' . (is_array($filterArr) ? 'yes' : 'no'));
+  public function buildGallery(string $sortBy, $filterArr = [], $page = 1, $limit = 10){
+    // Calcola offset per la paginazione
+    $offset = ($page - 1) * $limit;    
+    $filterMaterial = "";
+    $filterArtifact = [];
     
-    $filterMaterial="";
-    $filterArtifact=[];
     if(!empty($filterArr)){
       foreach ($filterArr as $index => $filter) {
-        error_log('Processing filter index ' . $index . ': ' . var_export($filter, true));
-        error_log('Filter type: ' . gettype($filter));
-        
-        // Controllo di sicurezza
-        if (!is_array($filter)) {
-          error_log('WARNING: filter at index ' . $index . ' is not an array, skipping');
+        // Se il filtro è già una stringa con condizione SQL completa
+        if (is_string($filter)) {
+          // Controlla se è un filtro per material
+          if (strpos($filter, 'material.id') !== false) {
+            $filterMaterial = "WHERE " . $filter;
+          } else {
+            // Aggiungi direttamente alla lista dei filtri per artifact
+            $filterArtifact[] = $filter;
+          }
           continue;
         }
         
-        if (array_key_exists('material.id', $filter)) {
-          $filterMaterial = "WHERE material.id ".$filter['material.id'];
-          unset($filterArr[$index]['material.id']);
-        }
-        if (array_key_exists('description', $filter)) {
-          array_push($filterArtifact,$filter['description']);
-          unset($filterArr[$index]['description']);
-        }
-      }
-      foreach ($filterArr as $index => $filter) {
+        // Gestione del formato array (come prima)
         if (!is_array($filter)) {
-          error_log('WARNING: filter at index ' . $index . ' is not an array in second loop, skipping');
+          error_log('WARNING: filter at index ' . $index . ' is not an array or string, skipping');
           continue;
         }
+        
+        // Processa filtri in formato array
         foreach ($filter as $key => $value) {
-          $filterArtifact[] = $key . $value;
+          if ($key === 'material.id') {
+            $filterMaterial = "WHERE material.id = " . intval($value);
+          } else if ($key === 'description') {
+            $filterArtifact[] = "artifact.description LIKE '%" . addslashes($value) . "%'";
+          } else {
+            if (is_numeric($value)) {
+              $filterArtifact[] = $key . " = " . intval($value);
+            } else {
+              $filterArtifact[] = $key . " LIKE '%" . addslashes($value) . "%'";
+            }
+          }
         }
       }
     }
-    $filter = !empty($filterArtifact) ? " AND " . join(" and ", $filterArtifact) : "";
     
-    error_log('Final SQL filter: ' . $filter);
-    $sql="
-    SELECT 
+    $filter = !empty($filterArtifact) ? " AND " . implode(" AND ", $filterArtifact) : "";
+    
+    error_log("Filter material: " . $filterMaterial);
+    error_log("Filter artifact array: " . json_encode($filterArtifact));
+    error_log("Final filter string: " . $filter);
+
+    $totField = "count(*) as tot";
+    $galleryFields = "
       artifact.id,
       artifact.name,
+      inst.name institution,
+      gadm0.country as nation,
+      COALESCE(gadm1.name_1, '') AS county,
       COALESCE(artifact.description, 'no description available') AS description,
       class.id AS category_id,
       class.value AS category,
@@ -225,28 +234,40 @@ class Model extends Conn{
       artifact.start,
       artifact.end,
       obj.object,
-      obj.thumbnail 
-    FROM artifact 
+      obj.thumbnail";
+
+    $conditions = "FROM artifact 
     INNER JOIN list_category_class class ON artifact.category_class = class.id 
     INNER JOIN artifact_material_technique amt ON amt.artifact = artifact.id 
     INNER JOIN artifact_model am ON artifact.id = am.artifact 
     INNER JOIN model_object obj ON obj.model = am.model 
+    INNER JOIN institution inst ON inst.id = artifact.storage_place
     LEFT JOIN list_material_specs material ON amt.material = material.id
-    left join artifact_findplace af on af.artifact = artifact.id
+    LEFT JOIN artifact_findplace af ON af.artifact = artifact.id
+    LEFT JOIN gadm0 ON gadm0.gid_0 = af.gid_0
+    LEFT JOIN gadm1 ON gadm1.gid_1 = af.gid_1
     WHERE artifact.status = 2
       AND artifact.id IN (
-      SELECT artifact.id
-      FROM artifact
-      INNER JOIN artifact_material_technique amt ON amt.artifact = artifact.id
-      LEFT JOIN list_material_specs material ON amt.material = material.id
-      ".$filterMaterial."
-      GROUP BY artifact.id
-    )
+        SELECT artifact.id
+        FROM artifact
+        INNER JOIN artifact_material_technique amt ON amt.artifact = artifact.id
+        LEFT JOIN list_material_specs material ON amt.material = material.id
+        ".$filterMaterial."
+        GROUP BY artifact.id
+      )
     ".$filter."
-    GROUP BY artifact.id, artifact.name, class.id, class.value, artifact.start, artifact.end, obj.object, obj.thumbnail
-    ORDER BY ".$sortBy.";";
-    return $this->simple($sql);
-  }
+    GROUP BY artifact.id, artifact.name, gadm0.country, gadm1.name_1, inst.name, class.id, class.value, artifact.start, artifact.end, obj.object, obj.thumbnail ";
+    
+    $pagination = "ORDER BY ".$sortBy." LIMIT ".$limit." OFFSET ".$offset.";";
+    
+    $totSql = "SELECT ".$totField." ".$conditions.";";
+    $gallerySql = "SELECT ".$galleryFields." ".$conditions." ".$pagination;
+
+    error_log('Total SQL: ' . $totSql);
+    error_log('Gallery SQL: ' . $gallerySql);
+
+    return ["tot" => $this->simple($totSql), "gallery" => $this->simple($gallerySql)];
+}
 
   public function getModel(int $id){
     $out['model'] = $this->simple("select m.id, m.name, m.note, m.uuid, NULLIF(m.description, 'no description available') description, m.thumbnail, status.id status_id, status.value status, m.create_at, m.updated_at, concat(p.last_name,' ',p.first_name) created_by, m.doi, m.doi_svg, m.citation from model m inner join list_item_status status ON m.status = status.id inner join user on m.created_by = user.id inner join person p on user.person = p.id where m.id =  ".$id.";")[0];

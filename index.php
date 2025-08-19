@@ -28,8 +28,29 @@
     </div>
 
     <div id="statWrap" class="statWrapVisible bg-light border animated mainSection">
-      <div id="institution_chart" class="bg-white border rounded"></div>
-      <div id="mapChart" class="bg-white border rounded">
+
+      <div id="itemsCount" class="">
+        <div class="statSection text-center" id="institutionTot" >
+          <h5 class="m-0 pt-2 fw-bold">Institutions</h5>
+          <h2 class="fs-1 fw-bold"></h2>
+        </div> 
+        <div class="statSection text-center" id="artifactTot" >
+          <h5 class="m-0 pt-2 fw-bold">Artifacts</h5>
+          <h2 class="fs-1 fw-bold"></h2>
+        </div>
+        <div class="statSection text-center" id="modelTot" >
+          <h5 class="m-0 pt-2 fw-bold">Models</h5>
+          <h2 class="fs-1 fw-bold"></h2>
+        </div>
+        <div class="statSection text-center" id="filesTot" >
+          <h5 class="m-0 pt-2 fw-bold">Media</h5>
+          <h2 class="fs-1 fw-bold"></h2>
+        </div> 
+      </div>
+      
+      <div id="institution_chart" class="statSection"></div>
+
+      <div id="mapChart" class="statSection">
         <div id="mapInfo" class="border rounded shadow">
           <h6 id="mapInfoTitle" class="m-0 text-secondary">Map info</h6>
           <div id="geomProp" class="text-center">
@@ -38,25 +59,11 @@
           </div>
         </div>
       </div>
-      <div id="itemsCount" class="">
-        <div class="border rounded bg-white text-center" id="artifactTot" >
-          <h5 class="m-0 pt-2 fw-bold">Artifacts</h5>
-          <h2 class="fs-1 fw-bold"></h2>
-        </div>
-        <div class="border rounded bg-white text-center" id="modelTot" >
-          <h5 class="m-0 pt-2 fw-bold">Models</h5>
-          <h2 class="fs-1 fw-bold"></h2>
-        </div>
-        <div class="border rounded bg-white text-center" id="institutionTot" >
-          <h5 class="m-0 pt-2 fw-bold">Institutions</h5>
-          <h2 class="fs-1 fw-bold"></h2>
-        </div> 
-        <div class="border rounded bg-white text-center" id="filesTot" >
-          <h5 class="m-0 pt-2 fw-bold">Media</h5>
-          <h2 class="fs-1 fw-bold"></h2>
-        </div> 
-      </div>
-      <div id="crono_chart" class="bg-white border rounded"></div>
+      
+      
+      
+      <div id="crono_chart" class="statSection"></div> 
+     
     </div>
 
     <main class="animated mainSection tab-content">

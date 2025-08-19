@@ -10,11 +10,12 @@ if(isset($funzione) && function_exists($funzione)) {
   echo $trigger;
 }
 
-function saveModel($obj){return json_encode($obj->saveModel($_POST, $_FILES));}
 function buildGallery($obj){
   error_log('buildGallery function called in model.php');
-  return json_encode($obj->buildGallery($_POST['sort'], $_POST['filter'] ?? []));
+  return json_encode($obj->buildGallery($_POST['sort'], $_POST['filter'] ?? [], $_POST['page'] ?? 1, $_POST['limit'] ?? 20));
 }
+
+function saveModel($obj){return json_encode($obj->saveModel($_POST, $_FILES));}
 function getModel($obj){return json_encode($obj->getModel($_POST['id']));}
 function getModels($obj){return json_encode($obj->getModels($_POST['search']));}
 function saveModelParam($obj){return json_encode($obj->saveModelParam($_POST));}
