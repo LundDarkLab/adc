@@ -48,7 +48,7 @@ const findplaceIco = L.icon({
 });
 
 // == GLOBAL VARIABLES ===
-let map, map2, marker,county, countyGroup, cityGroup, boundaries;
+let map, map2, marker,county, countyGroup, institutionsGroup, cityGroup, boundaries;
 let baseLayers, osm, gStreets, gSat, gTerrain, layerControl;
 let overlayMaps = {}
 let mapClick = false;

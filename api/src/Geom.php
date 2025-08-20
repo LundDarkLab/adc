@@ -5,6 +5,52 @@ session_start();
 class Geom extends Conn{
   function __construct(){}
 
+  public function getAvailableLevels(): array {
+    $levels = [0,1,2,3,4,5];
+    $availableLevels = [];
+    
+    foreach ($levels as $level) {
+      // Query per contare le features distinte
+      $sql = "SELECT COUNT(DISTINCT af.gid_$level) as tot FROM artifact_findplace af INNER JOIN artifact a ON af.artifact = a.id WHERE a.status = 2 AND af.gid_$level IS NOT NULL;";
+      
+      $result = $this->simple($sql);
+      
+      // Gestione empty set: se non ci sono risultati, $result sarà vuoto
+      if (empty($result) || !isset($result[0]['tot'])) {
+        $count = 0;
+      } else {
+        $count = (int)$result[0]['tot'];
+      }
+      
+      // Aggiungi solo i livelli che hanno almeno una feature
+      if ($count > 0) {
+        $availableLevels[] = [
+          'level' => $level,
+          'count' => $count,
+          'name' => $this->getLevelName($level)
+        ];
+      }
+    }
+    
+    return [
+      'success' => true,
+      'levels' => $availableLevels
+    ];
+  }
+
+  // Metodo helper per i nomi dei livelli
+  private function getLevelName(int $level): string {
+    $levelNames = [
+      0 => 'Country',
+      1 => 'Provinces', 
+      2 => 'Districts',
+      3 => 'Municipalities',
+      4 => 'Admin Boundaries Level 1',
+      5 => 'Admin Boundaries Level 2'
+    ];
+    return $levelNames[$level] ?? "Level $level";
+  }
+
   public function getAdminList (array $payload,): array{
     $sql='';
     if($payload['gid'] == 0 && empty($payload['filter'])){
@@ -16,26 +62,44 @@ class Geom extends Conn{
     return ["query"=>$sql,"items"=>$this->simple($sql)];
   }
 
-  public function getBoundaries(int $level, string $filter): array {
+  public function getBoundaries(int $level, ?string $filter): array {
     try {
-      $fields = "gid_$level, st_asgeojson(`SHAPE`) as geom";
-      $fields .= $level == 0 ? ", country" : ", name_$level";
+      $fields = "g.gid_$level as gid";
+      $fields .= $level == 0 ? ", g.country as name" : ", g.name_$level as name";
+      $geom = "st_asgeojson(g.SHAPE) as geom";
 
-      $table = 'artifact_findplace af';
-
-      $join = "inner join artifact a on af.artifact = a.id";
-      $join .= "inner join gadm_$level g on af.gid_$level = g.gid_$level";
-
-      $where = "WHERE a.status = 2";
+      $subquery = "SELECT af.gid_$level FROM artifact_findplace af INNER JOIN artifact a ON af.artifact = a.id WHERE a.status = 2 GROUP BY af.gid_$level";
 
       if (!empty($filter)) {
         $where .= $level == 0 ? " and g.country = '$filter'" : " and g.gid_$level = '$filter'";
       }
-           
-      $sql = "select $fields from $table $join $where ;";
+
+      $sql = "SELECT $fields, $geom FROM ( $subquery ) artifact INNER JOIN gadm$level g ON g.gid_$level = artifact.gid_$level;";
+      
       return ["query"=>$sql,"items"=>$this->simple($sql)];
     } catch (\Throwable $th) {
-      return ["error" => "API Error: " . $th->getMessage()];
+      return ["error" => "API Error: " . $th->getMessage(), "sql" => $sql];
+    }
+  }
+
+  public function getInstitutionPoint(?int $id): array {
+    try {
+      $where = $id === null ? '' : "WHERE id = $id";
+      $sql = "SELECT id, name, abbreviation, lat,lon, logo FROM institution $where order by name asc;";
+      return ["query"=>$sql,"items"=>$this->simple($sql)];
+    } catch (\Throwable $th) {
+      return ["error" => "API Error: " . $th->getMessage(), "sql" => $sql];
+    }
+  }
+
+  public function getFindPlacePoint(?int $id): array {
+    try {
+      $where = "where a.status = 2 and af.longitude is not null and af.latitude is not null";
+      $where .= $id === null ? '' : " and id = $id";
+      $sql = "select a.name, a.description, af.latitude, af.longitude from artifact_findplace af inner join artifact a on af.artifact = a.id $where order by a.name asc;";
+      return ["query"=>$sql,"items"=>$this->simple($sql)];
+    } catch (\Throwable $th) {
+      return ["error" => "API Error: " . $th->getMessage(), "sql" => $sql];
     }
   }
 
@@ -54,6 +118,7 @@ class Geom extends Conn{
       $sql = "select gid_".$level." gid, name_".$level." as name, st_asgeojson(`SHAPE`) as geom from gadm".$level." where gid_".$level." = '".$filter."';";
       $items = $this->simple($sql);
     }
+    error_log("SQL: $sql");
     return ["query"=>$sql,"items"=>$items];
   }
 

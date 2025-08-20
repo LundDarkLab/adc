@@ -1,15 +1,10 @@
 /* HOME */
-#mapInfo{
-  display: none;
-}
-
+#mapInfo{ display: none; }
 .legend{ display: none;}
 
 
 /* MAP */
-#mapWrap{
-  margin:0 !important;
-}
+#mapWrap{ margin:0 !important;}
 #map{
   position:absolute; 
   top:70px; 
@@ -31,6 +26,68 @@
   justify-content: center;
   align-items: center;
   color:#fff;
+}
+
+#layerSwitcher{
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: auto;
+  padding: 15px;
+  z-index: 1000;
+}
+#layerSwitcher h5{
+  font-size: 1rem;
+}
+#mapGalleryWrap{
+  position: absolute;
+  top: 150px;
+  left: -50vw;
+  width: 50vw;
+  height: calc(100vh - 300px);
+  padding: 1rem;
+  z-index: 1000;
+  
+  /* Aggiungi la transizione */
+  transition: left 0.3s ease-in-out;
+}
+
+#mapGalleryWrap.visible {
+  left: 0;
+}
+
+#mapGalleryContent{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.5rem;
+  overflow-y: auto;
+  padding-right: .5rem;
+}
+
+.mapGalleryItem{
+  aspect-ratio: 1;
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  min-width: 0; /* Previene overflow del contenuto */
+}
+
+/* Media queries per controllo più granulare */
+@media (max-width: 576px) {
+  #mapGalleryContent {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 577px) and (max-width: 768px) {
+  #mapGalleryContent {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 769px) and (max-width: 992px) {
+  #mapGalleryContent {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 
 @media (min-width: 992px) {
@@ -76,5 +133,9 @@
     padding:10px;
     background-color: rgba(255,255,255,.8); 
     z-index:1000;
+  }
+
+  #mapGalleryContent {
+    grid-template-columns: repeat(5, 1fr);
   }
 }
