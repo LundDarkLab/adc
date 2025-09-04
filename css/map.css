@@ -1,4 +1,4 @@
-@import url('/css/gallery.css');
+@import url('./gallery.css');
 
 /* HOME */
 #mapInfo{ display: none; }

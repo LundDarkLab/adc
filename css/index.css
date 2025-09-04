@@ -1,5 +1,5 @@
-@import '/css/artifacts.css';
-@import '/css/map.css';
+@import './artifacts.css';
+@import './map.css';
 
 #statToggle{
   position:fixed; 
