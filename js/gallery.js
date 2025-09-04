@@ -6,7 +6,7 @@ export function initGallery(client, features = {}, filter = {}) {
   };
 
   const state = {
-    endpoint: "/api/endpoint_private.php",
+    endpoint: ENDPOINT,
     class: 'Collection',
     page: 1,
     limit: 20,
