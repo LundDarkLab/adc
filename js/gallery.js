@@ -168,6 +168,8 @@ export function initCollection(filter) {
     </div>
     `;
     return;
+  }else{
+    document.getElementById('noCollection').innerHTML = '';
   }
 
   const state = {
