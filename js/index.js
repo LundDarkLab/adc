@@ -1,21 +1,8 @@
-let artifactsTot=0;
-// Cache for county data
-let countyDataCache = null;
-let cacheTimestamp = null;
+import { initGallery as gallery, initCollection as collection } from "./gallery.js";
+const filterForm = document.getElementById('filterForm');
+const resetCollectionBtn = document.getElementById('resetCollection');
+const resetGalleryBtn = document.getElementById('resetGallery');
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
-
-// Prevent browser scroll restoration for better UX with dynamic content
-if ('scrollRestoration' in history) {
-  history.scrollRestoration = 'manual';
-} else {
-  // Fallback for older browsers
-  window.addEventListener('load', () => {
-    window.scrollTo(0, 0);
-  });
-}
-
-/////////////
-// DOM Elements Cache (ottimizzazione)
 const byCounty = document.getElementsByName('byCounty')[0];
 const byInstitution = document.getElementsByName('byInstitution')[0];
 const byCategory = document.getElementsByName('byCategory')[0];
@@ -23,260 +10,98 @@ const byMaterial = document.getElementsByName('byMaterial')[0];
 const byStart = document.getElementsByName('byStart')[0];
 const byEnd = document.getElementsByName('byEnd')[0];
 const byDescription = document.getElementsByName('byDescription')[0];
-const sortBy = document.getElementsByName('sortBy')[0];
-const $window = $(window);
-const $document = $(document);
+const sortByBtn = document.querySelectorAll('.sortBy');
+const toggleFilterBtn = document.querySelectorAll(".toggleFilter");
+const statToggle = document.getElementById('statToggleBtn');
+const toggleSpan = statToggle.querySelector('span');
+const createFromFilteredBtn = document.getElementById('createFromFiltered');
+const removeItemBtn = document.querySelectorAll(".removeItemBtn");
 
-// State variables
-let activeFilter = 0;
-let cronoData = [];
-let institutionData = [];
+let filter = [];
+let feature = []
+let currentFilter = [];
 
-// Infinite scroll optimization
-let scrollTimeout;
-const SCROLL_THRESHOLD = 200; // Pixels from bottom to trigger load
-const DEBOUNCE_DELAY = 100; // ms
-
-// Google Charts
 google.charts.load('current', { 'packages':['corechart']});
 
-// Initial setup
-$("#createFromFiltered, #resetCollection").hide();
-
-if($("[name=logged]").val() == 0){
-  $("#itemTool, #statWrap").addClass('large');
-}else{
-  $("#itemTool, #statWrap").addClass(checkDevice()=='pc' ? 'small' :'large');
-}
-
-currentPageActiveLink('index.php');
-
-// Initialize everything
-initializeApp();
-
-// Event Listeners (ottimizzati con delegation dove possibile)
-screen.orientation.addEventListener("change", debounce(resizeDOM, 500));
-
-// Filter events
-$(".toggleFilter").on('click', toggleFilter);
-$("[name=statToggle]").on('click', toggleStats);
-$("a.sortBy").on('click', handleSortChange);
-$("#resetGallery").on('click', resetGallery);
-$("#createFromFiltered").on('click', createFromFiltered);
-$("#resetCollection").on('click', resetCollection);
-$("#toggleMenu").on('click', resizeDOM);
-
-// Delegated events for dynamic content
-$("body").on('click', "#macroList .dropdown-item", handleChronoChange);
-
-// Infinite scroll with debouncing
-$window.on('scroll', debounce(handleScroll, DEBOUNCE_DELAY));
-
-// Tab events
-document.querySelectorAll('button[data-bs-toggle="tab"]').forEach((el) => {
-  el.addEventListener('show.bs.tab', handleTabChange);
+document.addEventListener('DOMContentLoaded', function() {
+  initializeApp();
 });
-
-// ==================== FUNCTIONS ====================
 
 async function initializeApp() {
   try {
     // Load data in parallel for better performance
     await Promise.all([
+      currentPageActiveLink('index.php'),
+      interfaceSetup(),
       artifactByCounty(),
       getFilterList(),
-      buildStat()
+      buildStat(),
     ]);
-        
-    // Load first page
-    resetPagination();
-    buildGallery(gallery, 1, false);
-    
+
+    await showGallery();
+    await showCollection();
+    await initializeEventListeners();
   } catch (error) {
     console.error('Error initializing app:', error);
+  } finally {
+    const loader = document.getElementById('loadingDiv');
+    if (loader) loader.style.display = 'none';
   }
 }
 
-function resetPagination() {
-  currentPage = 1;
-  hasMoreItems = true;
-  isLoading = false;
-}
-
-function loadNextPage() {
-  if (!hasMoreItems || isLoading) return;
-  
-  currentPage++;
-  buildGallery(gallery, currentPage, true);
-}
-
-function handleScroll() {
-  const scrollTop = $window.scrollTop();
-  const windowHeight = $window.height();
-  const documentHeight = $document.height();
-  
-  // Handle stats visibility
-  handleStatsVisibility(scrollTop);
-  
-  // Handle infinite scroll
-  if (scrollTop + windowHeight >= documentHeight - SCROLL_THRESHOLD) {
-    if (hasMoreItems && !isLoading) {
-      loadNextPage();
-    }
+async function interfaceSetup() {
+  createFromFilteredBtn.style.visibility = 'hidden';
+  resetCollectionBtn.style.display = 'none';
+  if(logged.value == 0){ 
+    itemTool.classList.add('large');
+    statWrap.classList.add('large');
+  }else{
+    itemTool.classList.add(checkDevice()=='pc' ? 'small' :'large');
+    statWrap.classList.add(checkDevice()=='pc' ? 'small' :'large');
   }
 }
-
-function handleStatsVisibility(scrollTop) {
-  const statWrap = document.getElementById("statWrap");
-  const statToggle = document.querySelector("[name=statToggle]");
-  
-  if (scrollTop > 0) {
-    if (statWrap.classList.contains('statWrapVisible')) {
-      statWrap.classList.remove('statWrapVisible');
-      statWrap.classList.add('statWrapHidden');
-      
-      const toggleSpan = statToggle.querySelector('span');
-      toggleSpan.classList.remove('mdi-chevron-left');
-      toggleSpan.classList.add('mdi-chevron-right');
-    }
-  } else {
-    if (statWrap.classList.contains('statWrapHidden')) {
-      statWrap.classList.remove('statWrapHidden');
-      statWrap.classList.add('statWrapVisible');
-      
-      const toggleSpan = statToggle.querySelector('span');
-      toggleSpan.classList.remove('mdi-chevron-right');
-      toggleSpan.classList.add('mdi-chevron-left');
-    }
+async function artifactByCounty() {
+  if (countyDataCache && cacheTimestamp && (Date.now() - cacheTimestamp < CACHE_DURATION)) {
+    mapStat(countyDataCache);
+    return;
   }
-}
 
-function toggleFilter() {
-  const filterWrap = document.getElementById('filterWrap');
-  const toggleSpan = document.querySelector('.toggleFilter span');
-  
-  filterWrap.classList.toggle('d-none');
-  filterWrap.classList.toggle('d-block');
-  
-  toggleSpan.classList.toggle('mdi-chevron-down');
-  toggleSpan.classList.toggle('mdi-chevron-up');
-}
-
-function toggleStats(event) {
-  const statWrap = document.getElementById('statWrap');
-  const toggleSpan = event.currentTarget.querySelector('span');
-  
-  statWrap.classList.toggle('statWrapVisible');
-  statWrap.classList.toggle('statWrapHidden');
-  
-  toggleSpan.classList.toggle('mdi-chevron-left');
-  toggleSpan.classList.toggle('mdi-chevron-right');
-}
-
-function handleSortChange() {
-  sort = $(this).data('sort') + " asc";
-  resetPagination();
-  getFilter();
-}
-
-function handleFilterChange() {
-  resetPagination();
-  getFilter();
-}
-
-function handleChronoChange(el) {
-  $("#macroList .dropdown-item").removeClass('active');
-  $(el.target).addClass('active');
-  $("#chronoDropDownBtn").text($(el.target).text());
-  resetPagination();
-  getFilter();
-}
-
-function handleTabChange(event) {
-  if (event.target.id == 'viewCollection') {
-    window.scrollTo(0, 350);
-  }
-}
-
-function resetGallery() {
-  filter = [];
-  sort = "artifact.id DESC";
-  activeFilter = 0;
-  
-  // Reset del form
-  document.getElementById('filterForm').reset();  
-  resetPagination();
-  buildGallery(gallery, 1, false);
-  
-  if (countyGroup && typeof countyGroup.getBounds === 'function') {
-    map2.fitBounds(countyGroup.getBounds());
-  } else {
-    console.error("countyGroup is not defined or does not have a getBounds method");
-  }
-}
-
-function createFromFiltered() {
-  $(".addItemBtn").trigger('click');
-  $(this).hide();
-}
-
-function resetCollection() {
-  $(".removeItemBtn").hide();
-  $(".addItemBtn").show();
-  buildCollection();
-  checkActiveFilter();
-}
-
-function getFilter() {
-  filter = [];
-  
-  // Ottieni tutti i dati del form in una volta
-  const formData = new FormData(document.getElementById('filterForm'));
-  
-  // Converti FormData in un oggetto normale per facilità d'uso
-  const filterValues = Object.fromEntries(formData.entries());
-  
-  // Costruisci i filtri solo per i campi con valori
-  if (filterValues.byCounty) {
-    filter.push("af.gid_1 = '" + filterValues.byCounty + "'");
+  try {
+    const formData = new FormData();
+    formData.append('trigger', 'artifactByCounty');
+    formData.append('filter[]', 'a.category_class > 0');
     
-    // Zoom to selected county on map
-    if (typeof county !== 'undefined' && county) {
-      county.eachLayer(function(layer) {
-        if (layer.feature.properties.id === filterValues.byCounty) {
-          map2.fitBounds(layer.getBounds());
-        }
-      });
+    const response = await fetch(API + "stats.php", {
+      method: 'POST',
+      body: formData
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
-  }
-  
-  if (filterValues.byInstitution) { filter.push("artifact.storage_place = " + filterValues.byInstitution); }
-  if (filterValues.byCategory) { filter.push("class.id = " + filterValues.byCategory); }
-  if (filterValues.byMaterial) { filter.push("material.id = " + filterValues.byMaterial); }
-  if (filterValues.byStart) { filter.push("artifact.start >= " + filterValues.byStart); }
-  if (filterValues.byEnd) { filter.push("artifact.end <= " + filterValues.byEnd); }
-  if (filterValues.description) {
-    filter.push("(artifact.description like '%" + filterValues.description + "%' or artifact.name like '%" + filterValues.description + "%')");
-  }
-  
-  
-  resetPagination();
-  document.getElementById('wrapGallery').innerHTML = '';
-  
-  if(screen.width < 576 ) {handleStatsVisibility(100);}
-  buildGallery(gallery, 1, false);
-}
+    
+    const data = await response.json();
+    if (!Array.isArray(data)) {
+      console.error('Expected array but got:', typeof data, data);
+      throw new Error('Expected array response');
+    }
+    
+    const countyFragment = document.createDocumentFragment();
+    data.forEach((county) => {
+      const option = document.createElement('option');
+      option.textContent = county.name_1;
+      option.value = county.gid_1;
+      countyFragment.appendChild(option);
+    });
+    byCounty.appendChild(countyFragment);
 
-// Aggiungi event listener per il form in JavaScript puro
-document.getElementById('filterForm').addEventListener('submit', function(e) {
-  e.preventDefault();
-  resetPagination();
-  getFilter();
-});
-
-function initializeEventListeners() {
-  // Reset gallery
-  document.getElementById('resetGallery').addEventListener('click', resetGallery);
+    countyDataCache = data;
+    cacheTimestamp = Date.now();
+    mapStat(data);
+    
+  } catch (error) {
+    console.error('Error loading county data:', error);
+  }
 }
 
 async function getFilterList() {
@@ -334,11 +159,6 @@ async function getFilterList() {
   }
 }
 
-function checkActiveFilter(){
-  filter.length > 0 ? $("#createFromFiltered").show() : $("#createFromFiltered").hide();
-}
-
-
 async function buildStat() {
   try {
     const formData = new FormData();
@@ -371,61 +191,174 @@ async function buildStat() {
     document.querySelector("#institutionTot > h2").textContent = data.institution.tot;
     document.querySelector("#filesTot > h2").textContent = data.files.tot;
 
-    google.charts.setOnLoadCallback(cronoChart);
-    google.charts.setOnLoadCallback(institutionChart);
+    google.charts.setOnLoadCallback(cronoChart(cronoData));
+    google.charts.setOnLoadCallback(institutionChart(institutionData));
     
   } catch (error) {
     console.error('Error loading stats:', error);
   }
 }
 
-async function artifactByCounty() {
-  // Check if we have valid cached data
-  if (countyDataCache && cacheTimestamp && (Date.now() - cacheTimestamp < CACHE_DURATION)) {
-    mapStat(countyDataCache);
-    return;
-  }
+async function initializeEventListeners() {
+  screen.orientation.addEventListener("change", debounce(resizeDOM, 500));
+  window.addEventListener('scroll', function() { 
+    const scrollTop = window.scrollY || document.documentElement.scrollTop;
+    let backTopPos = scrollTop > 0 ? '10px' : '50px';
+    backToTop.style.transform = 'translate(-50%, ' + backTopPos + ')';
 
+    let activeTab = document.querySelector('#viewCollection')?.classList.contains('active');
+    if (activeTab) return;
+
+    scrollTop > 0 ? hideStats() : showStats();
+  });
+
+  document.querySelectorAll('button[data-bs-toggle="tab"]').forEach((el) => {
+    el.addEventListener('show.bs.tab', handleTabChange);
+  });
+
+  toggleFilterBtn.forEach(btn => {
+    btn.addEventListener('click', toggleFilter);
+  });
+
+  if (createFromFilteredBtn){createFromFilteredBtn.addEventListener('click', createFromFiltered);}
+  if (resetCollectionBtn){resetCollectionBtn.addEventListener('click', resetCollection);}
+  if (resetGalleryBtn){resetGalleryBtn.addEventListener('click', resetGallery);}
+  if (toggleMenuBtn){toggleMenuBtn.addEventListener('click', debounce(resizeDOM, 500));}
+  if (statToggle){statToggle.addEventListener('click', toggleStats);}
+  if (sortByBtn){sortByBtn.forEach(btn => btn.addEventListener('click', handleSortChange));}
+  if (backToTopBtn){backToTopBtn.addEventListener('click', () => { window.scrollTo({ top: 0, behavior: 'smooth' }); });}
+
+  filterForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    showGallery();
+  });
+}
+
+function checkActiveFilter(){
+  let displayClass = activeFilter > 0 ? "visible" : "hidden";
+  createFromFilteredBtn.style.visibility = displayClass;
+  document.getElementById('activeFilter').textContent = activeFilter > 0 ? activeFilter : '';
+}
+
+function createFromFiltered() {
   try {
-    const formData = new FormData();
-    formData.append('trigger', 'artifactByCounty');
-    formData.append('filter[]', 'a.category_class > 0');
-    
-    const response = await fetch(API + "stats.php", {
-      method: 'POST',
-      body: formData
-    });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    const data = await response.json();
-    // Verifica che data sia un array
-    if (!Array.isArray(data)) {
-      console.error('Expected array but got:', typeof data, data);
-      throw new Error('Expected array response');
-    }
-    
-    // Popola il dropdown delle county
-    const countyFragment = document.createDocumentFragment();
-    data.forEach((county) => {
-      // county.fillOpacity = county.tot > 0 ? 0.7 : 0.1;
-      const option = document.createElement('option');
-      option.textContent = county.name_1;
-      option.value = county.gid_1;
-      countyFragment.appendChild(option);
-    });
-    byCounty.appendChild(countyFragment);
+    createFromFilteredBtn.disabled = true;
+    createFromFilteredBtn.innerHTML = '<i class="mdi mdi-loading mdi-spin"></i> Creating Collection...';
 
-    // Cache the response
-    countyDataCache = data;
-    cacheTimestamp = Date.now();
-    mapStat(data);
-    
   } catch (error) {
-    console.error('Error loading county data:', error);
+    console.error('Error creating collection:', error);
+  } finally {
+    createFromFilteredBtn.style.visibility = 'hidden';
+    createFromFilteredBtn.innerHTML = 'Create Collection';
   }
+}
+
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
+async function getFilter() {
+  filter = [];
+  let activeFilterCount = 0;
+  const formData = new FormData(filterForm);
+  const filterValues = Object.fromEntries(formData.entries());
+  
+  if (filterValues.byCounty) {
+    filter.push("af.gid_1 = '" + filterValues.byCounty + "'");
+    activeFilterCount++;
+    if (typeof county !== 'undefined' && county) {
+      county.eachLayer(function(layer) {
+        if (layer.feature.properties.id === filterValues.byCounty) {
+          map2.fitBounds(layer.getBounds());
+        }
+      });
+    }
+  }
+  
+  if (filterValues.byInstitution) { 
+    filter.push("artifact.storage_place = " + filterValues.byInstitution); 
+    activeFilterCount++;
+  }
+  if (filterValues.byCategory) { 
+    filter.push("class.id = " + filterValues.byCategory); 
+    activeFilterCount++;
+  }
+  if (filterValues.byMaterial) { 
+    filter.push("material.id = " + filterValues.byMaterial); 
+    activeFilterCount++;
+  }
+  if (filterValues.byStart) { 
+    filter.push("artifact.start >= " + filterValues.byStart); 
+    activeFilterCount++;
+  }
+  if (filterValues.byEnd) { 
+    filter.push("artifact.end <= " + filterValues.byEnd); 
+    activeFilterCount++;
+  }
+  if (filterValues.description) {
+    filter.push("(artifact.description like '%" + filterValues.description + "%' or artifact.name like '%" + filterValues.description + "%')");
+    activeFilterCount++;
+  }  
+  // Salva il numero di filtri attivi in una variabile globale, se vuoi
+  activeFilter = activeFilterCount;
+  if(screen.width < 576 ) {hideStats();}
+  checkActiveFilter();
+}
+
+function handleSortChange(ev) {
+  sort = ev.currentTarget.dataset.sort + " ASC";
+  getFilter();
+}
+
+function hideStats() {
+  statWrap.classList.add('statWrapHidden');
+  toggleSpan.classList.remove('mdi-chevron-left');
+  toggleSpan.classList.add('mdi-chevron-right');
+}
+
+function showStats() {
+  statWrap.classList.remove('statWrapHidden');
+  toggleSpan.classList.remove('mdi-chevron-right');
+  toggleSpan.classList.add('mdi-chevron-left');
+}
+
+function handleTabChange(pane) {
+  if (pane.target.id === 'viewCollection') {
+    statToggle.style.transform = 'translate(-50px, 0)';
+    hideStats();
+  }else{
+    statToggle.style.transform = 'translate(5px, 0)';
+    showStats();
+    window.scrollTo(0, 350);
+  }
+}
+
+function resetCollection() {
+  removeItemBtn.forEach(btn => btn.style.display = 'none');
+  addItemBtn.forEach(btn => btn.style.display = 'block');
+  checkActiveFilter();
+}
+
+function resetGallery() {
+  filter = [];
+  sort = "artifact.id DESC";
+  activeFilter = 0;
+  filterForm.reset();    
+  if (countyGroup && typeof countyGroup.getBounds === 'function') {
+    map2.fitBounds(countyGroup.getBounds());
+  } else {
+    console.error("countyGroup is not defined or does not have a getBounds method");
+  }
+  galleryInstance.reset();
+  showGallery();
 }
 
 function resizeDOM() {
@@ -442,7 +375,43 @@ function resizeDOM() {
   }
 }
 
-function institutionChart() {
+function toggleFilter() {
+  const filterWrap = document.getElementById('filterWrap');
+  const toggleSpan = document.querySelector('.toggleFilter span');
+  
+  filterWrap.classList.toggle('d-none');
+  filterWrap.classList.toggle('d-block');
+  
+  toggleSpan.classList.toggle('mdi-chevron-down');
+  toggleSpan.classList.toggle('mdi-chevron-up');
+}
+
+function toggleStats(event) {
+  const toggleSpan = event.currentTarget.querySelector('span');
+  statWrap.classList.toggle('statWrapHidden');
+  
+  toggleSpan.classList.toggle('mdi-chevron-left');
+  toggleSpan.classList.toggle('mdi-chevron-right');
+}
+
+async function showGallery() {
+  await getFilter();
+  feature = [];
+  currentFilter = filter;
+  if (galleryInstance && typeof galleryInstance.reset === 'function') { galleryInstance.reset();}
+  galleryInstance = gallery('index', feature, currentFilter);
+}
+
+async function showCollection() {
+  await getFilter();
+  currentFilter = filter;
+  collectionInstance = collection(currentFilter);
+}
+
+/******************/
+/*****CHARTS ******/
+
+function institutionChart(institutionData) {
   var data = google.visualization.arrayToDataTable(institutionData);
   var slices = [];
   for (var i = 0; i < data.getNumberOfRows(); i++) {
@@ -470,8 +439,7 @@ function institutionChart() {
         
         if (institutionId) {
           byInstitution.value = institutionId;
-          resetPagination();
-          getFilter();
+          showGallery();
         }
       }
     }
@@ -480,18 +448,7 @@ function institutionChart() {
   chart.draw(data, options);
 }
 
-function getInstitutionIdByName(name) {
-  for (let i = 1; i < institutionData.length; i++) { 
-    if (institutionData[i][0] === name) {
-      break;
-    }
-  }
-  
-  const option = Array.from(byInstitution.options).find(opt => opt.textContent === name);
-  return option ? option.value : null;
-}
-
-function cronoChart() {
+function cronoChart(cronoData) {
   // Crea la DataTable solo con le colonne che servono per la visualizzazione
   var data = new google.visualization.DataTable();
   data.addColumn('string', 'chronology');
@@ -527,26 +484,17 @@ function cronoChart() {
     if (selection.length > 0) {
       var selectedItem = selection[0];
       if (selectedItem.row !== null) {
-        console.log(selectedItem);
-        
         // Accedi direttamente ai dati originali usando l'indice della riga selezionata
         var rowIndex = selectedItem.row + 1; // +1 perché saltiamo la prima riga (header)
         var chronologyName = cronoData[rowIndex][0];
         var artifactCount = cronoData[rowIndex][1];
-        var startValue = cronoData[rowIndex][2]; // Valore start
-        var endValue = cronoData[rowIndex][3];   // Valore end
+        var startValue = cronoData[rowIndex][2];
+        var endValue = cronoData[rowIndex][3];
         
-        console.log('Selected chronology:', chronologyName);
-        console.log('Artifact count:', artifactCount);
-        console.log('Start value:', startValue);
-        console.log('End value:', endValue);
-        
-        // Imposta i valori nei campi del filtro e applica il filtro
         if (startValue && endValue) {
           byStart.value = startValue;
           byEnd.value = endValue;
-          resetPagination();
-          getFilter();
+          showGallery();
         }
       }
     }
@@ -555,20 +503,140 @@ function cronoChart() {
   chart.draw(data, options);
 }
 
-// Utility function for debouncing
-function debounce(func, wait) {
-  let timeout;
-  return function executedFunction(...args) {
-    const later = () => {
-      clearTimeout(timeout);
-      func(...args);
-    };
-    clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
-  };
+
+function getInstitutionIdByName(name) {
+  for (let i = 1; i < institutionData.length; i++) { 
+    if (institutionData[i][0] === name) {
+      break;
+    }
+  }
+  
+  const option = Array.from(byInstitution.options).find(opt => opt.textContent === name);
+  return option ? option.value : null;
 }
 
-// Chiamare questa funzione nell'inizializzazione
-document.addEventListener('DOMContentLoaded', function() {
-  initializeEventListeners();
-});
+
+/*****************/
+/*****  MAP ******/
+function mapStat(countyData){
+  map2 = L.map('mapChart').fitBounds(mapExt)
+  L.maptilerLayer({apiKey: mapTilerKey, style: "dataviz-light"}).addTo(map2)
+  countyGroup = L.featureGroup().addTo(map2);
+  let countyJson = {"type":"FeatureCollection", "features": []}
+  countyData.forEach(el => {
+    countyJson.features.push({
+      "type": "Feature",
+      "properties": {area:'county',id:el.gid_1,name:el.name_1, tot:el.tot},
+      "geometry": JSON.parse(el.geometry)
+    })
+  });
+  
+  county = L.geoJson(countyJson, {
+    style: styleByGroup,
+    onEachFeature: onEachFeature
+  }).addTo(countyGroup);
+  
+  
+  let myToolbar = L.Control.extend({
+    options: { position: 'topleft'},
+    onAdd: function (map) {
+      let container = L.DomUtil.create('div', 'extentControl leaflet-bar leaflet-control leaflet-touch');
+      btnHome = $("<a/>",{href:'#', title:'max zoom', id:'maxZoomBtn'}).attr({"data-bs-toggle":"tooltip","data-bs-placement":"right"}).appendTo(container)
+      $("<i/>",{class:'mdi mdi-home'}).appendTo(btnHome)
+      
+      btnHome.on('click', function (e) {
+        e.preventDefault()
+        e.stopPropagation()
+        if(window.location.pathname.includes('artifact_view')){
+          map.fitBounds(countyGroup.getBounds())
+        }else{
+          map2.fitBounds(countyGroup.getBounds())
+        }
+      });
+      return container;
+    }
+  })
+  map2.addControl(new myToolbar());
+  
+  let legend = L.control({position: 'bottomright'});
+  legend.onAdd = function (map2) {
+    let div = L.DomUtil.create('div', 'info legend border rounded')
+    let grades = [0, 10, 20, 50, 100, 200, 500, 1000]
+    let labels = [];
+    for (var i = 0; i < grades.length; i++) {
+      let row = $("<div/>").appendTo(div)
+      let img = $("<img/>",{class:'arrowGroup arrow'+grades[i], src:'img/ico/play.png'}).appendTo(row)
+      $("<i/>").css("background-color",getColorByGroup(grades[i] + 1)).appendTo(row)
+      $("<small/>").text(grades[i] + (grades[i + 1] ? '-' + grades[i + 1] : '+')).appendTo(row)
+    }
+    return div;
+  };
+  legend.addTo(map2);
+  $(".arrowGroup").css('visibility','hidden')
+  map2.fitBounds(countyGroup.getBounds())
+}
+
+function filterElement(e){
+  document.getElementsByName('byCounty')[0].value = e.target.feature.properties.id
+  map2.fitBounds(e.target.getBounds());
+  showGallery();
+};
+
+function onEachFeature(feature, layer) {
+  const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  
+  if (isTouchDevice) {
+    let touchTimeout;
+    let isHighlighted = false;
+    layer.on({
+      touchstart: function(e) {
+        e.originalEvent.preventDefault();
+        
+        // Simula hover dopo un breve delay
+        touchTimeout = setTimeout(() => {
+          if (!isHighlighted) {
+            isHighlighted = true;
+            highlightFeature(e);
+          }
+        }, 200);
+      },
+      
+      touchend: function(e) {
+        clearTimeout(touchTimeout);
+        
+        if (isHighlighted) {
+          setTimeout(() => {
+            resetHighlight(e);
+            isHighlighted = false;
+            if(window.location.pathname.includes('artifact_view')){
+              zoomToFeature(e);
+            } else {
+              filterElement(e);
+            }
+          }, 300);
+        }
+      },
+      
+      touchcancel: function(e) {
+        clearTimeout(touchTimeout);
+        if (isHighlighted) {
+          resetHighlight(e);
+          isHighlighted = false;
+        }
+      }
+    });
+    
+  } else {
+    layer.on({
+      mouseover: highlightFeature,
+      mouseout: resetHighlight,
+      click: (e) => {
+        if(window.location.pathname.includes('artifact_view')){
+          zoomToFeature(e);
+        } else {
+          filterElement(e);
+        }
+      }
+    });
+  }
+}

@@ -66,7 +66,7 @@ async function getVocabulary(item, value) {
   try {
     const data = { table: value };
     const body = { class: 'Get', action: 'getVocabulary', ...data };
-    const result = await fetchApi(ENDPOINT, 'POST', {}, body);
+    const result = await fetchApi({url: ENDPOINT, body});
     if (result && result.data) {
       createTable(item, value, result.data);
     } else {
@@ -307,7 +307,7 @@ function createNewValueForm(list, options = []){
 async function addNewItem(list, payload){
   try {
     const body = { class: 'Vocabulary', action: 'addItem', table: list, ...payload };
-    const result = await fetchApi(ENDPOINT, 'POST', {}, body);
+    const result = await fetchApi({url: ENDPOINT, body:body});
     if (result && result.data) {
       const key = Object.keys(listArray).find(k => listArray[k] === list);
       getVocabulary(key, list);
@@ -331,7 +331,7 @@ async function updateVocabulary(data, list, index){
       payload[name] = el.value;
     });
     const body = { class: 'Vocabulary', action: 'updateItem', ...payload };
-    const result = await fetchApi(ENDPOINT, 'POST', {}, body);
+    const result = await fetchApi({url: ENDPOINT, body:body});
     if (result && result.data) {
       const key = Object.keys(listArray).find(k => listArray[k] === list);
       getVocabulary(key, list);
@@ -353,7 +353,7 @@ function deleteVocabularyItem(table,id){
     try {
       const data = { table:table, id:id };
       const body = { class: 'Vocabulary', action: 'deleteItem', ...data };
-      const result = await fetchApi(ENDPOINT, 'POST', {}, body);
+      const result = await fetchApi({url: ENDPOINT, body:body});
       if (result && result.data) {
         const key = Object.keys(listArray).find(k => listArray[k] === table);
         getVocabulary(key,table);
@@ -438,7 +438,7 @@ async function getItemsFromValue(item, list, obj){
   try {
     const data = { object: list, value: obj.id };
     const body = { class: 'Get', action: 'getItemsFromValue', ...data };
-    const result = await fetchApi(ENDPOINT, 'POST', {}, body);
+    const result = await fetchApi({url: ENDPOINT, body:body});
     if (result && result.data) {
       const val = obj.value || obj.acronym;
       viewItemsTitle.textContent = `Items with "${val}" value for "${item}" list`;

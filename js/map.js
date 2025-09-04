@@ -1,3 +1,8 @@
+import { initGallery as gallery } from './gallery.js';
+
+let currentFilter = [];
+let galleryInstance = null;
+
 // Variabili globali
 let galleryWrap;
 let closeGallery;
@@ -10,7 +15,12 @@ const loadedLevels = {};
 const loadingLevels = new Set(); // Per evitare caricamenti multipli
 
 function initMap() {
-  map = L.map('map').fitWorld().setZoom(defaultZoom);
+  // map = L.map('map').fitWorld().setZoom(defaultZoom);
+  const bounds = [
+  [35.5, -10],   // Sud-Ovest (esempio: sud Europa)
+  [60, 30]       // Nord-Est (esempio: nord Europa)
+];
+map = L.map('map').fitBounds(bounds);
   osm = L.tileLayer(osmTile, { maxZoom: 20, attribution: osmAttrib}).addTo(map);
   gStreets = L.tileLayer(gStreetTile,{maxZoom: 20, subdomains:gSubDomains });
   gSat = L.tileLayer(gSatTile,{maxZoom: 20, subdomains:gSubDomains});
@@ -86,7 +96,7 @@ function initMap() {
 
   loadInstitutions();
   loadFindPlace();
-  buildSwitcher(); // Sostituisce loadAllBoundaries()
+  buildSwitcher();
 }
 
 // Funzione per verificare quali livelli hanno geometrie e costruire lo switcher
@@ -105,8 +115,6 @@ async function buildSwitcher() {
     }
     
     const data = await response.json();
-    console.log('Response data:', data);
-    
     if (!data.success || !Array.isArray(data.levels)) {
       throw new Error('Formato dati non valido');
     }
@@ -117,14 +125,9 @@ async function buildSwitcher() {
       return;
     }
     
-    console.log('Elemento overlay trovato, creando checkbox...');
-    
     // Crea le checkbox per ogni livello disponibile
     data.levels.forEach(levelData => {
-      const { level, count, name } = levelData;
-      
-      console.log(`Creating checkbox for level ${level}: ${name} (${count})`);
-      
+      const { level, count, name } = levelData;      
       const checkDiv = document.createElement('div');
       checkDiv.className = 'form-check';
       
@@ -149,8 +152,6 @@ async function buildSwitcher() {
       checkDiv.appendChild(checkbox);
       checkDiv.appendChild(label);
       overlayDiv.appendChild(checkDiv);
-      
-      console.log(`✓ Checkbox created for level ${level}`);
     });
     
     // Carica subito il livello 0 se esiste
@@ -243,7 +244,6 @@ async function loadLevel(level) {
   try {
     const result = await getBoundaries(level);
     loadedLevels[level] = true;
-    console.log(`✓ Livello ${level} caricato: ${result} features`);
     return result;
   } catch (error) {
     console.error(`✗ Errore caricando livello ${level}:`, error);
@@ -257,9 +257,9 @@ async function loadLevel(level) {
 function showLevelLoader(level) {
   const checkbox = document.getElementById(`level-${level}`);
   const label = checkbox?.nextElementSibling;
-  
+
+  showLoading();
   if (checkbox && label) {
-    // Disabilita checkbox e mostra spinner
     checkbox.disabled = true;
     label.innerHTML = `<span class="spinner-border spinner-border-sm me-2" style="width: 0.8rem; height: 0.8rem;"></span>${getLevelName(level)}`;
   }
@@ -268,14 +268,23 @@ function showLevelLoader(level) {
 function hideLevelLoader(level) {
   const checkbox = document.getElementById(`level-${level}`);
   const label = checkbox?.nextElementSibling;
-  
+
+  hideLoading();
   if (checkbox && label) {
-    // Riabilita checkbox e ripristina il testo originale
     checkbox.disabled = false;
-    // Cerca di mantenere il conteggio originale se presente
     const originalText = label.getAttribute('data-original-text') || getLevelName(level);
     label.textContent = originalText;
   }
+}
+
+function showLoading(){
+  const loadingDiv = document.getElementById('loadingDiv');
+  loadingDiv.style.display = 'flex';
+}
+
+function hideLoading(){
+  const loadingDiv = document.getElementById('loadingDiv');
+  loadingDiv.style.display = 'none';
 }
 
 async function getBoundaries(level) {
@@ -285,10 +294,7 @@ async function getBoundaries(level) {
     const formData = new FormData();
     formData.append('trigger', 'getBoundaries');
     formData.append('level', level);
-    formData.append('filter', '');
-    
-    console.log(`Caricamento livello ${level}...`);
-    
+    formData.append('filter', '');    
     const response = await fetch(API + "geom.php", {
       method: 'POST',
       body: formData
@@ -311,7 +317,6 @@ async function getBoundaries(level) {
       throw new Error(`Errore nel parsing JSON: ${parseError.message}`);
     }
     
-    // Il server restituisce un oggetto con la proprietà 'items'
     let items = [];
     if (data && Array.isArray(data.items)) {
       items = data.items;
@@ -369,7 +374,7 @@ async function getBoundaries(level) {
             opacity: 0.8,
             fillOpacity: 0.3
           },
-          onEachFeature: adminItems
+          onEachFeature: openGallery
         });
         
         levelLayers[level] = levelLayer;
@@ -379,12 +384,9 @@ async function getBoundaries(level) {
         if (checkbox && checkbox.checked) {
           levelLayer.addTo(countyGroup);
         }
-        
-        console.log(`✓ Livello ${level} completato: ${geoJsonData.features.length} features`);
         return geoJsonData.features.length;
       }
     } else {
-      console.log(`Livello ${level}: nessun dato disponibile`);
       return 0;
     }
     
@@ -425,12 +427,13 @@ async function loadInstitutions() {
     }
 
     const data = await response.json();
-    console.log('Dati istituzioni:', data);
     if (data && Array.isArray(data.items)) {
       data.items.forEach(institution => {
         if (institution.lat && institution.lon) {
           const marker = L.marker([institution.lat, institution.lon], { icon: storagePlaceIco });
-          marker.bindPopup(`<strong>${institution.name || 'Institution'}</strong>`);
+          marker.on('click', function(e) {
+            showGalleryForProps({ institution: institution.id, name: institution.name });
+          });
           institutionsGroup.addLayer(marker);
         }
       });
@@ -461,12 +464,12 @@ async function loadFindPlace() {
     }
 
     const data = await response.json();
-    console.log('Dati artefatto:', data);
     if (data && Array.isArray(data.items)) {
       data.items.forEach(obj => {
         if (obj.latitude && obj.longitude) {
-          const marker = L.marker([obj.latitude, obj.longitude]);
-          marker.bindPopup(`<strong>${obj.name || 'Artefatto'}</strong>`);
+          const marker = L.marker([obj.latitude, obj.longitude], { icon: findplaceIco });
+          marker.bindPopup(popUp(obj));
+          marker.on('click', function(e) { console.log(obj); });
           findPlaceGroup.addLayer(marker);
         }
       });
@@ -483,22 +486,83 @@ async function loadFindPlace() {
   }
 }
 
-function adminItems(feature, layer) {
-  // layer.bindPopup(`<strong>${feature.properties.name}</strong><br>Gid: ${feature.properties.gid}<br>Level: ${feature.properties.level}`);
-  layer.on('click', function() {
-    console.log(`Clicked on ${feature.properties.name}`);
-    galleryWrap.classList.add('visible');
+function popUp(properties) {
+  let popupContent = "<div class='card popUpCard'>";
+  popupContent += `<div class="card-header mapCardHeader">`;
+  popupContent += `<img src="archive/thumb/${properties.thumbnail}" alt="${properties.thumbnail}" loading="lazy" class="cardImage" onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;16&quot; height=&quot;16&quot; fill=&quot;currentColor&quot; class=&quot;bi bi-image&quot; viewBox=&quot;0 0 16 16&quot;&gt;<path d=&quot;M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0&quot;/><path d=&quot;M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1z&quot;/></svg>'; this.className ='cardPlaceholder'"/>`;
+  popupContent += `<p class="txt-adc-dark fw-bold headerTxt">${properties.id}</p>`;
+  popupContent += "</div>";
+
+  popupContent += `<div class="card-body">`;
+  popupContent += `<h3 class="card-title txt-adc-dark fw-bold">${properties.category}</h3>`;
+  popupContent += `<p class="m-0 mb-1">${properties.nation} / ${properties.county}</p>`;
+  popupContent += `<p class="m-0 mb-1">${properties.institution}</p>`;
+  popupContent += `<p class="m-0 mb-1">${properties.start} / ${properties.end}</p>`;
+  popupContent += `<p class="txt-adc-dark">${properties.description}</p>`;
+  popupContent += "</div>";
+
+  popupContent += `<div class="card-footer">`;
+  popupContent += `<a href="artifact_view.php?item=${properties.id}" class="btn btn-adc-blue text-white">View</a>`;
+  popupContent += "</div>";
+
+  popupContent += "</div>";
+  return popupContent;
+}
+
+function openGallery(feature, layer) {
+  layer.on('click', async function() {
+    showGalleryForProps(feature.properties);
   });
 }
 
 document.addEventListener('DOMContentLoaded', function() {
   closeGallery = document.getElementById('closeGallery');
-  
+  const mapGuide = document.getElementById('mapGuide');
+  const mapGuideBtn = document.getElementById('mapGuideBtn');
+  const closeGuide = document.getElementById('closeGuide');
+
   if (closeGallery) {
     closeGallery.addEventListener('click', function() {
       galleryWrap.classList.remove('visible');
     });
   }
-  
+
+  if (mapGuideBtn) {
+    mapGuideBtn.addEventListener('click', function() {
+      mapGuide.classList.toggle('visible');
+    });
+  }
+
+  if (closeGuide) {
+    closeGuide.addEventListener('click', function() {
+      mapGuide.classList.remove('visible');
+    });
+  }
+
   initMap();
 });
+
+function showGalleryForProps(props) {
+  if (!props) return;
+  let feature = null
+  let filter = null;
+  if (props.institution) {
+    feature = 'institution'; 
+    filter = [`inst.id = ${props.institution}`]; 
+  } 
+  else if (props.level !== undefined && props.gid !== undefined) {
+    feature = 'boundary'; 
+    filter = [`af.gid_${props.level} = '${props.gid}'`]; 
+  } 
+  else { filter = []; }
+  currentFilter = filter;
+  const content = document.getElementById('wrapCollection');
+  if (content) {
+    content.scrollTop = 0;
+    content.innerHTML = '';
+  }
+
+  if (galleryInstance && typeof galleryInstance.reset === 'function') { galleryInstance.reset();}
+  galleryInstance = gallery('map', {name:props.name, type:feature}, currentFilter);
+  galleryWrap.classList.add('visible');
+}

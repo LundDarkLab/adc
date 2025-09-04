@@ -43,7 +43,7 @@ function timelineTableClick(event) {
 async function buildTimelineList() {
   try {
     const payload = {class: 'Timeline',  action: 'getTimelineList'}
-    const result = await fetchApi(ENDPOINT, 'POST', {}, payload);
+    const result = await fetchApi({url:ENDPOINT, body:payload});
     if (result && result.data) {
       const timelines = result.data;
       const rows = timelines.map(timeline => {
@@ -141,7 +141,7 @@ function defineTimelineInfo(action){
     const name = nameInput.value.trim();
     if (name) {
       const payload = {class: 'Timeline', action: 'checkTimelineName', name: name};
-      fetchApi(ENDPOINT, 'POST', {}, payload)
+      fetchApi({url: ENDPOINT, body: payload})
         .then(result => {
           if (result && result.data && result.data.error === 0) {
             showToast('Timeline name is available.', 'success');
@@ -399,7 +399,7 @@ function defineMacro(){
     `
   });
   const payload = {class: 'Timeline', action: 'getMacroList'};
-  fetchApi(ENDPOINT, 'POST', {}, payload)
+  fetchApi({url: ENDPOINT, body: payload})
     .then(result => {
       if (result && result.data) {
         result.data.forEach(macro => {
@@ -837,9 +837,9 @@ function refreshCategoryRows(tbody, data, type, select) {
       actionCell.appendChild(resetBtn);
     } else if (type === 'specific') {
       newRow.dataset.generic = item.generic_id;
-      const genericCell = newRow.insertCell();
       const genericObj = definedGeneric.find(g => g.id === item.generic_id);
-      genericCell.textContent = genericObj.definition;
+      const genericCell = newRow.insertCell();
+      genericCell.textContent = genericObj ? genericObj.definition : 'N/A';
       const defCell = newRow.insertCell();
       defCell.textContent = item.definition;
       const startCell = newRow.insertCell();
@@ -1041,7 +1041,7 @@ function saveTimeline(state){
     generic: definedGeneric,
     specific: definedSpecific
   };
-  fetchApi(ENDPOINT, 'POST', {}, payload).then(result => {
+  fetchApi({url: ENDPOINT, body: payload}).then(result => {
     if (result && result.data) {
       // Reset the defined arrays and UI elements
       definedMacro.length = 0;
@@ -1121,7 +1121,7 @@ const editTimelineGuide = ()=>{
 async function getTimelineDetails(timelineId) {
   try {
     const payload = {class: 'Timeline', action: 'getTimelineDetails', timelineId: timelineId};
-    const result = await fetchApi(ENDPOINT, 'POST', {}, payload);
+    const result = await fetchApi({url: ENDPOINT, body: payload});
     if (result && result.data) {
       const timelineDetails = result.data;
       // console.log('Timeline details:', timelineDetails);

@@ -42,16 +42,19 @@ const storagePlaceIco = L.icon({
 });
 const findplaceIco = L.icon({
   iconUrl: 'img/ico/findPlace.png',
-  iconSize:     [30, 30],
+  iconSize:     [40, 40],
   iconAnchor:   [15, 15],
-  popupAnchor:  [-3, -76]
+  // popupAnchor:  [-3, -76]
+  popupAnchor:  [0, -15]
 });
 
 // == GLOBAL VARIABLES ===
-let map, map2, marker,county, countyGroup, institutionsGroup, cityGroup, boundaries;
+let map, map2;
+let marker,county, countyGroup, institutionsGroup, cityGroup, boundaries, findPlaceGroup;
 let baseLayers, osm, gStreets, gSat, gTerrain, layerControl;
 let overlayMaps = {}
 let mapClick = false;
+let btnHome;
 
 // === VARIABILI PER GEOJSON ===
 let countyJson = { type: "FeatureCollection", features: [] };

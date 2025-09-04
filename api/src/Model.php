@@ -172,6 +172,9 @@ class Model extends Conn{
   }
 
   public function buildGallery(string $sortBy, $filterArr = [], $page = 1, $limit = 10){
+    // debug rapido: log tipo e anteprima valore
+  error_log('buildGallery: $filterArr type=' . gettype($filterArr) . ' value=' . substr(var_export($filterArr, true), 0, 500));
+
     // Calcola offset per la paginazione
     $offset = ($page - 1) * $limit;    
     $filterMaterial = "";

@@ -68,9 +68,9 @@ class Get extends Conn{
   }
 
   public function getFilterList(){
-    $out['category'] = $this->simple("select l.id, l.value from list_category_class l inner join artifact a on a.category_class = l.id group by l.id order by 2 asc;");
-    $out['material'] = $this->simple("select l.id, l.value from list_material_specs l inner join artifact_material_technique a on a.material = l.id group by l.id order by 2 asc;");
-    $out['institution'] = $this->simple("select i.id, i.name value from institution i inner join artifact a on a.storage_place = i.id group by i.id order by 2 asc;");
+    $out['category'] = $this->simple("select l.id, l.value from list_category_class l inner join artifact a on a.category_class = l.id and a.status = 2 group by l.id order by 2 asc;");
+    $out['material'] = $this->simple("select l.id, l.value from list_material_specs l inner join artifact_material_technique amt on amt.material = l.id inner join artifact a on a.id = amt.artifact and a.status = 2 group by l.id order by 2 asc;");
+    $out['institution'] = $this->simple("select i.id, i.name value from institution i inner join artifact a on a.storage_place = i.id and a.status = 2 group by i.id order by 2 asc;");
     return $out;
   }
 

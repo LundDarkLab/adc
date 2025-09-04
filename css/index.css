@@ -1,23 +1,29 @@
-#statToggle{position:fixed; top:265px; left:-17px; z-index:501;}
-#statToggle > button{padding-right:2px}
+@import '/css/artifacts.css';
+@import '/css/map.css';
+
+#statToggle{
+  position:fixed; 
+  top:265px; 
+  left:0px; 
+  z-index:501; 
+  transform: translate(-15px, 0);
+  transition: transform 0.3s ease-in-out;
+}
 
 #statWrap{
   position:fixed; 
   height:fit-content;
   top:115px; 
+  left:0;
   padding:10px; 
   z-index:500;
   display: grid;
   grid-template-columns: 1fr;
   grid-template-rows: repeat(4, 1fr);
   grid-gap: 10px;
+  transition: transform 0.4s cubic-bezier(.4,0,.2,1);
 }
-.statWrapVisible{
-  left:0;
-}
-.statWrapHidden{
-  left:-100vw;
-}
+.statWrapHidden{transform: translateX(-100vw);}
 
 .statSection{
   padding:10px; 
@@ -91,8 +97,14 @@
 .dropdown-menu .dropdown-submenu {display: none;position: absolute;left: 100%;top: -7px; width:200px;}
 .dropdown-menu > li:hover > .dropdown-submenu {display: block;}
 
-main{margin-top: 480px !important;}
-
+/* main{padding-top: 480px !important;} */
+main {
+  position: absolute;
+  top:120px;
+  bottom:0;
+  margin:0 0 !important;
+  padding: 0px;
+}
 @media (min-width: 368px) {
 }
 

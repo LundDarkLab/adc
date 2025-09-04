@@ -1,5 +1,6 @@
 <?php
 namespace Adc;
+
 use PDO;
 use Dotenv\Dotenv;
 class Conn {

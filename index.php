@@ -10,8 +10,6 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
     <link rel="stylesheet" href="css/index.css">
-    <link rel="stylesheet" href="css/artifacts.css">
-    <link rel="stylesheet" href="css/map.css">
   </head>
   <body>
     <?php 
@@ -19,15 +17,18 @@
       require("assets/loadingDiv.html"); 
       require("assets/itemtool.html"); 
     ?>
-    
-
     <div id="statToggle" class="">
-      <button type="button" class="btn btn-lg btn-secondary" name="statToggle">
+      <button type="button" class="btn btn-lg btn-dark" id="statToggleBtn">
         <span class="mdi mdi-chevron-left"></span>
       </button>
     </div>
+    <div id="backToTop">
+      <button class="btn btn-dark btn-lg" type="button" id="scrollToTopBtn">
+        <span class="mdi mdi-chevron-up"></span>
+      </button>
+    </div>
 
-    <div id="statWrap" class="statWrapVisible bg-light border animated mainSection">
+    <div id="statWrap" class="bg-light border-bottom mainSection">
 
       <div id="itemsCount" class="">
         <div class="statSection text-center" id="institutionTot" >
@@ -60,18 +61,19 @@
         </div>
       </div>
       
-      
-      
       <div id="crono_chart" class="statSection"></div> 
      
     </div>
 
     <main class="animated mainSection tab-content">
+
       <div class="tab-pane fade show active" id="gallery-pane" role="tabpanel">
-        <div id="wrapGallery" class="card-wrap"></div>
+        <div id="wrapGallery" class="card-wrap indexGallery"></div>
       </div>
+
       <div class="tab-pane fade" id="collection-pane" role="tabpanel">
-        <div class="bg-light border rounded py-3">
+        <div id="noCollection"></div>
+        <!--<div class="bg-light border rounded py-3">
           <div id="emptyCollection" class="text-center">
             <h2>Your collection is empty!</h2>
           </div>
@@ -121,13 +123,13 @@
               </div>
             </div>
           </div>
-        </div>
+        </div> -->
         <div id="wrapCollection" class="card-wrap"></div>
       </div>
     </main>
     <?php
       require("assets/menu.php");
-      require("assets/footer.php");
+      // require("assets/footer.php");
       require("assets/js.html"); 
     ?>
   </body>
@@ -137,5 +139,6 @@
   <script src="https://www.gstatic.com/charts/loader.js"></script>
   <script src="js/maps/geo_config.js" charset="utf-8"></script>
   <script src="js/maps/geo_function.js" charset="utf-8"></script>
-  <script src="js/index.js" charset="utf-8"></script>
+  <!-- <script src="js/charts.js" charset="utf-8"></script> -->
+  <script src="js/index.js" charset="utf-8" type="module"></script>
 </html>

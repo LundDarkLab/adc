@@ -1,9 +1,18 @@
-$(document).ready(function() {
-  initNav()
-  $("#toggleMenu, #backdrop").on('click', (e) => {
-    e.preventDefault();
-    toggleNav();
-  })
+document.addEventListener("DOMContentLoaded", function() {
+  initNav();
+  backdrop.style.display = 'none';
+  if(backdrop){
+    backdrop.addEventListener('click', (e) => {
+      e.preventDefault();
+      toggleNav();
+    });
+  }
+  if(toggleMenuBtn){
+    toggleMenuBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      toggleNav();
+    });
+  }
   screen.orientation.addEventListener("change", initNav);
 });
 
@@ -54,9 +63,14 @@ function preventScroll(e){
 }
 
 
-function currentPageActiveLink(url){
-  $(".headerLink > a").removeClass('currentPage');
-  $(".headerLink > a[href='"+url+"']").addClass('currentPage');
+async function currentPageActiveLink(url) {
+  document.querySelectorAll('.headerLink > a.currentPage').forEach(el => {
+    el.classList.remove('currentPage');
+  });
+  const activeLink = document.querySelector(`.headerLink > a[href="${url}"]`);
+  if (activeLink) {
+    activeLink.classList.add('currentPage');
+  }
 }
 
 function getSelectOptions(list, column, filter, select){

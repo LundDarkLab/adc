@@ -2,7 +2,11 @@
 namespace Adc;
 session_start();
 
+use Adc\Traits\ReadSelectParametersTrait;
+
 class Geom extends Conn{
+  use ReadSelectParametersTrait;
+
   function __construct(){}
 
   public function getAvailableLevels(): array {
@@ -11,7 +15,9 @@ class Geom extends Conn{
     
     foreach ($levels as $level) {
       // Query per contare le features distinte
-      $sql = "SELECT COUNT(DISTINCT af.gid_$level) as tot FROM artifact_findplace af INNER JOIN artifact a ON af.artifact = a.id WHERE a.status = 2 AND af.gid_$level IS NOT NULL;";
+      $sql = "SELECT COUNT(DISTINCT af.gid_$level) as tot FROM artifact_findplace af INNER JOIN artifact a ON af.artifact = a.id and a.status = 2 AND af.gid_$level IS NOT NULL;";
+
+      error_log("SQL for level $level: $sql");
       
       $result = $this->simple($sql);
       
@@ -68,7 +74,7 @@ class Geom extends Conn{
       $fields .= $level == 0 ? ", g.country as name" : ", g.name_$level as name";
       $geom = "st_asgeojson(g.SHAPE) as geom";
 
-      $subquery = "SELECT af.gid_$level FROM artifact_findplace af INNER JOIN artifact a ON af.artifact = a.id WHERE a.status = 2 GROUP BY af.gid_$level";
+      $subquery = "SELECT af.gid_$level FROM artifact_findplace af INNER JOIN artifact a ON af.artifact = a.id and a.status = 2 GROUP BY af.gid_$level";
 
       if (!empty($filter)) {
         $where .= $level == 0 ? " and g.country = '$filter'" : " and g.gid_$level = '$filter'";
@@ -94,10 +100,36 @@ class Geom extends Conn{
 
   public function getFindPlacePoint(?int $id): array {
     try {
-      $where = "where a.status = 2 and af.longitude is not null and af.latitude is not null";
-      $where .= $id === null ? '' : " and id = $id";
-      $sql = "select a.name, a.description, af.latitude, af.longitude from artifact_findplace af inner join artifact a on af.artifact = a.id $where order by a.name asc;";
-      return ["query"=>$sql,"items"=>$this->simple($sql)];
+      $payload = [
+        'table' => 'artifact_findplace af',
+        'columns' => ['a.id', 'a.name', 'class.value AS category', 'i.name as institution', 'a.description', 'a.start', 'a.end', 'af.latitude', 'af.longitude', "COALESCE(gadm0.country, '') AS nation", "COALESCE(gadm1.name_1, '') AS county", 'm.thumbnail'],
+        'conditions' => $id !== null ? ['a.id' => $id] : [],
+        'joins' => 
+          [
+            ['table' => 'artifact a', 'first' => 'af.artifact', 'operator' => '=', 'second' => 'a.id AND a.status = 2 AND af.longitude IS NOT NULL AND af.latitude IS NOT NULL'],
+            ['table' => 'institution i', 'first' => 'a.storage_place', 'operator' => '=', 'second' => 'i.id'],
+            ['table' => 'list_category_class class', 'first' => 'a.category_class', 'operator' => '=', 'second' => 'class.id'],
+            ['table' => 'artifact_model am', 'first' => 'am.artifact', 'operator' => '=', 'second' => 'a.id'],
+            ['table' => 'model m', 'first' => 'am.model', 'operator' => '=', 'second' => 'm.id'],
+            ['table' => 'gadm0', 'first' => 'af.gid_0', 'operator' => '=', 'second' => 'gadm0.gid_0', 'type' => 'left'],
+            ['table' => 'gadm1', 'first' => 'af.gid_1', 'operator' => '=', 'second' => 'gadm1.gid_1', 'type' => 'left']
+          ],
+        'orderBy' => ['a.name' => 'asc']
+      ];
+
+      $params = $this->extractReadParameters($payload);
+      $results = $this->read(
+        $params['table'],
+        $params['columns'],
+        $params['conditions'],
+        $params['joins'],
+        $params['orderBy'],
+        $params['limit'],
+        $params['offset'],
+        $params['groupBy'],
+        $params['having']
+      );
+      return ["items"=>$results];
     } catch (\Throwable $th) {
       return ["error" => "API Error: " . $th->getMessage(), "sql" => $sql];
     }
