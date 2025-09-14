@@ -1,100 +1,178 @@
-checkAdmin()
-currentPageActiveLink('login.php');
-$("#rescuePwdCard").hide();
+const loginCard = document.getElementById("loginCard");
+const rescuePwdCard = document.getElementById("rescuePwdCard");
+const toggleRescue = document.getElementById("toggleRescue");
+const toggleLogin = document.getElementById("toggleLogin");
+const outputMsgSpinner = `<div class="d-flex justify-content-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>`;
 
-$("[name=toggleRescue]").on('click', () => { 
-  $("#loginCard").fadeToggle('fast', function() {
-    $("#rescuePwdCard").fadeToggle('fast');
+document.addEventListener('DOMContentLoaded', function() {
+  checkAdmin();
+  currentPageActiveLink('login.php');
+
+
+  loginCard.style.display = 'block';
+  rescuePwdCard.style.display = 'none';
+
+  toggleRescue.addEventListener('click', function() {
+    fadeOut(loginCard, () => { fadeIn(rescuePwdCard); });
   });
-})
 
-$("[name=toggleLogin]").on('click', () => { 
-  $("#rescuePwdCard").fadeToggle('fast', function() {
-    $("#loginCard").fadeToggle('fast');
+  toggleLogin.addEventListener('click', function() {
+    fadeOut(rescuePwdCard, () => { 
+      fadeIn(loginCard); 
+      document.querySelector("[name=email4Rescue]").value = '';
+      outputMsg.innerHTML = '';
+      outputMsg.className = outputMsg.className.replace(/text-\S+/g, '');
+    });
   });
-})
 
-$("#toggle-pwd").click(function() {
-  $(this).find('i').toggleClass("mdi-eye mdi-eye-off");
-  var input = $(".pwd");
-  let type = input.attr("type") == "password" ? "text" : "password";
-  input.attr("type", type);
+  document.getElementById("toggle-pwd").addEventListener('click', function() {
+    const icon = this.querySelector('i');
+    icon.classList.toggle("mdi-eye");
+    icon.classList.toggle("mdi-eye-off");
+    
+    const input = document.querySelector(".pwd");
+    const type = input.type === "password" ? "text" : "password";
+    input.type = type;
+  });
+
+  document.querySelectorAll("[name=loginBtn]").forEach(btn => {
+    btn.addEventListener('click', (e) => login(e));
+  });
+
+  document.querySelectorAll("[name=toggleRescue]").forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelector("[name=email4Rescue]").value = '';
+    });
+  });
+
+  document.querySelectorAll("[name=rescuePwdBtn]").forEach(btn => {
+    btn.addEventListener('click', (e) => rescuePwd(e));
+  });
 });
 
-$("[name=loginBtn]").on('click', (el)=>{ login(el) })
-$("[name=toggleRescue]").on('click', ()=>{ $("[name=email4Rescue]").val('') })
-$("[name=rescuePwdBtn]").on('click', (el)=>{ rescuePwd(el) })
+async function login(el) {
+  try {
+    const form = document.querySelector("form[name=login]");
+    const outputMsg = form.querySelector(".outputMsg");
+    outputMsg.className = outputMsg.className.replace(/text-\S+/g, '');
+    outputMsg.innerHTML = outputMsgSpinner;
 
-function login(el){
-  const form = $("form[name=login]");
-  form.find(".outputMsg").removeClass(function (index, className) {
-    return (className.match (/(^|\s)text-\S+/g) || []).join(' ');
-  }).html(spinner);
-  if (form[0].checkValidity()) {
-    el.preventDefault()
-    let dati={}
-    dati.trigger = 'login';
-    dati.email=$("[name=email]").val()
-    dati.password=$("[name=password]").val()
-    ajaxSettings.url=API+"user.php";
-    ajaxSettings.data = dati
-    $.ajax(ajaxSettings)
-    .done(function(data) {
-      console.log('Login response:', data);
-      console.log('data[0]:', data[0]);
-      console.log('data[1]:', data[1]);
-      form.find(".outputMsg").removeClass('text-success text-danger');
-      let classe = data[1] == 0 ? 'text-success' : 'text-danger';
-      console.log('CSS class:', classe);
-      form.find(".outputMsg").addClass(classe).html(data[0]);
-      if(data[1] == 0){
-        console.log('Login successful, redirecting in 3 seconds...');
-        window.setTimeout(function(){location.href = "dashboard.php";}, 3000);
+    if (form.checkValidity()) {
+      el.preventDefault();
+      try {
+        const data = await fetchApi({
+          url: ENDPOINT,
+          body: {
+            class: 'User',
+            action: 'login',
+            email: document.querySelector("[name=email]").value,
+            password: document.querySelector("[name=password]").value
+          }
+        });        
+        outputMsg.classList.remove('text-success', 'text-danger');
+        console.log(data);
+        if (data.data.res === 1) {
+          outputMsg.classList.add('text-danger');
+          outputMsg.innerHTML = data.data.output;
+        } else {
+          outputMsg.classList.add('text-success');
+          outputMsg.innerHTML = data.data.output + '<br>Redirecting to dashboard...';
+          setTimeout(() => {
+            location.href = "dashboard.php";
+          }, 3000);
+        }
+      } catch (error) {
+        console.log('Login failed:', error);
+        outputMsg.innerHTML = error.message;
       }
-    }).fail(function(data){
-      console.log('Login failed:', data);
-      form.find(".outputMsg").html(data);
-    });
+    }
+  } catch (error) {
+    console.error('Error initializing login form:', error);
+  }  
+}
+
+async function rescuePwd(el) {
+  try {
+    const form = document.querySelector("form[name=rescuePwd]");
+    const outputMsg = form.querySelector(".outputMsg");
+    outputMsg.className = outputMsg.className.replace(/text-\S+/g, '');
+    outputMsg.innerHTML = outputMsgSpinner;
+  
+    if (form.checkValidity()) {
+      el.preventDefault();
+      try {
+        const data = await fetchApi({
+          url: ENDPOINT,
+          body: {
+            class : 'User',
+            action : 'rescuePwd',
+            email: document.querySelector("[name=email4Rescue]").value
+          }
+        });
+        outputMsg.classList.remove('text-success', 'text-danger');
+        console.log(data);
+        if (data.data.error === 1) {
+          outputMsg.classList.add('text-danger');
+          outputMsg.innerHTML = data.data.output;
+        } else {
+          outputMsg.classList.add('text-success');
+          outputMsg.innerHTML = data.data.output + '<br>Redirecting to home page...';
+          setTimeout(() => { location.href = "index.php"; }, 3000);
+        }
+    } catch (error) {
+      console.log("error: " + error.message);
+      outputMsg.innerHTML = error.message;
+    }
+  }
+  }catch (error) {
+    console.error('Error initializing rescuePwd form:', error);
   }
 }
 
-function rescuePwd(el){
-  const form = $("form[name=rescuePwd]");
-  form.find(".outputMsg").removeClass(function (index, className) {
-    return (className.match (/(^|\s)text-\S+/g) || []).join(' ');
-  }).html(spinner);
-  if (form[0].checkValidity()) {
-    el.preventDefault()
-    let dati={}
-    dati.trigger = 'rescuePwd';
-    dati.email=$("[name=email4Rescue]").val()
-    ajaxSettings.url=API+"user.php";
-    ajaxSettings.data = dati
-    $.ajax(ajaxSettings)
-    .done(function(data) {
-      form.find(".outputMsg").removeClass('text-success text-danger');
-      let classe = data.res == 1 ? 'text-success' : 'text-danger';
-      form.find(".outputMsg").addClass(classe).html(data.output);
-      if(data.res == 1){window.setTimeout(function(){location.href = "index.php";}, 5000);}
-    }).fail(function(data){
-      console.log("error: "+data);
-      form.find(".outputMsg").html(data);
+async function checkAdmin() {
+  try {
+    const data = await fetchApi({
+      url: ENDPOINT,
+      method: 'POST',
+      body: { class: 'User', action: 'checkAdmin' }
     });
-  }
-}
-
-function checkAdmin(){
-  ajaxSettings.url=API+"user.php";
-  ajaxSettings.data = {trigger:'checkAdmin'}
-  $.ajax(ajaxSettings)
-  .done(function(data) {
-    if(data==0){
+    
+    if (data == 0) {
       localStorage.setItem("addAdmin", 'true');
-      window.location.href="addUser.php"
-    }else {
+      window.location.href = "addUser.php";
+    } else {
       if (localStorage.getItem("addAdmin")) {
         localStorage.removeItem('addAdmin');
       }
     }
-  });
+  } catch (error) {
+    console.error('Error checking admin:', error);
+  }
+}
+
+
+function fadeIn(element, callback) {
+  element.style.display = 'block';
+  element.style.transition = 'opacity 0.5s ease';
+  
+  // Force reflow
+  element.offsetHeight;
+  
+  element.style.opacity = 1;
+  element.classList.remove('fade-hidden');
+  
+  setTimeout(() => {
+    if (callback) callback();
+  }, 500);
+}
+
+function fadeOut(element, callback) {
+  element.style.transition = 'opacity 0.5s ease';
+  element.style.opacity = 0;
+  element.classList.add('fade-hidden');
+  
+  setTimeout(() => {
+    element.style.display = 'none';
+    if (callback) callback();
+  }, 500);
 }

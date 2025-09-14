@@ -20,43 +20,61 @@ function resetCollection(){
 }
 
 // store and retrieve from LocalStorage
-function retrieveCollectionData(){
-  return JSON.parse(localStorage.getItem('DYNCOLLECTION')) || undefined;
-}
-function storeCollectionData(){
-  COLLECTIONDATA.time = new Date().toISOString(); // update time to current time
-  localStorage.setItem('DYNCOLLECTION', JSON.stringify(COLLECTIONDATA));
-}
+// function retrieveCollectionData(){
+//   return JSON.parse(localStorage.getItem('DYNCOLLECTION')) || undefined;
+// }
+// function storeCollectionData(){
+//   COLLECTIONDATA.time = new Date().toISOString(); // update time to current time
+//   localStorage.setItem('DYNCOLLECTION', JSON.stringify(COLLECTIONDATA));
+// }
 
-function validateCollection(collection){
-  if (collection.type !== "DC_COLL") return false;
-  return true;
-}
+// function validateCollection(collection){
+//   if (collection.type !== "DC_COLL") return false;
+//   return true;
+// }
 
 /////////////////////////////////////////////////////////
 //handlers for export / import / delete collection
-$("#btExportCollection").on('click', function(){
-  exportCollection();
-});
-$("#btImportCollection").on('click', function(){
-  importCollection();
-});
-$("#ifileJSON").on('change', function(){
-  getJSON(this.files);
-});
-$("#btResetCollection").on('click', function(){
-  if(COLLECTIONDATA.items.length == 0)return;
-  if(confirm('Delete the current Collection?')){
-    resetCollection();
-    updateCollection();
-  }
-});
+// const btImportCollection = document.querySelectorAll(".btImportCollection");
+// const btExportCollection = document.getElementById("btExportCollection");
+// const exportCollectionBtn = document.getElementById("exportCollectionBtn");
+// const ifileJSON = document.getElementById("ifileJSON");
+// const btResetCollection = document.getElementById("btResetCollection");
+// const btCloseFormCollection = document.getElementById("btCloseFormCollection");
+// const collectionFormContainer = document.getElementById("collectionFormContainer");
+// if(btImportCollection){
+//   btImportCollection.forEach(button => {
+//     button.addEventListener('click', () => {ifileJSON.click();});
+//   });
+// }
+// if(btExportCollection){btExportCollection.addEventListener('click', exportCollection);}
+// if(ifileJSON){ifileJSON.addEventListener('change', function(){ getJSON(this.files); });}
+// if(btResetCollection){
+//   btResetCollection.addEventListener('click', function(){
+//     if(COLLECTIONDATA.items.length == 0)return;
+//     if(confirm('Delete the current Collection?')){
+//       resetCollection();
+//       updateCollection();
+//     }
+//   });
+// }
 
+// if(exportCollectionBtn){
+//   exportCollectionBtn.addEventListener('click', ()=>{
+//     collectionFormContainer.style.display = 'flex';
+//   });
+// }
+
+// if(btCloseFormCollection){
+//   btCloseFormCollection.addEventListener('click', ()=>{
+//     collectionFormContainer.style.display = 'none';
+//   });
+// }
 //export / import collection
 function exportCollection(){
   storeCollectionData();
   if(!COLLECTIONDATA.items.length){
-    alert('Cannot export an empty collection!');
+    showToast('Cannot export an empty collection!', 'danger');
     return;
   }
   var element = document.createElement('a');
@@ -66,9 +84,6 @@ function exportCollection(){
 	document.body.appendChild(element);
 	element.click();
 	document.body.removeChild(element);
-}
-function importCollection(){
-  document.getElementById("ifileJSON").click();
 }
 function getJSON(files){
 	if((files)&&(files.length>0)){
@@ -255,12 +270,12 @@ function addToCollection(id) {
   updateCollection();
 }
 
-function removeFromCollection(id) {
-  COLLECTIONDATA = JSON.parse(localStorage.getItem('DYNCOLLECTION'));
-  COLLECTIONDATA.items = COLLECTIONDATA.items.filter(item => item.id !== id);
-  storeCollectionData();
-  updateCollection();
-}
+// function removeFromCollection(id) {
+//   COLLECTIONDATA = JSON.parse(localStorage.getItem('DYNCOLLECTION'));
+//   COLLECTIONDATA.items = COLLECTIONDATA.items.filter(item => item.id !== id);
+//   storeCollectionData();
+//   updateCollection();
+// }
 
 
 function getCity(query){
@@ -654,11 +669,13 @@ function setElementVisibility(id, visible) {
 
 async function fetchApi({url, method = 'POST', headers = {}, body = null}) {
   try {
-    const options = { method, headers: {'Content-Type': 'application/json', ...headers, }, };
+    const options = { 
+      method, headers: {'Content-Type': 'application/json', ...headers, }, 
+    };
     if (body) { options.body = JSON.stringify(body); }
     const response = await fetch(url, options);
-    if (!response.ok) { throw new Error(`Errore HTTP! stato: ${response.status}`); }
     const data = await response.json();
+    if (!response.ok) { throw new Error(data.message || `Errore HTTP! stato: ${response.status}`); }
     return data;
   } catch (error) {
     console.error('Errore durante la chiamata API:', error);

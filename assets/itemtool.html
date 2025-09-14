@@ -1,21 +1,21 @@
 <div id="itemTool" class="animated mainSection bg-light border-bottom">
   <div class="itemToolBlock">
-    <button type="button" class="btn btn-sm btn-light toggleFilter" name="toggleFilter">
+    <button type="button" class="btn btn-light toggleFilter" name="toggleFilter">
       <small class="badge rounded bg-secondary" id="activeFilter"></small>
       filters
       <span class="mdi mdi-chevron-down"></span>
     </button>
-    <button class="btn btn-sm bg-light" type="button" id="createFromFiltered" data-bs-toggle="tooltip" data-bs-title="create a new collection from filtered items">create collection</button>
-    <button class="btn bg-light btn-sm me-1" type="button" id="resetCollection" data-bs-toggle="tooltip" data-bs-title="clear collection">clear collection</button>
+    <button class="btn btn-light" type="button" id="createFromFiltered" data-bs-toggle="tooltip" data-bs-title="create a new collection from filtered items">create collection</button>
+    <button class="btn bg-light me-1" type="button" id="resetCollection" data-bs-toggle="tooltip" data-bs-title="clear collection">clear collection</button>
   </div>
 
   <div id="tabPane" class="itemToolBlock">
     <div class="nav nav-pills nav-fill">
-      <button id="viewGallery" class="nav-item active btn btn-sm btn-light me-1" aria-current="page" data-bs-toggle="tab" data-bs-target="#gallery-pane">
+      <button id="viewGallery" class="nav-item active btn btn-light me-1" aria-current="page" data-bs-toggle="tab" data-bs-target="#gallery-pane">
         gallery 
         <span id="countItems" class="badge rounded bg-secondary"></span>
       </button>
-      <button id="viewCollection" class="nav-item btn btn-sm btn-light" data-bs-toggle="tab" data-bs-target="#collection-pane">
+      <button id="viewCollection" class="nav-item btn btn-light" data-bs-toggle="tab" data-bs-target="#collection-pane">
         collection 
         <span id="countCollection" class="badge rounded bg-danger">0</span>
       </button>
@@ -24,7 +24,7 @@
 
   <div class="itemToolBlock text-end">
     <div class="dropdown me-3">
-      <button class="btn btn-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" id="sortByBtn"><span class="mdi mdi-sort-reverse-variant"></span></button>
+      <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown" id="sortByBtn"><span class="mdi mdi-sort-reverse-variant"></span></button>
       <ul class="dropdown-menu" id="sortBy">
         <li><a class="dropdown-item sortBy" href="#" data-sort="category">name</a></li>
         <li><a class="dropdown-item sortBy" href="#" data-sort="material">material</a></li>
@@ -63,7 +63,7 @@
       </div>
       
       <div class="d-block mb-2">
-        <input type="search" name="description" class="form-control form-select-sm" value="" placeholder="description">
+        <input type="search" name="byDescription" class="form-control form-select-sm" value="" placeholder="description">
       </div>
       <div class="d-block ">
         <button class="btn btn-light btn-sm d-inline-block" type="submit" id="search" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-container="body" data-bs-title="search artifacts"><span class="mdi mdi-magnify"> search</span></button>

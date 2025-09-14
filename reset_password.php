@@ -12,7 +12,7 @@
     <?php require("assets/header.php"); ?>
     <?php require("assets/menu.php"); ?>
     <main class="d-flex flex-column align-items-center">
-      <div id="tokenExpired"><h5></h5></div>
+      <div id="tokenExpired"></div>
       <form name="resetPwd" id="resetPwd" class="invisible mt-5">
         <h6 class="bfc-txt">Use this form to create a new password for your account<br>
         Password must have 8 characters at least<br>
@@ -33,12 +33,12 @@
         <label for="confirm_pwd" class="form-label">Confirm password</label>
         <input type="password" class="form-control pwd" id="confirm_pwd" name="confirm_pwd" required>
         <div class="outputMsg my-3"></div>
-        <button type="submit" name="resetPwdBtn" class="btn btn-primary">save password</button>
+        <button type="submit" id="resetPwdBtn" class="btn btn-primary">save password</button>
       </form>
     </main>
+    <div id="toast-container" class="toast-container position-fixed top-0 start-50 translate-middle-x p-3"></div>
     <?php 
       require("assets/js.html"); 
-      require("assets/toastDiv.html");
     ?>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/zxcvbn/4.2.0/zxcvbn.js"></script>
     <script src="js/reset_password.js" charset="utf-8"></script>

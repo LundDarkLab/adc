@@ -75,7 +75,7 @@ class User extends Conn{
   }
 
   protected function checkEmail(string $email){
-    $sql = "select u.id, p.id person, p.email, p.institution, u.role, u.password_hash from person p inner join user u on u.person = p.id where p.email = '".$email."' and u.is_active = 1;";
+    $sql = "select u.id, p.id person, concat(coalesce(p.first_name,''),' ',coalesce(p.last_name,'')) as name, p.email, p.institution, u.role, u.password_hash from person p inner join user u on u.person = p.id where p.email = '".$email."' and u.is_active = 1;";
     $out = $this->simple($sql);
     $x = count($out);
     if ($x == 0) { throw new \Exception("The email is not in the database or your account is disabled. Please try again, if the problem persists please contact the project manager", 1); }
@@ -88,22 +88,35 @@ class User extends Conn{
   }
 
   protected function checkResetRequest(string $email){
-    $sql = "select * from reset_password where email = '".$email."';";
-    $out = $this->simple($sql);
-    $x = count($out);
-    if ($x > 0) { throw new \Exception("Sorry, but there is already an active request for this email.<br>If you did not receive the email with the link to reset your password, please search in spam or contact the system administrator: giuseppe.naponiello@ark.lu.se", 1); }
-    return $out[0];
-  }
-  public function checkToken(string $token){
-    try {
-      $sql = "select * from reset_password where token = '".$token."';";
-      $out = $this->simple($sql);
-      if (count($out) == 0) { throw new \Exception("Sorry, but your token is expired! Please try requesting a new password again", 0); }
-      return ["res"=> 1, "output"=>$out[0]];
-    } catch (\Exception $e) {
-      return ["res"=>0, "output"=>$e->getMessage()];
+    // Controlla se esiste una richiesta attiva (non scaduta) 
+    $sql = "SELECT * FROM reset_password WHERE email = '" . $email . "' AND exp_date > DATE_SUB(NOW(), INTERVAL 1 DAY)";
+    $activeRequests = $this->simple($sql);
+    
+    if (count($activeRequests) > 0) { 
+        throw new \Exception("Sorry, but there is already an active request for this email.<br>If you did not receive the email with the link to reset your password, please search in spam or contact the system administrator: giuseppe.naponiello@ark.lu.se", 1); 
     }
-    return $out[0];
+    
+    // Elimina eventuali richieste scadute
+    $params = ["email" => $email];
+    $sql = "DELETE FROM reset_password WHERE email = :email AND exp_date <= DATE_SUB(NOW(), INTERVAL 1 DAY)";
+    $this->prepared($sql, $params);
+    
+    return true;
+  }
+
+  public function checkToken(array $payload){
+    // Cerca token VALIDI (non scaduti)
+    $sql = "SELECT * FROM reset_password WHERE token = '".$payload['token']."' and exp_date > now();";
+    $out = $this->simple($sql);
+    error_log("checkToken query: ".$sql);
+    error_log("checkToken count:".count($out));
+    // Se non trova nessun record, il token è scaduto o non esiste
+    if (count($out) == 0) { 
+        throw new \Exception("Sorry, but your token is expired or invalid! Please try requesting a new password again", 1); 
+    }
+    
+    // Se trova il record, il token è valido - restituisce i dati
+    return ["error" => 0, "output" => $out[0]];
   }
 
   public function genPwd(){
@@ -138,9 +151,9 @@ class User extends Conn{
       $usr = $this->checkEmail($dati['email']);
       $this->checkPwd($dati['password'],$usr['password_hash']);
       $this->setSession($usr);
-      return ["Ok, you are logged-in!",0];
+      return ["output"=>"Ok, you are logged-in!", "res"=>0];
     } catch (\Exception $e) {
-      return [$e->getMessage(), $e->getCode()];
+      return ["output"=>$e->getMessage(), "res"=>$e->getCode()];
     }
   }
 
@@ -154,28 +167,24 @@ class User extends Conn{
   }
 
 
-  public function rescuePwd(string $email){
+  public function rescuePwd(array $dati){
     try {
-      // check if email exists and if it's active, and get user id
-      $usr = $this->checkEmail($email);
-      $this->checkResetRequest($email);
-      // create a token to sent
-      $token = $this->genToken($email);
-      // save request in reset_password table
-      $resArr = array("email" => $email, "token" => $token);
+      $usr = $this->checkEmail($dati['email']);
+      $this->checkResetRequest($dati['email']);
+      $token = $this->genToken($dati['email']);
+      $resArr = array("email" => $dati['email'], "token" => $token);
       $sql = $this->buildInsert("reset_password", $resArr);
       $this->prepared($sql, $resArr);
-      // send an email with link
       $datiMail=array(
-        "email"=>$email, 
+        "email"=>$dati['email'], 
         "name"=>$usr['name'], 
         "link"=>"https://dyncolldev.ht.lu.se/plus/reset_password.php?key=".$token, 
         "mailBody"=>2
       );
       $this->sendMail($datiMail);
-      return ["res" => 1, "output"=>"A reset link has been sent to provided email. The link will expires in 1 day"];
+      return ["error" => 0, "output"=>"A reset link has been sent to provided email. The link will expires in 1 day"];
     } catch (\Exception $e) {
-      return ["res"=>0, "output"=>$e->getMessage()];
+      return ["error"=>1, "output"=>$e->getMessage()];
     }
   }
 
@@ -194,10 +203,10 @@ class User extends Conn{
       $this->prepared($sql, $array);
 
       $this->pdo()->commit();
-      return ["res"=>1, "output" => 'Your password has been successfully reset, you can now log in.'];
+      return ["error"=>0, "output" => 'Your password has been successfully reset, you can now log in.'];
     } catch (\Exception $e) {
       $this->pdo()->rollBack();
-      return ["res"=>0, "output"=>$e->getMessage()];
+      return ["error"=>1, "output"=>$e->getMessage()];
     }
   }
 
@@ -253,7 +262,7 @@ class User extends Conn{
       if ($mailParams === false) {throw new \Exception("Error reading mail configuration file",1);}
       $this->mail->isSMTP();
       // only for testing, print messages only in the console, do not use in production!!!!
-      // $this->mail->SMTPDebug = SMTP::DEBUG_SERVER; 
+      //$this->mail->SMTPDebug = SMTP::DEBUG_SERVER; 
     
       $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
       $this->mail->SMTPAuth = true;
@@ -299,7 +308,7 @@ class User extends Conn{
     $this->mail->isSMTP();
     
     // only for testing, print messages only in the console, do not use in production!!!!
-    // $this->mail->SMTPDebug = SMTP::DEBUG_SERVER; 
+    $this->mail->SMTPDebug = SMTP::DEBUG_SERVER; 
     
     $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
     $this->mail->SMTPAuth = true;

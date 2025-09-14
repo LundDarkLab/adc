@@ -9,7 +9,7 @@
       </ul>
       <div class="license-info mt-3">
         <h6 class="fw-bold">Licensing Information</h6>
-        <ul class="list-unstyled small">
+        <ul class="list-unstyled">
           <li>
             <strong>Text & Documentation:</strong> Licensed under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" class="animated">CC BY 4.0</a>
           </li>

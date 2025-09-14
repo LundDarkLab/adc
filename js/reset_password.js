@@ -4,76 +4,89 @@ const confPwd = document.getElementById("confirm_pwd")
 const pwdStrength = document.getElementById("password-strength");
 const pwdMsg = document.getElementById("pwdMsg");
 const token = document.getElementById('token').value;
-const toastToolBar = $('#toastBtn');
+const toastToolBar = document.getElementById('toastBtn');
+const togglePwd = document.getElementById("toggle-pwd");
+const genPwd = document.getElementById("genPwd");
+const resetPwdBtn = document.getElementById("resetPwdBtn");
+const tokenExpiredDiv = document.getElementById("tokenExpired");
 let email;
-checkToken(token)
 
-function checkToken(token){
-  ajaxSettings.url=API+'user.php';
-  ajaxSettings.data = {trigger:'checkToken', token:token};
-  $.ajax(ajaxSettings)
-  .done(function(data){
-    if (data.res == 0) {
-      $("#tokenExpired > h5").text(data.output)
-      $("#resetPwd").remove();
-      return false;
-    }
-    $("#tokenExpired").remove();
-    $("#resetPwd").removeClass('invisible');
-    email=data.output.email;
+
+document.addEventListener('DOMContentLoaded', function() {
+  checkToken(token);
+  newPwd.addEventListener("input", getPwdStrength);
+  togglePwd.addEventListener('click', () => {
+    const icon = togglePwd.querySelector('i');
+    icon.classList.toggle("mdi-eye");
+    icon.classList.toggle("mdi-eye-off");
+    
+    const type = newPwd.type === "password" ? "text" : "password";
+    newPwd.type = type;
+    confPwd.type = type;
   });
-}
-
-$("#toggle-pwd").on('click', function() {
-  $(this).find('i').toggleClass("mdi-eye mdi-eye-off");
-  var input = $(".pwd");
-  let type = input.attr("type") == "password" ? "text" : "password";
-  input.attr("type", type);
+  genPwd.addEventListener('click', generateRandomPassword);
+  resetPwdBtn.addEventListener('click', (ev) => { resetPwd(ev);});
 });
 
-newPwd.addEventListener("input", getPwdStrength);
-
-$("#genPwd").on('click', generateRandomPassword)
-
-$("[name=resetPwdBtn").on('click', function(e){
-  checkPwd()
-  if (form.checkValidity()) {
-    e.preventDefault()
-    let dati={}
-    dati.trigger = 'resetPassword';
-    dati.token = token;
-    dati.email = email;
-    dati.password_hash = newPwd.value;
-    ajaxSettings.url=API+'user.php';
-    ajaxSettings.data = dati;
-    $.ajax(ajaxSettings)
-    .done(function(data) {
-      console.log(data);
-      // return false;
-      if (data.res==0) {
-        $("#toastDivError .errorOutput").text(data.output);
-        $("#toastDivError").removeClass("d-none");
-      }else {
-        $(".toastTitle").text(data.output)
-        gotoIndex.appendTo(toastToolBar);
-        $("#toastDivSuccess").removeClass("d-none")
+async function resetPwd(ev){
+  checkPwd();
+  try {
+    if (form.checkValidity()) {
+      ev.preventDefault();
+      console.log("Resetting password for", email);
+      const response = await fetchApi({
+        url: ENDPOINT,
+        body: {
+          class: 'User',
+          action: 'resetPassword',
+          token: token,
+          email: email,
+          password_hash: newPwd.value
+        }
+      });
+      if (!response.ok) {
+        throw new Error(data.message || "Errore di sistema. Riprova più tardi.");
       }
-      $("#toastDivContent").removeClass('d-none')
-    })
-    .fail(function(data){
-      form.find(".outputMsg").html(data);
-    });
+      if (response.error == 1) {
+        throw new Error(response.message || "Error resetting password");
+      }
+      if (response.error == 0) {
+        console.log("Password reset successfully");
+        showToast("Success", response.data.output || "Your password has been successfully reset, you can now log in.", "success");
+        setTimeout(() => {
+          location.href = "index.php";
+        }, 3000);
+      } else {
+        showToast("Error", response.data.output || "Error resetting password", "error");
+      }  
+    }
+  } catch (error) {
+    console.error('Error resetting password:', error);
+    showToast(error.message || "Errore di sistema. Riprova più tardi.", "danger");
   }
-})
+}
+
+async function checkToken(token){
+  try {
+    const response = await fetchApi({
+      url: ENDPOINT,
+      body: { class: 'User', action: 'checkToken', token: token }
+    });
+    if (response.error == 1) { throw new Error(data.message || "Token expired or invalid"); }
+    if (tokenExpiredDiv) {tokenExpiredDiv.remove();}
+    if (form) {form.classList.remove('invisible');}
+  } catch (error) {
+    if (tokenExpiredDiv) {tokenExpiredDiv.textContent = error.message || "Token expired or invalid";}
+    if (form) {form.remove();}
+  }
+}
 
 function checkPwd(){
-  //pwd minchar
   if(newPwd.value.length <= 8){
     newPwd.setCustomValidity("Password must have 8 characters at least");
   }else{
     newPwd.setCustomValidity("");
   }
-  //pwd matching
   if(newPwd.value !== confPwd.value){
     confPwd.setCustomValidity("Passwords don't match, please check and try again");
   }else{

@@ -1,17 +1,21 @@
-import { initGallery as gallery, initCollection as collection } from "./gallery.js";
+import { initGallery as gallery} from "./modules/gallery.js";
+import { collection } from "./modules/collection.js";
+import { createGalleryItem} from "./components/galleryCard.js"
+import {bsToast } from "./components/bsComponents.js"
+
+const coll = collection();
 const filterForm = document.getElementById('filterForm');
 const resetCollectionBtn = document.getElementById('resetCollection');
-const resetGalleryBtn = document.getElementById('resetGallery');
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+
 const byCounty = document.getElementsByName('byCounty')[0];
 const byInstitution = document.getElementsByName('byInstitution')[0];
 const byCategory = document.getElementsByName('byCategory')[0];
 const byMaterial = document.getElementsByName('byMaterial')[0];
 const byStart = document.getElementsByName('byStart')[0];
 const byEnd = document.getElementsByName('byEnd')[0];
-const byDescription = document.getElementsByName('byDescription')[0];
 const sortByBtn = document.querySelectorAll('.sortBy');
-const toggleFilterBtn = document.querySelectorAll(".toggleFilter");
+const toggleFilterBtn = document.getElementsByName('toggleFilter')[0]
 const statToggle = document.getElementById('statToggleBtn');
 const toggleSpan = statToggle.querySelector('span');
 const createFromFilteredBtn = document.getElementById('createFromFiltered');
@@ -24,6 +28,20 @@ let currentFilter = [];
 google.charts.load('current', { 'packages':['corechart']});
 
 document.addEventListener('DOMContentLoaded', function() {
+  const popoverElement = document.querySelector('[data-bs-toggle="popover"]');
+  if (popoverElement) {   
+    const popover = new bootstrap.Popover(popoverElement, {
+      html: true,
+      trigger: 'click',
+      placement: 'auto'
+    });
+
+    document.addEventListener('click', function(event) {
+      if (!popoverElement.contains(event.target) && !document.querySelector('.popover')?.contains(event.target)) {
+        popover.hide();
+      }
+    });
+  }
   initializeApp();
 });
 
@@ -49,6 +67,136 @@ async function initializeApp() {
   }
 }
 
+async function showCollection() {
+  const activeCollection = await coll.getActiveCollection();
+  // Se non c'è una collezione attiva, mostra il messaggio
+  if (!activeCollection) {
+    noCollection(true);
+    return;
+  }
+  noCollection(false);
+
+  // Recupera i dati della collezione
+  const collectionData = await coll.retrieveCollection(activeCollection);
+
+  // Se ci sono items, controlla i metadata
+  const meta = collectionData.metadata || {};
+  const allMetaFilled =
+    [meta.title, meta.email, meta.author, meta.description].every(val => typeof val === 'string' && val.trim() !== '' && val !== 'undefined');
+
+  if (!allMetaFilled) {
+    updateMetadataFormVisibility('block', activeCollection, meta);
+    document.getElementById('collectionTitle').textContent = 'Collection';
+    return;
+  }
+
+  // Se non ci sono items ma i metadata sono compilati, mostra solo la gallery vuota
+  if (collectionData.items.length === 0) {
+    document.getElementById('noItemsInCollection').style.display = 'block';
+    updateMetadataFormVisibility('none');
+    buildCollection(collectionData); // Mostra la gallery vuota
+    collectionMetadata(activeCollection, meta);
+    collectionList();
+    return;
+  }
+
+  // Se ci sono items e metadata compilati, mostra tutto
+  updateMetadataFormVisibility('none');
+  buildCollection(collectionData);
+  collectionMetadata(activeCollection, meta);
+  collectionList();
+}
+
+function noCollection(show = true){
+  const noCollectionDiv = document.getElementById('noCollection');
+  const collectionContainer = document.getElementById('collectionContainer');
+  if (noCollectionDiv) { noCollectionDiv.style.display = show ? 'block' : 'none'; }
+  if (collectionContainer) { collectionContainer.style.display = show ? 'none' : 'block'; }
+}
+
+async function onCreateCollection(){
+  try {
+    const key = await coll.createCollection();
+    const collection = await coll.retrieveCollection(key);
+    collectionMetadata(key, collection.metadata);
+    bsToast('Collection successfully created!', 'success');
+  } catch (error) {
+    bsToast(`Collection error! ${error}`, 'error');
+  }
+}
+
+function buildCollection(data){
+  noCollection(false);
+  const countCollection = document.getElementById('countCollection');
+  if (countCollection) { countCollection.textContent = data.items.length; }
+  const wrapCollection = document.getElementById('wrapCollection');
+  wrapCollection.innerHTML = '';
+
+  data.items.forEach(item => {
+    const itemEl = createGalleryItem(item, 'collection',null,galleryInstance.onUnCollect);
+    wrapCollection.appendChild(itemEl);
+  });
+}
+
+function collectionMetadata(activeCollection, metadata) {
+  document.getElementById('collectionTitle').textContent =  metadata.title || 'Collection';
+  const email = document.getElementById('collEmail');
+  const author = document.getElementById('collAuthor');
+  const title = document.getElementById('collTitle');
+  const description = document.getElementById('collDesc');
+
+  if(!metadata.title || metadata.title == '' || metadata.title == 'undefined'){
+    updateMetadataFormVisibility('block')
+  }else{
+    updateMetadataFormVisibility('none')
+  }
+
+  if (email) {email.value = metadata.email || '';}
+  if (author) {author.value = metadata.author || '';}
+  if (title) {title.value = metadata.title || '';}
+  if (description) {description.value = metadata.description || '';}
+}
+
+async function saveCollectionMetadata(e) {
+  e.preventDefault();
+  const activeCollection = await coll.getActiveCollection();
+  const updatedMetadata = {
+    email: document.getElementById('collEmail').value,
+    author: document.getElementById('collAuthor').value,
+    title: document.getElementById('collTitle').value,
+    description: document.getElementById('collDesc').value
+  };
+  try {
+    if (activeCollection) {
+      let collectionObj = JSON.parse(localStorage.getItem(activeCollection));
+      if (collectionObj) {
+        collectionObj.metadata = updatedMetadata;
+        localStorage.setItem(activeCollection, JSON.stringify(collectionObj));
+        bsToast('Metadata successfully updated!', 'success', 3000, ()=>updateMetadataFormVisibility('none', activeCollection, collectionObj.metadata));
+      } else {
+        bsToast('Collection not found!', 'error');
+      }
+    }
+  } catch (err) {
+    bsToast('Error during updating metadata', 'error');
+    console.error(err);
+  }
+}
+
+function updateMetadataFormVisibility(display, activeCollection=null, metadata=null) {
+  noCollection(false);
+  const metaForm = document.getElementById('collectionForm');
+  metaForm.style.display = display;
+  if (activeCollection && metadata) {
+    collectionMetadata(activeCollection, metadata);
+    return;
+  }
+}
+
+async function collectionList(){
+  const list = await coll.getCollectionList();
+}
+
 async function interfaceSetup() {
   createFromFilteredBtn.style.visibility = 'hidden';
   resetCollectionBtn.style.display = 'none';
@@ -60,7 +208,9 @@ async function interfaceSetup() {
     statWrap.classList.add(checkDevice()=='pc' ? 'small' :'large');
   }
 }
+
 async function artifactByCounty() {
+  const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
   if (countyDataCache && cacheTimestamp && (Date.now() - cacheTimestamp < CACHE_DURATION)) {
     mapStat(countyDataCache);
     return;
@@ -125,7 +275,6 @@ async function getFilterList() {
     const materialFragment = document.createDocumentFragment();
     const institutionFragment = document.createDocumentFragment();
     
-    // Create options for category
     data.category.forEach((item) => {
       const option = document.createElement('option');
       option.textContent = item.value;
@@ -207,14 +356,13 @@ async function buildStat() {
 
 async function initializeEventListeners() {
   screen.orientation.addEventListener("change", debounce(resizeDOM, 500));
+
   window.addEventListener('scroll', function() { 
     const scrollTop = window.scrollY || document.documentElement.scrollTop;
     let backTopPos = scrollTop > 0 ? '10px' : '50px';
     backToTop.style.transform = 'translate(-50%, ' + backTopPos + ')';
-
     let activeTab = document.querySelector('#viewCollection')?.classList.contains('active');
     if (activeTab) return;
-
     scrollTop > 0 ? hideStats() : showStats();
   });
 
@@ -222,22 +370,50 @@ async function initializeEventListeners() {
     el.addEventListener('show.bs.tab', handleTabChange);
   });
 
-  toggleFilterBtn.forEach(btn => {
-    btn.addEventListener('click', toggleFilter);
-  });
+  toggleFilterBtn.addEventListener('click', toggleFilter);
 
-  if (createFromFilteredBtn){createFromFilteredBtn.addEventListener('click', createFromFiltered);}
-  if (resetCollectionBtn){resetCollectionBtn.addEventListener('click', resetCollection);}
-  if (resetGalleryBtn){resetGalleryBtn.addEventListener('click', resetGallery);}
-  if (toggleMenuBtn){toggleMenuBtn.addEventListener('click', debounce(resizeDOM, 500));}
-  if (statToggle){statToggle.addEventListener('click', toggleStats);}
-  if (sortByBtn){sortByBtn.forEach(btn => btn.addEventListener('click', handleSortChange));}
-  if (backToTopBtn){backToTopBtn.addEventListener('click', () => { window.scrollTo({ top: 0, behavior: 'smooth' }); });}
+  if (createFromFilteredBtn){
+    createFromFilteredBtn.addEventListener('click', createFromFiltered);
+  }
+
+  if (resetCollectionBtn){
+    resetCollectionBtn.addEventListener('click', resetCollection);
+  }
+
+  document.getElementById('resetGallery').addEventListener('click', resetGallery);
+
+  if (toggleMenuBtn){
+    toggleMenuBtn.addEventListener('click', debounce(resizeDOM, 500));
+  }
+
+  if (statToggle){
+    statToggle.addEventListener('click', toggleStats);
+  }
+
+  if (sortByBtn){
+    sortByBtn.forEach(btn => btn.addEventListener('click', handleSortChange));
+  }
+
+  if (backToTopBtn){
+    backToTopBtn.addEventListener('click', () => { 
+      window.scrollTo({ top: 0, behavior: 'smooth' }); 
+    });
+  }
 
   filterForm.addEventListener('submit', function(e) {
     e.preventDefault();
     showGallery();
   });
+
+  document.querySelectorAll('.btNewCollection').forEach(btn => {
+    btn.addEventListener('click', onCreateCollection);
+  });
+
+  document.getElementById('metadataBtn').addEventListener('click',()=>{
+    updateMetadataFormVisibility('block')
+  });
+
+  document.getElementById('collectionForm').addEventListener('submit', saveCollectionMetadata);
 }
 
 function checkActiveFilter(){
@@ -309,8 +485,8 @@ async function getFilter() {
     filter.push("artifact.end <= " + filterValues.byEnd); 
     activeFilterCount++;
   }
-  if (filterValues.description) {
-    filter.push("(artifact.description like '%" + filterValues.description + "%' or artifact.name like '%" + filterValues.description + "%')");
+  if (filterValues.byDescription) {
+    filter.push("(artifact.description like '%" + filterValues.byDescription + "%' or artifact.name like '%" + filterValues.byDescription + "%')");
     activeFilterCount++;
   }  
   // Salva il numero di filtri attivi in una variabile globale, se vuoi
@@ -340,10 +516,14 @@ function handleTabChange(pane) {
   if (pane.target.id === 'viewCollection') {
     statToggle.style.transform = 'translate(-50px, 0)';
     hideStats();
+    toggleFilterBtn.style.visibility = 'hidden';
+    document.getElementById('sortByBtn').style.visibility = 'hidden';
   }else{
     statToggle.style.transform = 'translate(5px, 0)';
     showStats();
     window.scrollTo(0, 350);
+    toggleFilterBtn.style.visibility = 'visible';
+    document.getElementById('sortByBtn').style.visibility = 'visible';
   }
 }
 
@@ -406,12 +586,6 @@ async function showGallery() {
   currentFilter = filter;
   if (galleryInstance && typeof galleryInstance.reset === 'function') { galleryInstance.reset();}
   galleryInstance = gallery('index', feature, currentFilter);
-}
-
-async function showCollection() {
-  await getFilter();
-  currentFilter = filter;
-  collectionInstance = collection(currentFilter);
 }
 
 /******************/
@@ -540,7 +714,6 @@ function getInstitutionIdByName(name) {
       break;
     }
   }
-  
   const option = Array.from(byInstitution.options).find(opt => opt.textContent === name);
   return option ? option.value : null;
 }
@@ -607,7 +780,7 @@ function mapStat(countyData){
 }
 
 function filterElement(e){
-  document.getElementsByName('byCounty')[0].value = e.target.feature.properties.id
+  byCounty.value = e.target.feature.properties.id
   map2.fitBounds(e.target.getBounds());
   showGallery();
 };

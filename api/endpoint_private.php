@@ -2,6 +2,8 @@
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
+error_log("Raw input: " . file_get_contents('php://input'));
+error_log("POST data: " . print_r($_POST, true));
 require 'vendor/autoload.php';
 
 $availableClasses = [
@@ -9,6 +11,7 @@ $availableClasses = [
   'Timeline' => Adc\Timeline::class,
   'Vocabulary' => Adc\Vocabulary::class,
   'Collection' => Adc\Collection::class,
+  'User' => Adc\User::class,
 ];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -35,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           echo json_encode(['error' => 0, 'data' => $response]);
         } catch (Exception $e) {
           http_response_code(500); // Errore del server
-          echo json_encode(['error' => 1, 'message' => "no input provided: ". $e->getMessage()]);
+          echo json_encode(['error' => 1, 'message' => $e->getMessage()]);
         }
       } else {
         http_response_code(404); // Metodo non trovato

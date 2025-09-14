@@ -1,5 +1,14 @@
-const API = 'api/';
-const ENDPOINT = API+'endpoint_private.php';
+// Rileva automaticamente il base path
+const getBasePath = () => {
+  const path = window.location.pathname;
+  if (path.includes('/prototype_dev/')) { return '/prototype_dev/'; }
+  if (path.includes('/plus/')) { return '/plus/'; }
+  return '/';
+};
+
+const BASE_PATH = getBasePath();
+const API = BASE_PATH + 'api/';
+const ENDPOINT = API + 'endpoint_private.php';
 const spinner = "<div><div id='spinnerWrap' class='d-inline-block'><i class='mdi mdi-reload'></i></div> loading...</div>";
 
 const toastEL = document.getElementById('toast')

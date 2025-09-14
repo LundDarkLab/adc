@@ -72,59 +72,103 @@
       </div>
 
       <div class="tab-pane fade" id="collection-pane" role="tabpanel">
-        <div id="noCollection"></div>
-        <!--<div class="bg-light border rounded py-3">
-          <div id="emptyCollection" class="text-center">
+        <input type="file" id="ifileJSON" accept=".json,.JSON,.Json" style="display:none">
+        <div id="noCollection" class="">
+          <div class="col text-center txt-adc-dark mb-5">
             <h2>Your collection is empty!</h2>
           </div>
-          <div id="fullCollection" class="container">
-            <div class="row">
-              <div class="col">
-                <h3>Your Dynamic Collection</h3>
-              </div>
+          <div id="noCollectionBody">
+            <p>The dynamic collection you create resides in your browser's LocalStorage area and is not stored on the server or shared with others.</p>
+            <p>To create a new collection, you can:</p>
+            <ul>
+              <li>click on the "collect" button on each artefact's card</li>
+              <li>perform a search and add all the artefacts by clicking on the "create collection" button</li>
+              <li>click on the "import collection" button and upload a JSON file previously exported</li>
+              <li>click on the "new collection" button to create a new empty collection. If you choose this method, please fill the metadata collection form to export your collection correctly.</li>
+            </ul>
+            <p>Once you have added the artefacts, you can download the collection as a <span class="tipText" data-bs-toggle="popover" data-bs-html="true" data-bs-content="<span class='fw-bold'>JSON</span> (<span class='fw-bold'>JavaScript Object Notation</span>, pronounced /'dʒeIsən/ or /'dʒeIˌsɒn/) is an open standard file format and data interchange format that uses human-readable text to store and transmit data objects consisting of name-value pairs and arrays (or other serializable values). It is a commonly used data format with diverse uses in electronic data interchange, including that of web applications with servers. <a href='https://en.wikipedia.org/wiki/JSON' target='_blank' rel='noopener noreferrer' class='d-block'>Read more on Wikipedia <span class='mdi mdi-open-in-new'></span></a>">json file <span class="mdi mdi-help-circle-outline"></span></span>.<br>The downloaded file can be used to upload your collection from any device by clicking on the "upload your collection" button, or share it with colleagues and students as you see fit.</p>
+            <button id="btImportCollection" type="button" class="btn btn-adc-blue mt-3 btImportCollection" data-bs-toggle="tooltip" title="Import collection from JSON">
+              <span class="mdi mdi-upload"></span> import collection
+            </button>
+            <button type="button" class="btn btn-adc-blue mt-3 btNewCollection" data-bs-toggle="tooltip" title="Create a new collection">
+              <span class="mdi mdi-plus"></span> new collection
+            </button>
+          </div>
+        </div>
+        <div id="collectionContainer">
+          <nav class="bg-light border-bottom border-top">
+            <button type="button" class="btn btn-light btImportCollection">
+              <span class="mdi mdi-upload"></span> import
+            </button>
+            <button id="exportCollectionBtn" type="button" class="btn btn-light">
+              <span class="mdi mdi-download"></span> export
+            </button>
+            <button type="button" class="btn btn-light btNewCollection">
+              <span class="mdi mdi-plus"></span> new
+            </button>
+            <button type="button" class="btn btn-light">
+              <span class="mdi mdi-delete"></span> delete
+            </button> 
+            <button type="button" class="btn btn-light" id="metadataBtn">
+              <span class="mdi mdi-delete"></span> metadata
+            </button>          
+            <div class="dropdown">
+              <button type="button" class="btn btn-light dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                <span class="mdi mdi-swap-horizontal"></span> change
+              </button>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="#">Action</a></li>
+                <li><a class="dropdown-item" href="#">Another action</a></li>
+                <li><a class="dropdown-item" href="#">Something else here</a></li>
+              </ul>
             </div>
-            <div class="row">
-              <div class="col-6">
-                <p class="txt-adc-dark">The Dynamic Collection you create resides in the LocalStorage area on your browser, and is not memorized in the server or shared with others.</p>
-                <p class="txt-adc-dark">You may download the Collection as a json file, and you can share it with colleagues and students ay you see fit.</p>
-
-                <p>
-                <button id="btExportCollection" type="button" class="btn btn-sm btn-secondary" data-bs-toggle="tooltip" title="Export collection as JSON">
-                  <span class="mdi mdi-download"></span> Export
-                </button>
-                <button id="btImportCollection" type="button" class="btn btn-sm btn-secondary" data-bs-toggle="tooltip" title="Import collection from JSON">
-                  <span class="mdi mdi-upload"></span> Import
-                </button>
-                <input type="file" id="ifileJSON" accept=".json,.JSON,.Json" style="display:none">
-                </p>
-                <p>
-                <button id="btResetCollection" type="button" class="btn btn-sm btn-danger" data-bs-toggle="tooltip" title="Delete collection">
-                  <span class="mdi mdi-delete"></span> Delete
-                </button>
-                </p>
-              </div>
-              <div class="col-6">
-                <div class="mb-3">
-                  <label for="collEmail" class="form-label">Email</label>
-                  <input type="email" class="form-control form-control-sm" id="collEmail">
+          </nav>
+          <div id="collectionFormContainer">
+            <div id="collectionTitleWrap">
+              <h2 class="txt-adc-dark"><span id="collectionTitle"></span> metadata</h2>
+            </div>
+            <form id="collectionForm" class="animated">
+              <div class="row">
+                <div class="mb-3 col">
+                  <p class="text-muted">Please fill in all fields or edit them.The information requested is needed to uniquely identify the new collection.</p>
                 </div>
-                <div class="mb-3">
+              </div>
+              <div class="row">
+                <div class="mb-3 col-6">
+                  <label for="collEmail" class="form-label">Email</label>
+                  <input type="email" class="form-control form-control-sm" id="collEmail" required>
+                </div>
+                <div class="mb-3 col-6">
                   <label for="collAuthor" class="form-label">Author</label>
                   <input type="text" class="form-control form-control-sm" id="collAuthor" required>
                 </div>                
-                <div class="mb-3">
+              </div>
+              <div class="row">
+                <div class="col mb-3">
                   <label for="collTitle" class="form-label">Title</label>
                   <input type="text" class="form-control form-control-sm" id="collTitle" required>
                 </div>
+              </div>
+              <div class="row">
                 <div class="mb-3">
                   <label for="collDesc" class="form-label">Description</label>
-                  <textarea class="form-control form-control-sm" id="collDesc" rows="5"></textarea>
+                  <textarea class="form-control form-control-sm" id="collDesc" rows="5" required></textarea>
                 </div>
               </div>
+              <div class="row">
+                <div class="col">
+                  <button id="btExportCollection" type="submit" class="btn btn-adc-blue" title="Export collection as JSON">
+                    <span class="mdi mdi-download"></span> save
+                  </button>
+                </div>
+              </div>
+            </form>
+            <div id="noItemsInCollection" class="">
+              <h2>Your collection is empty!</h2>
             </div>
           </div>
-        </div> -->
-        <div id="wrapCollection" class="card-wrap"></div>
+          <div id="wrapCollection" class="card-wrap"></div>
+        </div>  
       </div>
     </main>
     <?php
