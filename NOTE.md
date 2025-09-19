@@ -1,5 +1,45 @@
+### 250917
+# Gestione dello stato con l'oggetto `state`
+
+## Perché è stato introdotto l'oggetto `state`
+
+L'oggetto `state` è stato introdotto per centralizzare e semplificare la gestione dei dati dell'applicazione in memoria (RAM), rendendo il codice più leggibile, reattivo e facilmente manutenibile. In precedenza, molte funzioni interrogavano direttamente il `localStorage` per leggere o scrivere dati, causando ridondanza, possibili incoerenze e rallentamenti nell'interfaccia.
+
+## Perché è utile
+
+- **Performance**: riduce le chiamate ripetute a `localStorage`, mantenendo i dati più usati direttamente in RAM.
+- **Coerenza**: tutte le funzioni lavorano su una "fonte unica di verità", evitando dati duplicati o non sincronizzati.
+- **Reattività**: la UI può aggiornarsi istantaneamente leggendo dallo stato, senza attendere operazioni asincrone sullo storage.
+- **Manutenibilità**: il flusso dei dati è chiaro e centralizzato, facilitando debug e refactoring.
+
+## Come interagisce con localStorage
+
+- **All'avvio**: lo stato viene popolato leggendo i dati da `localStorage` (collections, lista delle collection, ecc.).
+- **Durante l'uso**: tutte le modifiche alle collection e agli items aggiornano sia lo stato che il `localStorage`, mantenendo sincronizzati i dati persistenti e quelli in RAM.
+- **Alla cancellazione**: quando si eliminano collection o items, lo stato viene ripulito e il `localStorage` aggiornato di conseguenza.
+
+## Variabili principali dell'oggetto `state`
+
+- `collectionList`: oggetto che tiene le chiavi delle collection e lo stato attivo (`true`/`false`).
+- `collections`: oggetto che contiene tutte le collection caricate, indicizzate per chiave.
+- `activeCollectionKey`: chiave della collection attualmente attiva.
+- `activeCollection`: oggetto della collection attiva (con metadati e items).
+- `collectionItems`: array degli items della collection attiva.
+- `collectStatus`: oggetto che tiene traccia dello stato di raccolta degli items (es. `{ [itemId]: true/false }`).
+- `filters`: oggetto con i filtri attivi applicati alla gallery o alle collection.
+- `galleryItems`: array degli items attualmente visualizzati nella gallery.
+- `collectionFormMode`, `editingCollectionKey`: variabili di stato per la gestione del form di creazione/modifica collection.
+
+## Come funzionano le variabili
+
+- Quando si crea, aggiorna o elimina una collection, le variabili dello stato vengono aggiornate e sincronizzate con il `localStorage`.
+- Quando si aggiunge o rimuove un item, `collectionItems` e `collectStatus` vengono aggiornati per riflettere la situazione corrente.
+- La UI legge sempre dallo stato per mostrare dati aggiornati e coerenti.
+
+---
 ### 250914
 # Nuova struttura
+
 Organizzazione dei file per l'integrazione in un bundler tipo vite.
 
 I file js devono essere divisi logicamente in:

@@ -117,7 +117,7 @@ async function rescuePwd(el) {
         } else {
           outputMsg.classList.add('text-success');
           outputMsg.innerHTML = data.data.output + '<br>Redirecting to home page...';
-          setTimeout(() => { location.href = "index.php"; }, 3000);
+          setTimeout(() => { location.href = "login.php"; }, 3000);
         }
     } catch (error) {
       console.log("error: " + error.message);

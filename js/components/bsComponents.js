@@ -1,4 +1,4 @@
-export function bsToast(message, type, delay = 2000, callback = null) {
+export function bsAlert(message, type, delay = 2000, callback = null) {
   // Crea il container se non esiste
   let toastContainer = document.getElementById("toast-container");
   if (!toastContainer) {
@@ -29,5 +29,56 @@ export function bsToast(message, type, delay = 2000, callback = null) {
     if (!toastContainer.hasChildNodes()) {
       toastContainer.remove();
     }
+  });
+}
+
+export function bsConfirm(message, onConfirm, onCancel = null) {
+  let modalContainer = document.getElementById("modal-container");
+  if (!modalContainer) {
+    modalContainer = document.createElement("div");
+    modalContainer.id = "modal-container";
+    document.body.appendChild(modalContainer);
+  }
+
+  const modalId = `modal-${Date.now()}`;
+  const modalHTML = `
+    <div class="modal fade" id="${modalId}" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="${modalId}-label" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="${modalId}-label">Please Confirm</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">${message}</div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary" id="${modalId}-confirm">Confirm</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  modalContainer.innerHTML = modalHTML;
+
+  const modalElement = document.getElementById(modalId);
+  const modalInstance = new bootstrap.Modal(modalElement);
+  modalInstance.show();
+
+  modalElement.addEventListener("hidden.bs.modal", () => {
+    modalElement.remove();
+    if (typeof onCancel === "function") { onCancel(); }
+  });
+
+  document.getElementById(`${modalId}-confirm`).addEventListener("click", () => {
+    modalInstance.hide();
+    if (typeof onConfirm === "function") { onConfirm(); }
+  });
+}
+
+export function bsTooltips(selector = '[data-bs-toggle="tooltip"]') {
+  const tooltipTriggerList = [].slice.call(document.querySelectorAll(selector));
+  tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+    new bootstrap.Tooltip(tooltipTriggerEl, {trigger:'focus', html: true });
   });
 }

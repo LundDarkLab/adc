@@ -88,7 +88,7 @@
             </ul>
             <p>Once you have added the artefacts, you can download the collection as a <span class="tipText" data-bs-toggle="popover" data-bs-html="true" data-bs-content="<span class='fw-bold'>JSON</span> (<span class='fw-bold'>JavaScript Object Notation</span>, pronounced /'dʒeIsən/ or /'dʒeIˌsɒn/) is an open standard file format and data interchange format that uses human-readable text to store and transmit data objects consisting of name-value pairs and arrays (or other serializable values). It is a commonly used data format with diverse uses in electronic data interchange, including that of web applications with servers. <a href='https://en.wikipedia.org/wiki/JSON' target='_blank' rel='noopener noreferrer' class='d-block'>Read more on Wikipedia <span class='mdi mdi-open-in-new'></span></a>">json file <span class="mdi mdi-help-circle-outline"></span></span>.<br>The downloaded file can be used to upload your collection from any device by clicking on the "upload your collection" button, or share it with colleagues and students as you see fit.</p>
             <button id="btImportCollection" type="button" class="btn btn-adc-blue mt-3 btImportCollection" data-bs-toggle="tooltip" title="Import collection from JSON">
-              <span class="mdi mdi-upload"></span> import collection
+              <span class="mdi mdi-upload"></span> import new collection
             </button>
             <button type="button" class="btn btn-adc-blue mt-3 btNewCollection" data-bs-toggle="tooltip" title="Create a new collection">
               <span class="mdi mdi-plus"></span> new collection
@@ -96,37 +96,47 @@
           </div>
         </div>
         <div id="collectionContainer">
-          <nav class="bg-light border-bottom border-top">
-            <button type="button" class="btn btn-light btImportCollection">
-              <span class="mdi mdi-upload"></span> import
-            </button>
-            <button id="exportCollectionBtn" type="button" class="btn btn-light">
-              <span class="mdi mdi-download"></span> export
-            </button>
-            <button type="button" class="btn btn-light btNewCollection">
-              <span class="mdi mdi-plus"></span> new
-            </button>
-            <button type="button" class="btn btn-light">
-              <span class="mdi mdi-delete"></span> delete
-            </button> 
-            <button type="button" class="btn btn-light" id="metadataBtn">
-              <span class="mdi mdi-delete"></span> metadata
-            </button>          
-            <div class="dropdown">
-              <button type="button" class="btn btn-light dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                <span class="mdi mdi-swap-horizontal"></span> change
-              </button>
-              <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="#">Action</a></li>
-                <li><a class="dropdown-item" href="#">Another action</a></li>
-                <li><a class="dropdown-item" href="#">Something else here</a></li>
-              </ul>
+          <div id="collectionTitleWrap">
+            <h2 id="collectionTitle" class="txt-adc-dark border-bottom p-3 m-0"></h2>
+            <div id="collectionBtnWrap" class="bg-light border-bottom">
+              <div class="btn-group" role="group" aria-label="First group">
+                <div class="dropdown">
+                  <button type="button" class="btn btn-light rounded-0 dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    <span class="mdi mdi-code-json"></span> json file
+                  </button>
+                  <ul class="dropdown-menu">
+                    <button class="dropdown-item" id="btImportJson"><span class="mdi mdi-import"></span> import new collection</button>
+                    <button class="dropdown-item" id="btExportActive"><span class="mdi mdi-export"></span> export active collection</button>
+                    <button class="dropdown-item" id="btExportAll"><span class="mdi mdi-card-multiple-outline"></span> export all collections</button>
+                  </ul>
+                </div>
+                
+                <button type="button" class="btn btn-light btNewCollection">
+                  <span class="mdi mdi-plus"></span> new
+                </button>
+                <button type="button" class="btn btn-light" id="btUpdateMetadata">
+                  <span class="mdi mdi-information-outline"></span> metadata
+                </button>          
+                <div class="dropdown" id="changeCollectionDropdown">
+                  <button type="button" class="btn btn-light rounded-0 dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    <span class="mdi mdi-swap-horizontal"></span> change
+                  </button>
+                  <ul class="dropdown-menu" id="collectionListDropdown"></ul>
+                </div>
+                <div class="dropdown">
+                  <button type="button" class="btn btn-light text-danger rounded-0 dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    <span class="mdi mdi-close-octagon"></span> danger zone
+                  </button>
+                  <ul class="dropdown-menu">
+                    <button class="dropdown-item" id="btClearCollection"><span class="mdi mdi-delete-empty"></span> clear active</button>
+                    <button class="dropdown-item" id="btDeleteCollection"><span class="mdi mdi-delete-forever"></span> delete active</button>
+                    <button class="dropdown-item" id="btDeleteAllCollections"><span class="mdi mdi-delete-alert"></span> delete all collections</button>
+                  </ul>
+                </div>
+              </div>
             </div>
-          </nav>
+          </div>
           <div id="collectionFormContainer">
-            <div id="collectionTitleWrap">
-              <h2 class="txt-adc-dark"><span id="collectionTitle"></span> metadata</h2>
-            </div>
             <form id="collectionForm" class="animated">
               <div class="row">
                 <div class="mb-3 col">
@@ -157,8 +167,11 @@
               </div>
               <div class="row">
                 <div class="col">
-                  <button id="btExportCollection" type="submit" class="btn btn-adc-blue" title="Export collection as JSON">
+                  <button id="btExportCollection" type="submit" class="btn btn-adc-blue" title="save collection metadata">
                     <span class="mdi mdi-download"></span> save
+                  </button>
+                  <button id="btCancelMetadataFormRequest" type="button" class="btn btn-adc-blue toggleMetadataForm" title="Cancel request">
+                    <span class="mdi mdi-download"></span> cancel
                   </button>
                 </div>
               </div>
@@ -177,6 +190,7 @@
       require("assets/js.html"); 
     ?>
   </body>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
   <script src="https://cdn.maptiler.com/maptiler-sdk-js/v1.2.0/maptiler-sdk.umd.js"></script>
   <script src="https://cdn.maptiler.com/leaflet-maptilersdk/v2.0.0/leaflet-maptilersdk.js"></script>

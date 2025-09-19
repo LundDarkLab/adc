@@ -1,20 +1,7 @@
 import { initGallery as gallery} from "./modules/gallery.js";
 import { collection } from "./modules/collection.js";
-import { createGalleryItem,getCollectStatusBtn} from "./components/galleryCard.js"
+import { createGalleryItem} from "./components/galleryCard.js"
 import {bsAlert, bsConfirm } from "./components/bsComponents.js"
-
-export const state = {
-  filters: {},
-  collectionList: {}, // localStorage 'collectionList' 
-  collections: {}, // { [key]: collectionObject }
-  activeCollectionKey: null,
-  activeCollection: null, // oggetto collection attiva
-  galleryItems: [], // tutti gli item della gallery
-  // collectionItems: [], // tutti gli item della collection attiva
-  collectStatus: {}, // { [itemId]: true/false }
-  collectionFormMode: null, // 'create' | 'update'
-  editingCollectionKey: null,
-};
 
 const coll = collection();
 const filterForm = document.getElementById('filterForm');
@@ -58,35 +45,8 @@ document.addEventListener('DOMContentLoaded', function() {
   initializeApp();
 });
 
-async function stateInit() {
-  const storedList = localStorage.getItem('collectionList');
-  // Inizializza la lista delle collezioni se sono presenti, altrimenti un oggetto vuoto
-  state.collectionList = storedList ? JSON.parse(storedList) : {};
-  // Carica le collezioni esistenti dallo storage e aggiungile allo stato
-  for (const key of Object.keys(state.collectionList)) {
-    if (!key || key === "undefined") continue;
-    const obj = localStorage.getItem(key);
-    if (obj) state.collections[key] = JSON.parse(obj);
-  }
-
-  // Controlla se esiste una collezione attiva
-  const activeEntry = Object.entries(state.collectionList).find(([key, value]) => value === true);
-  if (activeEntry) {
-    state.activeCollectionKey = activeEntry[0];
-    // Imposta la collezione attiva nello stato
-    state.activeCollection = state.collections[state.activeCollectionKey];
-    // Aggiorna lo stato dei pulsanti delle cards della collezione attiva
-    getCollectStatusBtn();
-  } else {
-    state.activeCollectionKey = null;
-    state.activeCollection = null;
-    state.collectStatus = {};
-  }
-}
-
 async function initializeApp() {
   try {
-    await stateInit();
     // Load data in parallel for better performance
     await Promise.all([
       currentPageActiveLink('index.php'),
@@ -107,35 +67,43 @@ async function initializeApp() {
   }
 }
 
-export async function showCollection() {
-  const activeCollection = state.activeCollectionKey;
-  if (!activeCollection || !state.activeCollection) {
+async function showCollection() {
+  const activeCollection = await coll.getActiveCollection();
+  // Se non c'è una collezione attiva, mostra il messaggio
+  if (!activeCollection) {
     noCollection(true);
     collectionBtnGroup(false);
     return;
   }
   noCollection(false);
-
-  const collectionData = state.activeCollection;
+  
+  // Recupera i dati della collezione
+  const collectionData = await coll.retrieveCollection(activeCollection);
+  
+  // controlla i metadata
   const meta = collectionData.metadata || {};
   const allMetaFilled = [meta.title, meta.email, meta.author, meta.description].every(val => typeof val === 'string' && val.trim() !== '' && val !== 'undefined');
-
+  
+  // Se i metadata non sono tutti compilati, mostra il form
   if (!allMetaFilled) {
     updateMetadataFormVisibility(true, activeCollection, meta);
     document.getElementById('collectionTitle').textContent = 'Collection metadata';
     collectionBtnGroup(false);
     return;
   }
-
-  if (!Array.isArray(collectionData.items) || collectionData.items.length === 0) {
+  
+  // Se non ci sono items ma i metadata sono compilati, mostra solo la gallery vuota
+  if (collectionData.items.length === 0) {
     document.getElementById('noItemsInCollection').style.display = 'block';
     updateMetadataFormVisibility(false);
-    buildCollection(collectionData);
+    buildCollection(collectionData); // Mostra la gallery vuota
     collectionMetadata(meta);
     collectionBtnGroup(true);
+    document.getElementById('noItemsInCollection').style.display = 'block';
     return;
   }
 
+  // Se ci sono items e metadata compilati, mostra tutto
   updateMetadataFormVisibility(false);
   buildCollection(collectionData);
   collectionMetadata(meta);
@@ -163,91 +131,133 @@ function noCollection(show = true){
 }
 
 async function onCreateCollection() {
-  document.getElementById('collectionForm').reset();
-  document.getElementById('collectionTitle').textContent = 'Collection metadata';
-  document.getElementById('wrapCollection').style.display = 'none';
-  updateMetadataFormVisibility(true);
-  state.collectionFormMode = 'create';
-  state.editingCollectionKey = null;
-}
+  try {
+    document.getElementById('collectionForm').reset();
+    document.getElementById('collectionTitle').textContent = 'Collection metadata';
+    updateMetadataFormVisibility(true);
 
-async function onUpdateCollection() {
-  document.getElementById('wrapCollection').style.display = 'none';
-  const activeCollection = state.activeCollectionKey;
-  if (!activeCollection) return;
-  const collectionObj = JSON.parse(localStorage.getItem(activeCollection));
-  const meta = collectionObj?.metadata || {};
-  const collEmail = document.getElementById('collEmail');
-  const collAuthor = document.getElementById('collAuthor');
-  const collTitle = document.getElementById('collTitle');
-  const collDesc = document.getElementById('collDesc');
-  collEmail.value = meta.email || '';
-  collAuthor.value = meta.author || '';
-  collTitle.value = meta.title || '';
-  collDesc.value = meta.description || '';
-  document.getElementById('collectionTitle').textContent = meta.title || 'Collection metadata';
-  updateMetadataFormVisibility(true);
-  state.collectionFormMode = 'update';
-  state.editingCollectionKey = activeCollection;
-}
+    const form = document.getElementById('collectionForm');
+    form.onsubmit = null;
 
-document.getElementById('collectionForm').addEventListener('submit', async function(e) {
-  e.preventDefault();  
-  const collEmail = document.getElementById('collEmail');
-  const collAuthor = document.getElementById('collAuthor');
-  const collTitle = document.getElementById('collTitle');
-  const collDesc = document.getElementById('collDesc');
-  const metadata = {
-    email: collEmail.value,
-    author: collAuthor.value,
-    title: collTitle.value,
-    description: collDesc.value
-  };
+    let metadata = null;
 
-  if (state.collectionFormMode === 'create') {
+    function handler(e) {
+      e.preventDefault();
+      form.removeEventListener('submit', handler);
+      metadata = {
+        email: document.getElementById('collEmail').value,
+        author: document.getElementById('collAuthor').value,
+        title: document.getElementById('collTitle').value,
+        description: document.getElementById('collDesc').value
+      };
+      resolvePromise();
+    }
+
+    let resolvePromise;
+    const submitPromise = new Promise((resolve) => {
+      resolvePromise = resolve;
+      form.addEventListener('submit', handler);
+    });
+    await submitPromise;
+
+    // Rimuovi il listener in ogni caso (sicurezza extra)
+    form.removeEventListener('submit', handler);
+
     if (coll.isTitleDuplicate(metadata.title)) {
       bsAlert('Title already exists. Please choose another.', 'danger', 3000);
+      // Il form rimane visibile per permettere la correzione
       return;
     }
+
     const key = await coll.createCollection(metadata);
-    Object.keys(state.collectionList).forEach(k => state.collectionList[k] = false);
-    state.collectionList[key] = true;
-    state.activeCollectionKey = key;
-    state.activeCollection = state.collections[key];
-    getCollectStatusBtn();
-    localStorage.setItem('collectionList', JSON.stringify(state.collectionList));
     await toggleCollectionListBtn();
+
     bsAlert('Collection successfully created!', 'success');
     updateMetadataFormVisibility(false, key, metadata);
     collectionBtnGroup(true);
     await showCollection();
-    state.collectionFormMode = null;
-    state.editingCollectionKey = null;
-  } else if (state.collectionFormMode === 'update') {   
-    if (coll.isTitleDuplicate(metadata.title, state.editingCollectionKey)) {
+  } catch (error) {
+    bsAlert(`Collection error! ${error}`, 'danger');
+  }
+}
+
+async function onUpdateCollection() {
+  try {
+    const activeCollection = await coll.getActiveCollection();
+    if (!activeCollection) return;
+
+    // Recupera i metadati attuali
+    const collectionObj = JSON.parse(localStorage.getItem(activeCollection));
+    const meta = collectionObj?.metadata || {};
+    const collEmail = document.getElementById('collEmail');
+    const collAuthor = document.getElementById('collAuthor');
+    const collTitle = document.getElementById('collTitle');
+    const collDesc = document.getElementById('collDesc');
+    // Precompila il form con i dati attuali
+    collEmail.value = meta.email || '';
+    collAuthor.value = meta.author || '';
+    collTitle.value = meta.title || '';
+    collDesc.value = meta.description || '';
+
+    document.getElementById('collectionTitle').textContent = meta.title || 'Collection metadata';
+    updateMetadataFormVisibility(true);
+
+    const form = document.getElementById('collectionForm');
+    form.onsubmit = null;
+
+    let updatedMetadata = null;
+
+    // Definisci handler all'esterno
+    function handler(e) {
+      e.preventDefault();
+      form.removeEventListener('submit', handler);
+      updatedMetadata = {
+        email: collEmail.value,
+        author: collAuthor.value,
+        title: collTitle.value,
+        description: collDesc.value
+      };
+      resolvePromise();
+    }
+
+    // Promise che si risolve quando il form viene inviato
+    let resolvePromise;
+    const submitPromise = new Promise((resolve) => {
+      resolvePromise = resolve;
+      form.addEventListener('submit', handler);
+    });
+
+    await submitPromise;
+
+    // Rimuovi il listener in ogni caso
+    form.removeEventListener('submit', handler);
+
+    if (coll.isTitleDuplicate(updatedMetadata.title, activeCollection)) {
       bsAlert('Title already exists. Please choose another.', 'danger', 3000);
       return;
     }
-    const collectionObj = JSON.parse(localStorage.getItem(state.editingCollectionKey));
-    collectionObj.metadata = metadata;
-    localStorage.setItem(state.editingCollectionKey, JSON.stringify(collectionObj));
+
+    // Aggiorna i metadati
+    collectionObj.metadata = updatedMetadata;
+    localStorage.setItem(activeCollection, JSON.stringify(collectionObj));
     await toggleCollectionListBtn();
     bsAlert('Metadata successfully updated!', 'success', 3000, ()=>{
-      updateMetadataFormVisibility(false, state.editingCollectionKey, metadata);
+      updateMetadataFormVisibility(false, activeCollection, collectionObj.metadata);
       collectionBtnGroup(true);
     });
     await showCollection();
-    state.collectionFormMode = null;
-    state.editingCollectionKey = null;
+
+  } catch (err) {
+    bsAlert('Error during updating metadata', 'danger');
+    console.error(err);
   }
-});
+}
 
 function buildCollection(data){
   noCollection(false);
   const countCollection = document.getElementById('countCollection');
   if (countCollection) { countCollection.textContent = data.items.length; }
   const wrapCollection = document.getElementById('wrapCollection');
-  wrapCollection.style.display = 'grid';
   wrapCollection.innerHTML = '';
 
   data.items.forEach(item => {
@@ -299,17 +309,10 @@ async function interfaceSetup() {
 }
 
 async function toggleCollectionListBtn(){
-  let listCollection = coll.getCollectionList();
-  if (listCollection.length === 0) {
-    const obj = localStorage.getItem('collectionList');
-    if (obj) {
-      state.collectionList = JSON.parse(obj);
-      listCollection = coll.getCollectionList();
-    }
-  }
-  let showCollectionBtn = listCollection.length > 1;
+  const listCollection = coll.getCollectionList();
+  let showCollectionBtn = listCollection.length > 1 ? true : false;
   document.getElementById('changeCollectionDropdown').style.display = showCollectionBtn ? 'block' : 'none';
-  const activeKey = state.activeCollectionKey;
+  const activeKey = await coll.getActiveCollection();
   fillCollectionList(listCollection, activeKey);
 }
 
@@ -325,10 +328,13 @@ function fillCollectionList(list, activeKey){
     if (collection.key === activeKey) {
       btn.classList.add('active');
     }
-    btn.onclick = async () => {
-      document.querySelectorAll('#collectionListDropdown .dropdown-item.active').forEach(el => el.classList.remove('active'));
+    btn.onclick = () => {
+      // Rimuovi 'active' da tutti i pulsanti
+      document.querySelectorAll('#collectionListDropdown .dropdown-item.active')
+        .forEach(el => el.classList.remove('active'));
+      // Aggiungi 'active' solo al pulsante cliccato
       btn.classList.add('active');
-      await coll.setActiveCollection(collection.key);
+      coll.setActiveCollection(collection.key);
       showCollection();
     };
     li.appendChild(btn);
@@ -409,6 +415,7 @@ async function getFilterList() {
       categoryFragment.appendChild(option);
     });
     
+    // Create options for material
     data.material.forEach((item) => {
       const option = document.createElement('option');
       option.textContent = item.value;
@@ -416,6 +423,7 @@ async function getFilterList() {
       materialFragment.appendChild(option);
     });
     
+    // Create options for institution
     data.institution.forEach((item) => {
       const option = document.createElement('option');
       option.textContent = item.value;
@@ -465,10 +473,12 @@ async function buildStat() {
     document.querySelector("#institutionTot > h2").textContent = data.institution.tot;
     document.querySelector("#filesTot > h2").textContent = data.files.tot;
 
+    // Aspetta che Google Charts sia completamente caricato
     await new Promise((resolve) => {
       google.charts.setOnLoadCallback(resolve);
     });
 
+    // Ora inizializza i grafici
     cronoChart(cronoData);
     institutionChart(institutionData);
     
@@ -528,14 +538,7 @@ async function initializeEventListeners() {
     showGallery();
   });
 
-  document.getElementById('btExportActive').addEventListener('click', async () => {
-    await coll.exportCollection(true);
-  });
-
-  document.getElementById('btExportAll').addEventListener('click', async () => {
-    await coll.exportCollection(false);
-  });
-
+  // btn group collection
   document.querySelectorAll('.btNewCollection').forEach(btn => {
     btn.addEventListener('click', onCreateCollection);
   });
@@ -545,20 +548,17 @@ async function initializeEventListeners() {
   document.getElementById('btCancelMetadataFormRequest').addEventListener('click', async () => {
     document.getElementById('collectionForm').reset();
     updateMetadataFormVisibility(false);
-    const activeCollection = state.activeCollectionKey;
+    const activeCollection = await coll.getActiveCollection();
+    console.log(`Active: ${activeCollection}`);
     if (activeCollection) {
       const collectionObj = localStorage.getItem(activeCollection);
+      console.log(`Active: ${activeCollection} and metadata: ${collectionObj}`);
       if (collectionObj) {
         const meta = JSON.parse(collectionObj).metadata || {};
         document.getElementById('collectionTitle').textContent = meta.title || 'Collection metadata';
-        document.getElementById('wrapCollection').style.display = 'grid';
       }
     } else {
       document.getElementById('collectionTitle').textContent = 'Collection metadata';
-      state.activeCollection = null;
-      // state.collectionItems = [];
-      state.collectStatus = {};
-      noCollection(true);
     }
     if (coll.getCollectionList().length === 0) {
       noCollection(true);
@@ -568,13 +568,7 @@ async function initializeEventListeners() {
   document.getElementById('btClearCollection').addEventListener('click', () => {
     bsConfirm(
       'Are you sure you want to clear the entire collection? This action cannot be undone.', 
-      coll.clearCollection,
-      async () => {
-        await toggleCollectionListBtn();
-        collectionBtnGroup(true);
-        getCollectStatusBtn();
-        await showCollection();
-      }
+      coll.clearCollection
     ); 
   });
 
@@ -585,7 +579,6 @@ async function initializeEventListeners() {
       async () => {
         await toggleCollectionListBtn();
         collectionBtnGroup(true);
-        getCollectStatusBtn();
         await showCollection();
       }
     );
@@ -594,16 +587,10 @@ async function initializeEventListeners() {
   document.getElementById('btDeleteAllCollections').addEventListener('click', () => {
     bsConfirm(
       'Are you sure you want to delete all collections? This action cannot be undone.', 
-      async () => await coll.deleteCollection(true),
+      () => coll.deleteCollection(true),
       async () => {
-        // state.collectionList = {};
-        // state.collections = {};
-        // state.activeCollectionKey = null;
-        // state.activeCollection = null;
-        // state.collectStatus = {};
         await toggleCollectionListBtn();
         collectionBtnGroup(true);
-        getCollectStatusBtn();
         await showCollection();
       }
     );
@@ -684,6 +671,7 @@ async function getFilter() {
     filter.push("(artifact.description like '%" + filterValues.byDescription + "%' or artifact.name like '%" + filterValues.byDescription + "%')");
     activeFilterCount++;
   }  
+  // Salva il numero di filtri attivi in una variabile globale, se vuoi
   activeFilter = activeFilterCount;
   if(screen.width < 576 ) {hideStats();}
   checkActiveFilter();
@@ -846,6 +834,7 @@ function cronoChart(cronoData) {
   }
 
   try {
+    // Crea la DataTable solo con le colonne che servono per la visualizzazione
     var data = new google.visualization.DataTable();
     data.addColumn('string', 'chronology');
     data.addColumn('number', 'tot');

@@ -112,7 +112,7 @@ main {
 #collectionFormContainer{
   position:relative;
   width:100%;
-  margin:50px auto 0;
+  margin:100px auto 0;
   padding:0;
 }
 #collectionTitleWrap{
@@ -122,8 +122,7 @@ main {
   width:100%;
   background: #fff;
   text-align: center;
-  padding:10px 0;
-  border-bottom: 1px solid #eee;
+  padding:0px;
   z-index:100;
 }
 #collectionForm{
@@ -136,6 +135,7 @@ main {
   background: #fff;
   opacity:1;
   transition: opacity 0.4s ease;
+  z-index:10;
 }
 #collectionForm.form-hidden {
   opacity: 0;

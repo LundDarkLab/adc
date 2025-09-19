@@ -308,7 +308,7 @@ class User extends Conn{
     $this->mail->isSMTP();
     
     // only for testing, print messages only in the console, do not use in production!!!!
-    $this->mail->SMTPDebug = SMTP::DEBUG_SERVER; 
+    // $this->mail->SMTPDebug = SMTP::DEBUG_SERVER; 
     
     $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
     $this->mail->SMTPAuth = true;

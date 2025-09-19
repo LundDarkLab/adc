@@ -1,17 +1,17 @@
 import { collection } from "./collection.js";
-import { createGalleryItem } from "../components/galleryCard.js";
+import { createGalleryItem,getCollectStatusBtn} from "../components/galleryCard.js";
+import { showCollection, state } from "../index.js";
 
 const coll = collection();
 
 export function initGallery(client, features = {}, filter = {}) {
   const galleryEl = document.getElementById('wrapGallery');
-  const collectionEl = document.getElementById('wrapCollection');
   if (!galleryEl){ 
     console.error('Gallery element not found');
-    return
-  };
+    return;
+  }
 
-  const state = {
+  const galleryState = {
     endpoint: ENDPOINT,
     class: 'Collection',
     page: 1,
@@ -24,7 +24,6 @@ export function initGallery(client, features = {}, filter = {}) {
     items: [],
   };
 
-  // Sposta la dichiarazione qui
   let observer = null;
 
   if ('IntersectionObserver' in window) {
@@ -36,32 +35,32 @@ export function initGallery(client, features = {}, filter = {}) {
   }
   
   async function fetchGallery() {
-    if (state.loading || state.allLoaded) return;
-    state.loading = true;
+    if (galleryState.loading || galleryState.allLoaded) return;
+    galleryState.loading = true;
     galleryEl.classList.add('loading');
     
     try {
       const body = {
-        class: state.class,
+        class: galleryState.class,
         action:'getGallery',
         filterArr: filter,
         client: client,
-        page: state.page,
-        limit: state.limit,
-        sortBy: state.sortBy,
-        sortDir: state.sortDir
+        page: galleryState.page,
+        limit: galleryState.limit,
+        sortBy: galleryState.sortBy,
+        sortDir: galleryState.sortDir
       };
-      const result = await fetchApi({url: state.endpoint, body: body});     
+      const result = await fetchApi({url: galleryState.endpoint, body: body});     
       const data = result.data;
-      if (data.length < state.limit) { state.allLoaded = true; }
+      if (data.length < galleryState.limit) { galleryState.allLoaded = true; }
       buildGallery(data);
-      state.page += 1;
+      galleryState.page += 1;
     } catch (error) {
       console.error('Error fetching gallery data:', error);
     } finally {
-      state.loading = false;
+      galleryState.loading = false;
       galleryEl.classList.remove('loading');
-      if (state.allLoaded) {
+      if (galleryState.allLoaded) {
         const endMessage = document.createElement('div');
         endMessage.className = 'end-message';
         endMessage.textContent = 'No more items to load.';
@@ -72,8 +71,8 @@ export function initGallery(client, features = {}, filter = {}) {
 
   function buildGallery(data) {
     const items = data.gallery;
-    state.items = state.items.concat(items);
-    state.itemsCount += items.length;
+    galleryState.items = galleryState.items.concat(items);
+    galleryState.itemsCount += items.length;
     const tot = data.tot[0].tot || 0;
 
     if (items.length === 0) {
@@ -92,7 +91,7 @@ export function initGallery(client, features = {}, filter = {}) {
       galleryEl.appendChild(itemEl);
     });
 
-    setCount(state.itemsCount, tot, features);
+    setCount(galleryState.itemsCount, tot, features);
 
     // Riavvia l'osservatore per puntare alla nuova ultima immagine
     if (observer) {
@@ -103,34 +102,49 @@ export function initGallery(client, features = {}, filter = {}) {
   }
 
   function reset() {
-    state.itemsCount = 0;
-    state.page = 1;
-    state.allLoaded = false;
-    state.loading = false;
-    state.items = [];
+    galleryState.itemsCount = 0;
+    galleryState.page = 1;
+    galleryState.allLoaded = false;
+    galleryState.loading = false;
+    galleryState.items = [];
     if (observer) observer.disconnect();
     galleryEl.innerHTML = '';
     setCount(0, 0, features);
   }
 
-  async function collectItemBtnFunction(item,btn) {
+  async function collectItemBtnFunction(item, btn) {
     btn.style.display = 'none';
     const uncollectButton = btn.nextElementSibling;
     if (uncollectButton && uncollectButton.classList.contains("uncollectItemBtn")) {
       uncollectButton.style.display = 'inline-block';
     }
-    const collection = await coll.getActiveCollection();
-    await coll.addItem(collection, item);
-    const itemEl = createGalleryItem(item, 'collection', null, uncollectItemBtnFunction);
-    collectionEl.appendChild(itemEl);
+    const key = state.activeCollectionKey;
+    if (!key) {
+      bsAlert('No active collection selected!', 'danger');
+      return;
+    }
+    await coll.addItem(key, item);
+    state.collectStatus[item.id] = true;
+    getCollectStatusBtn();
+    await showCollection()
   }
   
-  function uncollectItemBtnFunction(btn) {
+  async function uncollectItemBtnFunction(btn) {
     btn.style.display = 'none';
     const collectButton = btn.previousElementSibling;
     if (collectButton && collectButton.classList.contains("collectItemBtn")) {
       collectButton.style.display = 'inline-block';
     }
+    const itemId = btn.dataset.item;
+    const key = state.activeCollectionKey;
+    if (!key) {
+      bsAlert('No active collection selected!', 'danger');
+      return;
+    }
+    await coll.removeItem(itemId);
+    delete state.collectStatus[itemId];
+    getCollectStatusBtn();
+    await showCollection();
   }
 
   fetchGallery();
@@ -140,7 +154,7 @@ export function initGallery(client, features = {}, filter = {}) {
     onCollect: collectItemBtnFunction,
     onUnCollect: uncollectItemBtnFunction,
     load: fetchGallery,
-    getState: () => ({ ...state })
+    getState: () => ({ ...galleryState })
   };
 }
 

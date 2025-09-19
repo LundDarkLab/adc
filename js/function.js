@@ -104,24 +104,24 @@ function importJSON(event){
 /////////////////////////////////////////////////////////
 // handlers for collection metadata update/display
 
-$("#collDesc").on('change', function(){ storeCollectionMetadata(); });
-$("#collTitle").on('change', function(){ storeCollectionMetadata(); });
+// $("#collDesc").on('change', function(){ storeCollectionMetadata(); });
+// $("#collTitle").on('change', function(){ storeCollectionMetadata(); });
 
 // collection metadata store/display
-function storeCollectionMetadata(){
-	COLLECTIONDATA.email = document.getElementById("collEmail").value;
-	COLLECTIONDATA.author = document.getElementById("collAuthor").value;
-	COLLECTIONDATA.title = document.getElementById("collTitle").value;
-	COLLECTIONDATA.description = document.getElementById("collDesc").value;
-  storeCollectionData();
-}
+// function storeCollectionMetadata(){
+// 	COLLECTIONDATA.email = document.getElementById("collEmail").value;
+// 	COLLECTIONDATA.author = document.getElementById("collAuthor").value;
+// 	COLLECTIONDATA.title = document.getElementById("collTitle").value;
+// 	COLLECTIONDATA.description = document.getElementById("collDesc").value;
+//   storeCollectionData();
+// }
 
-function displayCollectionMetadata(){
-  document.getElementById("collEmail").value = COLLECTIONDATA.email;
-  document.getElementById("collAuthor").value = COLLECTIONDATA.author;
-  document.getElementById("collTitle").value = COLLECTIONDATA.title;
-  document.getElementById("collDesc").value = COLLECTIONDATA.description;
-}
+// function displayCollectionMetadata(){
+//   document.getElementById("collEmail").value = COLLECTIONDATA.email;
+//   document.getElementById("collAuthor").value = COLLECTIONDATA.author;
+//   document.getElementById("collTitle").value = COLLECTIONDATA.title;
+//   document.getElementById("collDesc").value = COLLECTIONDATA.description;
+// }
 
 /////////////////////////////////////////////////////////
 
