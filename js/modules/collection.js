@@ -4,7 +4,7 @@ import { showCollection, state, toggleCollectionListBtn} from '../index.js';
 import { getDateString, sanitizeString } from "../helpers/utils.js";
 
 export function collection(){
-
+  const basePath = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '/');
   const COLLECTIONTEMPLATE = {
     metadata:{
       type: "DC_COLL",
@@ -320,19 +320,21 @@ export function collection(){
 
     let readme = '';
     try {
-      const response = await fetch('/assets/readme/exported_collection.md');
+      console.log(`Fetching README from ${basePath}assets/readme/exported_collection.md`);
+      
+      const response = await fetch(`${basePath}assets/readme/exported_collection.md`);
       readme = await response.text();
     } catch (error) {
-      console.error("Failed to load /assets/readme/exported_collection.md template:", error);
+      console.error(`Failed to load ${basePath}assets/readme/exported_collection.md template:`, error);
     } 
     zip.file("README.md", readme);
 
     let license = '';
     try {
-      const response = await fetch('/assets/license/CC_BY_4.0.txt');
+      const response = await fetch(`${basePath}assets/license/CC_BY_4.0.txt`);
       license = await response.text();
     } catch (error) {
-      console.error("Failed to load /assets/license/CC_BY_4.0.txt template:", error);
+      console.error(`Failed to load ${basePath}assets/license/CC_BY_4.0.txt template:`, error);
     }
     zip.file("LICENSE.txt", license);
 
