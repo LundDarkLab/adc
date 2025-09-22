@@ -13,3 +13,12 @@ export function getDateString() {
 export function sanitizeString(title) {
   return title.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_\-]/g, '');
 }
+
+export function escapeHTML(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}

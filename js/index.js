@@ -2,6 +2,7 @@ import { initGallery as gallery} from "./modules/gallery.js";
 import { collection } from "./modules/collection.js";
 import { createGalleryItem,getCollectStatusBtn} from "./components/galleryCard.js"
 import {bsAlert, bsConfirm } from "./components/bsComponents.js"
+import { confirmAction } from "./helpers/helper.js";
 
 export const state = {
   filters: {},
@@ -10,7 +11,6 @@ export const state = {
   activeCollectionKey: null,
   activeCollection: null, // oggetto collection attiva
   galleryItems: [], // tutti gli item della gallery
-  // collectionItems: [], // tutti gli item della collection attiva
   collectStatus: {}, // { [itemId]: true/false }
   collectionFormMode: null, // 'create' | 'update'
   editingCollectionKey: null,
@@ -112,35 +112,37 @@ export async function showCollection() {
   if (!activeCollection || !state.activeCollection) {
     noCollection(true);
     collectionBtnGroup(false);
+    document.getElementById('wrapCollection').style.display = 'none';
+    document.getElementById('noItemsInCollection').style.display = 'none';
     return;
   }
   noCollection(false);
 
   const collectionData = state.activeCollection;
   const meta = collectionData.metadata || {};
-  const allMetaFilled = [meta.title, meta.email, meta.author, meta.description].every(val => typeof val === 'string' && val.trim() !== '' && val !== 'undefined');
+  const allMetaFilled = [meta.email, meta.author, meta.description].every(val => typeof val === 'string' && val.trim() !== '' && val !== 'undefined');
+  const hasItems = Array.isArray(collectionData.items) && collectionData.items.length > 0;
 
   if (!allMetaFilled) {
     updateMetadataFormVisibility(true, activeCollection, meta);
-    document.getElementById('collectionTitle').textContent = 'Collection metadata';
-    collectionBtnGroup(false);
+    document.getElementById('collectionTitle').textContent = meta.title || 'Default Collection';
+    document.getElementById('wrapCollection').style.display = 'none';
+    document.getElementById('noItemsInCollection').style.display = 'none';
+    state.collectionFormMode = 'update';
+    state.editingCollectionKey = activeCollection;
     return;
   }
-
-  if (!Array.isArray(collectionData.items) || collectionData.items.length === 0) {
+    
+  if(!hasItems){
     document.getElementById('noItemsInCollection').style.display = 'block';
-    updateMetadataFormVisibility(false);
-    buildCollection(collectionData);
-    collectionMetadata(meta);
-    collectionBtnGroup(true);
-    return;
+  }else{
+    document.getElementById('noItemsInCollection').style.display = 'none';
   }
-
+  
+  collectionBtnGroup(true);
   updateMetadataFormVisibility(false);
   buildCollection(collectionData);
   collectionMetadata(meta);
-  collectionBtnGroup(true);
-  document.getElementById('noItemsInCollection').style.display = 'none';
 }
 
 function collectionBtnGroup(show = true){
@@ -150,7 +152,7 @@ function collectionBtnGroup(show = true){
   }
 }
 
-function noCollection(show = true){
+export function noCollection(show = true){
   const noCollectionDiv = document.getElementById('noCollection');
   const collectionContainer = document.getElementById('collectionContainer');
   if (noCollectionDiv) { 
@@ -159,6 +161,11 @@ function noCollection(show = true){
 
   if (collectionContainer) { 
     collectionContainer.style.display = show ? 'none' : 'block'; 
+  }
+
+  if (show) {
+    document.getElementById('collectionTitleBtn').textContent = 'no collection';
+    document.getElementById('countCollection').textContent = '';
   }
 }
 
@@ -203,7 +210,6 @@ document.getElementById('collectionForm').addEventListener('submit', async funct
     title: collTitle.value,
     description: collDesc.value
   };
-
   if (state.collectionFormMode === 'create') {
     if (coll.isTitleDuplicate(metadata.title)) {
       bsAlert('Title already exists. Please choose another.', 'danger', 3000);
@@ -231,11 +237,15 @@ document.getElementById('collectionForm').addEventListener('submit', async funct
     const collectionObj = JSON.parse(localStorage.getItem(state.editingCollectionKey));
     collectionObj.metadata = metadata;
     localStorage.setItem(state.editingCollectionKey, JSON.stringify(collectionObj));
+    state.collections[state.editingCollectionKey] = collectionObj;
+    state.activeCollection = collectionObj;
     await toggleCollectionListBtn();
-    bsAlert('Metadata successfully updated!', 'success', 3000, ()=>{
-      updateMetadataFormVisibility(false, state.editingCollectionKey, metadata);
-      collectionBtnGroup(true);
-    });
+    bsAlert('Metadata successfully updated!', 'success');
+    
+    updateMetadataFormVisibility(false, state.editingCollectionKey, metadata);
+    collectionBtnGroup(true);
+    document.getElementById('collectionTitleBtn').textContent = metadata.title;
+    document.getElementById('collectionTitle').textContent = metadata.title;
     await showCollection();
     state.collectionFormMode = null;
     state.editingCollectionKey = null;
@@ -244,6 +254,7 @@ document.getElementById('collectionForm').addEventListener('submit', async funct
 
 function buildCollection(data){
   noCollection(false);
+  document.getElementById('collectionTitleBtn').textContent = data.metadata.title;
   const countCollection = document.getElementById('countCollection');
   if (countCollection) { countCollection.textContent = data.items.length; }
   const wrapCollection = document.getElementById('wrapCollection');
@@ -262,12 +273,6 @@ function collectionMetadata(metadata) {
   const author = document.getElementById('collAuthor');
   const title = document.getElementById('collTitle');
   const description = document.getElementById('collDesc');
-
-  if(!metadata.title || metadata.title == '' || metadata.title == 'undefined'){
-    updateMetadataFormVisibility(true)
-  }else{
-    updateMetadataFormVisibility(false)
-  }
 
   if (email) {email.value = metadata.email || '';}
   if (author) {author.value = metadata.author || '';}
@@ -298,7 +303,7 @@ async function interfaceSetup() {
   toggleCollectionListBtn();
 }
 
-async function toggleCollectionListBtn(){
+export async function toggleCollectionListBtn(){
   let listCollection = coll.getCollectionList();
   if (listCollection.length === 0) {
     const obj = localStorage.getItem('collectionList');
@@ -324,6 +329,7 @@ function fillCollectionList(list, activeKey){
     btn.classList.add('dropdown-item');
     if (collection.key === activeKey) {
       btn.classList.add('active');
+       document.getElementById('collectionTitleBtn').textContent = collection.title || 'Untitled Collection';
     }
     btn.onclick = async () => {
       document.querySelectorAll('#collectionListDropdown .dropdown-item.active').forEach(el => el.classList.remove('active'));
@@ -528,6 +534,44 @@ async function initializeEventListeners() {
     showGallery();
   });
 
+  document.querySelectorAll('.btImportCollection').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const fileInput = document.getElementById('ifileJSON');
+      fileInput.value = ''; // reset per permettere re-import dello stesso file
+      fileInput.click();
+      fileInput.addEventListener('change', async (event) => {
+        const file = event.target.files[0];
+        if(!file) {return;}
+        try {
+          const result = await coll.importCollection(file);
+          if (result.status === 'success') {
+            const key = result.key;
+            state.collections[key] = result.importedData;
+            await coll.setActiveCollection(key);
+            bsAlert('Collection successfully imported!', 'success', 3000, async ()=>{
+              await toggleCollectionListBtn();
+              collectionBtnGroup(true);
+              getCollectStatusBtn();
+              await showCollection();
+              noCollection(false);
+            });
+          } else if (result.status === 'duplicate') {
+            await confirmAction(
+              `A collection named "${result.title}" already exists. Do you want to overwrite it and merge new items?`,
+              async () => { await mergeItems(result); },
+              () => { bsAlert('Import cancelled by user.', 'info'); }
+            );
+          } else {
+            bsAlert(result.message, result.status);
+          }
+        } catch (error) {
+          bsAlert('Import failed: ' + error.message, 'danger');
+          console.error(error);
+        }
+      }, { once: true });
+    });
+  });
+
   document.getElementById('btExportActive').addEventListener('click', async () => {
     await coll.exportCollection(true);
   });
@@ -565,24 +609,24 @@ async function initializeEventListeners() {
     }
   });
 
-  document.getElementById('btClearCollection').addEventListener('click', () => {
-    bsConfirm(
+  document.getElementById('btClearCollection').addEventListener('click', async () => {
+    await confirmAction(
       'Are you sure you want to clear the entire collection? This action cannot be undone.', 
-      coll.clearCollection,
       async () => {
+        await coll.clearCollection();
         await toggleCollectionListBtn();
         collectionBtnGroup(true);
         getCollectStatusBtn();
         await showCollection();
       }
-    ); 
+    );
   });
 
-  document.getElementById('btDeleteCollection').addEventListener('click', () => {
-    bsConfirm(
+  document.getElementById('btDeleteCollection').addEventListener('click', async () => {
+    await confirmAction(
       'Are you sure you want to delete the entire collection? This action cannot be undone.', 
-      coll.deleteCollection,
       async () => {
+        await coll.deleteCollection();
         await toggleCollectionListBtn();
         collectionBtnGroup(true);
         getCollectStatusBtn();
@@ -591,24 +635,33 @@ async function initializeEventListeners() {
     );
   })
 
-  document.getElementById('btDeleteAllCollections').addEventListener('click', () => {
-    bsConfirm(
+  document.getElementById('btDeleteAllCollections').addEventListener('click', async () => {
+    await confirmAction(
       'Are you sure you want to delete all collections? This action cannot be undone.', 
-      async () => await coll.deleteCollection(true),
       async () => {
-        // state.collectionList = {};
-        // state.collections = {};
-        // state.activeCollectionKey = null;
-        // state.activeCollection = null;
-        // state.collectStatus = {};
+        await coll.deleteCollection(true);
         await toggleCollectionListBtn();
-        collectionBtnGroup(true);
+        collectionBtnGroup(false);
         getCollectStatusBtn();
         await showCollection();
       }
     );
   })
+}
 
+async function mergeItems(result) {
+  const existingIds = new Set(result.duplicate.items.map(item => item.id));
+  const newItems = result.importedData.items.filter(item => !existingIds.has(item.id));
+  result.duplicate.items.push(...newItems);
+  const key = Object.keys(state.collections).find(k => state.collections[k] === result.duplicate);
+  localStorage.setItem(key, JSON.stringify(result.duplicate));
+  state.collections[key] = result.duplicate;
+  bsAlert(`Collection "${result.title}" updated with ${newItems.length} new items.`, 'success', 3000, async ()=>{
+    await toggleCollectionListBtn();
+    collectionBtnGroup(true);
+    getCollectStatusBtn();
+    await showCollection();
+  }); 
 }
 
 function checkActiveFilter(){

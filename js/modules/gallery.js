@@ -1,6 +1,7 @@
 import { collection } from "./collection.js";
 import { createGalleryItem,getCollectStatusBtn} from "../components/galleryCard.js";
 import { showCollection, state } from "../index.js";
+import { bsAlert, bsConfirm } from "../components/bsComponents.js";
 
 const coll = collection();
 
@@ -118,10 +119,11 @@ export function initGallery(client, features = {}, filter = {}) {
     if (uncollectButton && uncollectButton.classList.contains("uncollectItemBtn")) {
       uncollectButton.style.display = 'inline-block';
     }
-    const key = state.activeCollectionKey;
+    let key = state.activeCollectionKey;   
     if (!key) {
-      bsAlert('No active collection selected!', 'danger');
-      return;
+      key = await coll.createCollection();
+      bsAlert("A new collection named 'My Collection' has been created. You can edit its metadata later.", "info", 4000);
+      await new Promise(resolve => setTimeout(resolve, 4100));
     }
     await coll.addItem(key, item);
     state.collectStatus[item.id] = true;

@@ -1,9 +1,10 @@
-import { bsAlert } from "../components/bsComponents.js";
+import { bsAlert, bsConfirm } from "../components/bsComponents.js";
 import { getCollectStatusBtn } from "../components/galleryCard.js";
-import { state } from '../index.js';
+import { showCollection, state, toggleCollectionListBtn} from '../index.js';
 import { getDateString, sanitizeString } from "../helpers/utils.js";
 
 export function collection(){
+
   const COLLECTIONTEMPLATE = {
     metadata:{
       type: "DC_COLL",
@@ -12,10 +13,26 @@ export function collection(){
       time: new Date().toISOString(),
       email: '',
       author: '',
-      title: '',
+      title: 'My Collection',
       description: '',
     },
     items:[]
+  };
+
+  const ITEMTEMPLATE = {
+    id: '',
+    name: '',
+    institution: '',
+    nation: '',
+    county: '',
+    description: '',
+    category_id: '',
+    category: '',
+    material: '',
+    start: '',
+    end: '',
+    object: '',
+    thumbnail: ''
   };
   
   function getFromStorage(key) {
@@ -80,6 +97,7 @@ export function collection(){
     localStorage.setItem('collectionList', JSON.stringify({}));
   }
   
+  // add or update collection in the collectionList storage and set it active
   async function addCollection(key){
     let obj = state.collectionList;
      if (!obj || Object.keys(obj).length === 0) {
@@ -92,6 +110,7 @@ export function collection(){
     Object.keys(obj).forEach(k => { obj[k] = false; });
     obj[key] = true;
     state.collectionList = obj;
+    state.activeCollectionKey = key;
     localStorage.setItem('collectionList', JSON.stringify(obj));
     return true;
   }
@@ -109,18 +128,18 @@ export function collection(){
     return collection;
   }
 
-  async function createCollection(metadata) {
+  async function createCollection(metadata = null) {
     const key = "dyncoll_" + generateUUID();
-    await addCollection(key);
     const collection = structuredClone(COLLECTIONTEMPLATE);
     if (metadata && typeof metadata === 'object') {
       collection.metadata = { ...collection.metadata, ...metadata };
     }
     localStorage.setItem(key, JSON.stringify(collection));
     state.collections[key] = collection;
-    state.activeCollectionKey = key;
-    state.activeCollection = collection;
-    getCollectStatusBtn();
+    await addCollection(key);
+    await setActiveCollection(key);
+    await toggleCollectionListBtn();
+    await showCollection();
     return key;
   }
 
@@ -145,7 +164,7 @@ export function collection(){
 
     const collectionEl = document.getElementById('wrapCollection');
     if (collectionEl) { collectionEl.innerHTML = ''; }
-    bsAlert('Collection cleared!', 'success',3000, async () => {console.log(state.activeCollection.items);});    
+    bsAlert('Collection cleared!', 'success');
     return true;
   }
 
@@ -197,10 +216,6 @@ export function collection(){
   }
 
   async function addItem(key, item){
-    if (!key) {
-      bsAlert('No active collection!', 'danger');
-      return false;
-    }
     let obj = state.collections[key] || getFromStorage(key);
     if (!obj) {
       bsAlert('Collection not found!', 'danger');
@@ -216,6 +231,7 @@ export function collection(){
       state.activeCollection = obj;
       state.collectStatus[item.id] = true;
       getCollectStatusBtn();
+      showCollection();
       return true;
     }
     bsAlert('Item already in collection!', 'info');
@@ -320,6 +336,37 @@ export function collection(){
     }
     zip.file("LICENSE.txt", license);
 
+    let collectionsToExport = [];
+    if (activeOnly) {
+      if (state.activeCollection) {
+        collectionsToExport = [state.activeCollection];
+      }
+    } else {
+      collectionsToExport = Object.values(state.collections);
+    }
+
+    collectionsToExport = collectionsToExport.filter(c => Array.isArray(c.items) && c.items.length > 0);
+
+    if (collectionsToExport.length === 0) {
+      bsAlert('No valid collections to export!', 'warning');
+      return;
+    }
+
+    for (const coll of collectionsToExport) {
+      const title = sanitizeString(coll.metadata?.title || 'Untitled_Collection');
+      const csvName = `${dateString}_${title}.csv`;
+      const jsonName = `${dateString}_${title}.json`;
+
+      const csvData = collectionToCSV(coll.items);
+      const jsonData = JSON.stringify({
+        metadata: coll.metadata || {},
+        items: coll.items
+      }, null, 2);
+
+      zip.file(csvName, csvData);
+      zip.file(jsonName, jsonData);
+    }
+
     const content = await zip.generateAsync({ type: "blob" });
     const a = document.createElement("a");
     const url = URL.createObjectURL(content);
@@ -327,11 +374,90 @@ export function collection(){
     a.download = activeOnly ? `${dateString}_collection.zip` : `${dateString}_all_collections.zip`;
     document.body.appendChild(a);
     a.click();
-    document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    bsAlert('Collection exported as ZIP file!', 'success', 3000);
+    document.body.removeChild(a);
     return true;
   }
+
+  function collectionToCSV(items) {
+    if (!items.length) return '';
+    const keys = Object.keys(items[0]);
+    const csvRows = [
+      keys.join(','), // header
+      ...items.map(item => keys.map(k => `"${(item[k] ?? '').toString().replace(/"/g, '""')}"`).join(','))
+    ];
+    return csvRows.join('\n');
+  }
+
+  async function importCollection(file) {
+    // 1. Controllo che sia un file JSON
+    if (!file || !file.name.endsWith('.json') || file.type !== 'application/json') {
+      return {status: 'danger', message: 'Please select a valid JSON file.'};
+    }
+
+    if (file.size > 1 * 1024 * 1024) { // 1 MB
+      return {status: 'danger', message: 'File too large. Maximum allowed size is 1 MB.'};
+    }
+
+    // 2. Leggi e valida la struttura interna
+    let importedData;
+    try {
+      const text = await file.text();
+      importedData = JSON.parse(text);
+    } catch (e) {
+      return {status: 'danger', message: 'Invalid JSON format.'};
+    }
+
+    // 2b. Controllo struttura
+    if (
+      !importedData ||
+      typeof importedData !== 'object' ||
+      !importedData.metadata ||
+      typeof importedData.metadata.title !== 'string' ||
+      !Array.isArray(importedData.items)
+    ) {
+      return {status: 'danger', message: 'JSON structure is not valid for a collection.'};
+    }
+
+    const metadataTemplateKeys = Object.keys(COLLECTIONTEMPLATE.metadata);
+    const importedMetadataKeys = Object.keys(importedData.metadata);
+    if (
+      importedMetadataKeys.length !== metadataTemplateKeys.length ||
+      !metadataTemplateKeys.every(k => importedMetadataKeys.includes(k))
+    ) {
+      return { status: 'danger', message: 'Metadata structure does not match template. Import aborted.' };
+    }
+
+    const itemTemplateKeys = Object.keys(ITEMTEMPLATE);
+    for (const item of importedData.items) {
+      const itemKeys = Object.keys(item);
+      // Controlla che le chiavi siano esattamente quelle del template
+      if (
+        itemKeys.length !== itemTemplateKeys.length ||
+        !itemTemplateKeys.every(k => itemKeys.includes(k))
+      ) {
+      return { status: 'danger', message: 'Item structure does not match template. Import aborted.' };
+      }
+    }
+
+    // 3. Controllo duplicato su metadata.title
+    const title = importedData.metadata.title.trim();
+    const duplicate = Object.values(state.collections).find(
+      c => c.metadata?.title?.trim().toLowerCase() === title.toLowerCase()
+    );
+
+    if (duplicate) {
+      return { status: 'duplicate', title, importedData, duplicate };
+    } else {
+      // 7. Nuova collezione
+      const key = "dyncoll_" + generateUUID();
+      localStorage.setItem(key, JSON.stringify(importedData));
+      state.collections[key] = importedData;
+      await addCollection(key);
+      return { status: 'success', title, key };
+    }
+  }
+
 
   return { 
     getCollectionList,
@@ -345,5 +471,6 @@ export function collection(){
     deleteCollection,
     isTitleDuplicate,
     exportCollection,
+    importCollection,
   };
 }

@@ -72,7 +72,7 @@
       </div>
 
       <div class="tab-pane fade" id="collection-pane" role="tabpanel">
-        <input type="file" id="ifileJSON" accept=".json,.JSON,.Json" style="display:none">
+        <input type="file" id="ifileJSON" accept=".json" style="display:none">
         <div id="noCollection" class="">
           <div class="col text-center txt-adc-dark mb-5">
             <h2>Your collection is empty!</h2>
@@ -97,7 +97,7 @@
         </div>
         <div id="collectionContainer">
           <div id="collectionTitleWrap">
-            <h2 id="collectionTitle" class="txt-adc-dark border-bottom p-3 m-0"></h2>
+            <h2 id="collectionTitle" class="txt-adc-dark border-bottom p-3 m-0 collectionTitle"></h2>
             <div id="collectionBtnWrap" class="bg-light border-bottom">
               <div class="btn-group" role="group" aria-label="First group">
                 <div class="dropdown">
@@ -105,7 +105,7 @@
                     <span class="mdi mdi-code-json"></span> json file
                   </button>
                   <ul class="dropdown-menu">
-                    <button class="dropdown-item" id="btImportJson"><span class="mdi mdi-import"></span> import new collection</button>
+                    <button class="dropdown-item btImportCollection" id="btImportJson"><span class="mdi mdi-import"></span> import new collection</button>
                     <button class="dropdown-item" id="btExportActive"><span class="mdi mdi-export"></span> export active collection</button>
                     <button class="dropdown-item" id="btExportAll"><span class="mdi mdi-card-multiple-outline"></span> export all collections</button>
                   </ul>
