@@ -1,5 +1,10 @@
-import { state } from "../index.js";
-export function createGalleryItem(item, client, onCollect = null, onUncollect = null, onRemove = null) {
+import { collectionState } from "../modules/collectionStorage.js";
+import { cutString } from "../helpers/utils.js";
+
+const stateManager = await collectionState();
+
+export function createGalleryItem(item, onCollect = null, onUncollect = null, onRemove = null) {
+  const currentState = stateManager.getState();
   const itemEl = document.createElement('div');
   itemEl.className = 'galleryItem';
   itemEl.dataset.item = item.id;
@@ -36,22 +41,15 @@ export function createGalleryItem(item, client, onCollect = null, onUncollect = 
     <p class="m-0 mb-1">${item.start} / ${item.end}</p>
   `;
   
-  if(client === 'index' || client === 'collection'){
-    let cutLen;
-    if (screen.width < 577) { cutLen = 20; } 
-    else if (screen.width < 1081) { cutLen = 50; }
-    else if (screen.width < 1370) { cutLen = 80; } 
-    else { cutLen = 100; }
+  let cutLen;
+  if (screen.width < 577) { cutLen = 20; } 
+  else if (screen.width < 1081) { cutLen = 50; }
+  else if (screen.width < 1370) { cutLen = 80; } 
+  else { cutLen = 100; }
     
-    function cutString(str, len) { 
-      return str.length > len ? str.slice(0, len) + '…' : str; 
-    }
-    body.innerHTML += `<p class="m-0 mb-1">${cutString(item.description, cutLen)}</p>`;
-  }
+  body.innerHTML += `<p class="m-0 mb-1">${cutString(item.description, cutLen)}</p>`;
 
-  const footer = document.createElement('div');
-  footer.className = 'card-footer d-flex justify-content-start align-items-center gap-2 border-top';
-
+  
   const viewBtn = document.createElement('a');
   viewBtn.href = `artifact_view.php?item=${item.id}`;
   viewBtn.className = 'btn btn-sm btn-adc-blue text-white';
@@ -59,59 +57,59 @@ export function createGalleryItem(item, client, onCollect = null, onUncollect = 
   viewBtn.dataset.bsPlacement = "top";
   viewBtn.title = "View item details";
   viewBtn.textContent = 'View';
-  footer.appendChild(viewBtn);
-
+  
+  const collectItemBtn = document.createElement('button');
+  collectItemBtn.className = 'btn btn-sm btn-adc-blue text-white collectItemBtn';
+  collectItemBtn.dataset.item = item.id;
+  collectItemBtn.textContent = 'Collect';
+  collectItemBtn.addEventListener('click', (event) => {
+    event.preventDefault();
+    if (onCollect) onCollect(item, event.currentTarget);
+  });
 
   const uncollectItemBtn = document.createElement('button');
   uncollectItemBtn.className = 'btn btn-sm btn-danger text-white uncollectItemBtn';
   uncollectItemBtn.dataset.item = item.id;
   uncollectItemBtn.textContent = 'Uncollect';
+  uncollectItemBtn.addEventListener('click', (event) => {
+    event.preventDefault();
+    if (onUncollect) onUncollect(event.currentTarget);
+  });
 
-  if (client === 'index') {
-    const collectItemBtn = document.createElement('button');
-    collectItemBtn.className = 'btn btn-sm btn-adc-blue text-white collectItemBtn';
-    collectItemBtn.dataset.item = item.id;
-    collectItemBtn.textContent = 'Collect';
-    collectItemBtn.addEventListener('click', (event) => {
-      event.preventDefault();
-      onCollect(item, event.currentTarget);
-    });
-    
-    uncollectItemBtn.addEventListener('click', (event) => {
-      event.preventDefault();
-      onUncollect(event.currentTarget);
-    });
+  const inCollection = !!currentState.collectStatus[item.id];
+  collectItemBtn.style.display = inCollection ? 'none' : 'inline-block';
+  uncollectItemBtn.style.display = inCollection ? 'inline-block' : 'none';
 
-    const inCollection = !!state.collectStatus[item.id];
-    if (inCollection) {
-      collectItemBtn.style.display = 'none';
-      uncollectItemBtn.style.display = 'inline-block';
-    } else {
-      collectItemBtn.style.display = 'inline-block';
-      uncollectItemBtn.style.display = 'none';
-    }
-
-    footer.append(collectItemBtn, uncollectItemBtn);
-    
-  } else if (client === 'collection' && onUncollect) {
-    uncollectItemBtn.addEventListener('click', (event) => {
-      event.preventDefault();
-      onUncollect(event.currentTarget);
-    });
-
-    footer.appendChild(uncollectItemBtn);
-  }
+  const footer = document.createElement('div');
+  footer.className = 'card-footer d-flex justify-content-start align-items-center gap-2 border-top';
+  footer.append(viewBtn, collectItemBtn, uncollectItemBtn);
 
   itemEl.append(header, body, footer);
   
   return itemEl;
 }
 
-function updateGalleryCardButtons(itemId, inCollection) {
-  const galleryCard = document.querySelector(`#wrapGallery [data-item="${itemId}"]`);
+export function getCollectStatusBtn() {
+  const currentState = stateManager.getState();
+  const newCollectStatus = {};
+  if (currentState.activeCollection && Array.isArray(currentState.activeCollection.items)) {
+    currentState.activeCollection.items.forEach(item => { newCollectStatus[item.id] = true; });
+  }
+  stateManager.updateState({ collectStatus: newCollectStatus });
+  
+  document.querySelectorAll('.galleryItem').forEach(card => {
+    const itemId = card.dataset.item;
+    updateGalleryCardButtons(itemId);
+  });
+}
+
+function updateGalleryCardButtons(itemId) {
+  const currentState = stateManager.getState();
+  const galleryCard = document.querySelector(`.galleryItem[data-item="${itemId}"]`);
   if (galleryCard) {
     const collectBtn = galleryCard.querySelector('.collectItemBtn');
     const uncollectBtn = galleryCard.querySelector('.uncollectItemBtn');
+    const inCollection = !!currentState.collectStatus[itemId];
     if (inCollection) {
       if (collectBtn) collectBtn.style.display = 'none';
       if (uncollectBtn) uncollectBtn.style.display = 'inline-block';
@@ -120,19 +118,4 @@ function updateGalleryCardButtons(itemId, inCollection) {
       if (uncollectBtn) uncollectBtn.style.display = 'none';
     }
   }
-}
-
-export function getCollectStatusBtn() {
-  state.collectStatus = {};
-  if (state.activeCollection && Array.isArray(state.activeCollection.items)) {
-    state.activeCollection.items.forEach(item => {
-      state.collectStatus[item.id] = true;
-    });
-  }
-  // Aggiorna la UI dei pulsanti
-  document.querySelectorAll('#wrapGallery .galleryItem').forEach(card => {
-    const itemId = card.dataset.item;
-    const inCollection = !!state.collectStatus[itemId];
-    updateGalleryCardButtons(itemId, inCollection);
-  });
 }

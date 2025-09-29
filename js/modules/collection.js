@@ -1,9 +1,15 @@
-import { bsAlert, bsConfirm } from "../components/bsComponents.js";
+import { collectionState } from "./collectionStorage.js";
+import { bsAlert } from "../components/bsComponents.js";
 import { getCollectStatusBtn } from "../components/galleryCard.js";
-import { showCollection, state, toggleCollectionListBtn} from '../index.js';
-import { getDateString, sanitizeString } from "../helpers/utils.js";
+import { getDateString, sanitizeString, generateUUID } from "../helpers/utils.js";
+import { toggleCollectionListBtn } from "../helpers/collectionHelper.js";
 
-export function collection(){
+const stateManager = await collectionState();  // Singleton: ora tutti i moduli condividono la stessa istanza di stateManager
+// Nota: nessun stato locale globale qui; tutto passa attraverso il singleton
+
+export async function collection(){
+  // Lettura: ottiene una copia snapshot dello stato centrale per basePath e template
+  const currentState = stateManager.getState();
   const basePath = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '/');
   const COLLECTIONTEMPLATE = {
     metadata:{
@@ -34,134 +40,107 @@ export function collection(){
     object: '',
     thumbnail: ''
   };
-  
-  function getFromStorage(key) {
-    const obj = localStorage.getItem(key);
-    return obj ? JSON.parse(obj) : null;
-  }
 
   function getCollectionList() {
-    let obj = state.collectionList;
-    if (!obj || Object.keys(obj).length === 0) {
-      obj = getFromStorage("collectionList") || {};
-      state.collectionList = obj;
-    }
-    Object.keys(obj).forEach(key => {
-      if (!(key in state.collectionList)) {
-        state.collectionList[key] = obj[key];
-      }
-    });
-    
+    // Lettura: ottiene una copia snapshot dello stato centrale
+    const currentState = stateManager.getState();
+    const obj = currentState.collectionList || {};
     const list = [];
     Object.keys(obj).forEach(key => {
-      let collection = state.collections && state.collections[key];
-      if (!collection) {
-        collection = getFromStorage(key);
-        if (collection) {
-          if (!state.collections) {state.collections = {};}
-          state.collections[key] = collection;
-        }
-      }
+      const collection = currentState.collections[key];
       if (collection && collection.metadata) {
-        list.push({
-          key,
-          title: collection.metadata.title || 'Untitled Collection'
-        });
+        list.push({key, title: collection.metadata.title});
       }
     });
     return list;
   }
 
   async function setActiveCollection(key){
-    let obj = state.collectionList;
-    if (!obj || Object.keys(obj).length === 0) {
-      await createList();
-      state.collectionList = obj;
+    // Lettura: ottiene una copia snapshot dello stato centrale
+    const currentState = stateManager.getState();
+    if (!key || !currentState.collections[key]){
+      bsAlert('Collection not found!', 'danger');
+      return false;
     }
-    Object.keys(obj).forEach(k => { obj[k] = false; });
-    obj[key] = true;
-    state.collectionList = obj;
-    state.activeCollectionKey = key;
-    const collection = state.collections[key] || getFromStorage(key);
-    state.activeCollection = collection;
+    // Modifica: crea un nuovo oggetto per collectionList invece di modificare currentState
+    const newCollectionList = { ...currentState.collectionList };
+    Object.keys(newCollectionList).forEach(k => { newCollectionList[k] = false; });
+    newCollectionList[key] = true;
+    // Aggiornamento: modifica direttamente il singleton e sincronizza con localStorage
+    stateManager.updateState({
+      collectionList: newCollectionList,
+      activeCollectionKey: key,
+      activeCollection: currentState.collections[key]
+    });
     getCollectStatusBtn();
-    localStorage.setItem('collectionList', JSON.stringify(obj));
     return true;
   }
 
-  async function getActiveCollection() {
-    return state.activeCollectionKey;
-  }
-
-  async function createList(){
-    localStorage.setItem('collectionList', JSON.stringify({}));
-  }
-  
-  // add or update collection in the collectionList storage and set it active
-  async function addCollection(key){
-    let obj = state.collectionList;
-     if (!obj || Object.keys(obj).length === 0) {
-      obj = getFromStorage('collectionList');
-      if (!obj || Object.keys(obj).length === 0) {
-        await createList();
-        obj = {};
-      }
+  async function addCollection(key) {
+    // Lettura: ottiene una copia snapshot dello stato centrale
+    const currentState = stateManager.getState();
+    if (!key || !currentState.collections[key]) {
+      bsAlert('Collection not found!', 'danger');
+      return false;
     }
-    Object.keys(obj).forEach(k => { obj[k] = false; });
-    obj[key] = true;
-    state.collectionList = obj;
-    state.activeCollectionKey = key;
-    localStorage.setItem('collectionList', JSON.stringify(obj));
+
+    // Modifica: crea un nuovo oggetto per collectionList
+    const newCollectionList = { ...currentState.collectionList };
+    Object.keys(newCollectionList).forEach(k => { newCollectionList[k] = false; });
+    newCollectionList[key] = true;
+    // Aggiornamento: modifica direttamente il singleton
+    stateManager.updateState({
+      collectionList: newCollectionList,
+      activeCollectionKey: key,
+      activeCollection: currentState.collections[key]
+    });
+
     return true;
   }
 
-  async function retrieveCollection(key) {
-    const collection = state.collections[key] || getFromStorage(key);
-    if (collection) {
-      state.activeCollection = collection;
-      state.collections[key] = collection;
-      state.collectStatus = {};
-      collection.items.forEach(item => {
-        state.collectStatus[item.id] = true;
-      });
-    }
-    return collection;
-  }
-
-  async function createCollection(metadata = null) {
+  async function createCollection(metadata = null, onShowCollection = null){
+    // Lettura: ottiene una copia snapshot dello stato centrale
+    const currentState = stateManager.getState();
     const key = "dyncoll_" + generateUUID();
     const collection = structuredClone(COLLECTIONTEMPLATE);
     if (metadata && typeof metadata === 'object') {
       collection.metadata = { ...collection.metadata, ...metadata };
     }
-    localStorage.setItem(key, JSON.stringify(collection));
-    state.collections[key] = collection;
+    // Modifica: aggiorna prima currentState, poi passa a updateState
+    const newCollections = { ...currentState.collections, [key]: collection };
+    // Aggiornamento: modifica direttamente il singleton
+    stateManager.updateState({ collections: newCollections });
     await addCollection(key);
-    await setActiveCollection(key);
-    await toggleCollectionListBtn();
-    await showCollection();
+    toggleCollectionListBtn(stateManager, onShowCollection, setActiveCollection);
     return key;
   }
 
-  async function clearCollection(){    
-    const key = state.activeCollectionKey;
-    if (!key){
+  async function clearCollection() {
+    // Lettura: ottiene una copia snapshot dello stato centrale
+    const currentState = stateManager.getState();
+    const key = currentState.activeCollectionKey;
+    if (!key) {
       bsAlert('No active collection to clear!', 'warning'); 
       return false;
     }
-    let collection = state.collections[key] || getFromStorage(key);
-    if (!collection) return false;
-    collection.items = [];
-    localStorage.setItem(key, JSON.stringify(collection));
-    setCounter(key);
-
-    state.collections[key] = collection;
-    if (key === state.activeCollectionKey) {
-      // state.collectionItems = [];
-      state.activeCollection = collection;
-      state.collectStatus = {};
+    const collection = currentState.collections[key];
+    if (!collection) {
+      bsAlert('Active collection not found!', 'danger');
+      return false;
     }
 
+    // Modifica: crea nuovi oggetti per aggiornamenti
+    const newCollections = { ...currentState.collections };
+    newCollections[key] = { ...collection, items: [] };
+    // Aggiornamento: modifica direttamente il singleton
+    stateManager.updateState({
+      collections: newCollections,
+      activeCollection: newCollections[key],
+      collectStatus: {}
+    });
+
+    // Aggiorna la UI
+    setCounter(key);
     const collectionEl = document.getElementById('wrapCollection');
     if (collectionEl) { collectionEl.innerHTML = ''; }
     bsAlert('Collection cleared!', 'success');
@@ -169,90 +148,123 @@ export function collection(){
   }
 
   async function deleteCollection(all = false){
+    // Lettura: ottiene una copia snapshot dello stato centrale
+    const currentState = stateManager.getState();
     if (all) {
-      const list = getCollectionList();
-      list.forEach(col => {
-        localStorage.removeItem(col.key);
-        delete state.collections[col.key];
-        delete state.collectionList[col.key];
-      });
-      localStorage.removeItem('collectionList');
-      state.activeCollectionKey = null;
-      state.activeCollection = null;
-      // state.collectionItems = [];
+      stateManager.resetAll();
       setCounter(null);
       bsAlert('All collections deleted!', 'success');
       return true;
     }
-    const key = await getActiveCollection();
+
+    const key = currentState.activeCollectionKey;
     if (!key){
       bsAlert('No active collection to delete!', 'warning'); 
       return false;
     }
-    localStorage.removeItem(key);
-    delete state.collections[key];
-    delete state.collectionList[key];
 
-    const keys = Object.keys(state.collectionList);
+    // Modifica: crea nuovi oggetti
+    const newCollections = { ...currentState.collections };
+    const newCollectionList = { ...currentState.collectionList };
+    delete newCollections[key];
+    delete newCollectionList[key];
+
+    const keys = Object.keys(newCollectionList);
+    let newActiveKey = null;
+    let newActiveCollection = null;
+    const resetList = { ...newCollectionList };
+    
     if (keys.length > 0) {
-      Object.keys(state.collectionList).forEach(k => { state.collectionList[k] = false; });
-      state.collectionList[keys[0]] = true;
-      state.activeCollectionKey = keys[0];
-      if (!state.collections[keys[0]]) {
-        const newColl = getFromStorage(keys[0]);
-        if (newColl) state.collections[keys[0]] = newColl;
-      }
-      state.activeCollection = state.collections[keys[0]];
+      // Imposta la prima collezione disponibile come attiva
+      Object.keys(resetList).forEach(k => { resetList[k] = false; });
+      resetList[keys[0]] = true;
+      newActiveKey = keys[0];
+      newActiveCollection = newCollections[keys[0]];
       getCollectStatusBtn();
       setCounter(keys[0]);
     } else {
-      state.activeCollectionKey = null;
-      state.activeCollection = null;
       setCounter(null);
     }
-    localStorage.setItem('collectionList', JSON.stringify(state.collectionList));
+
+    // Aggiornamento: modifica direttamente il singleton
+    stateManager.updateState({
+      collections: newCollections,
+      collectionList: resetList,
+      activeCollectionKey: newActiveKey,
+      activeCollection: newActiveCollection
+    });
+
     bsAlert('Collection deleted!', 'success');
     return true;
   }
-
+  
   async function addItem(key, item){
-    let obj = state.collections[key] || getFromStorage(key);
+    // Lettura: ottiene una copia snapshot dello stato centrale
+    const currentState = stateManager.getState();
+    let obj = currentState.collections[key];
     if (!obj) {
       bsAlert('Collection not found!', 'danger');
       return false;
     }
     const alreadyPresent = obj.items.some(i => i.id === item.id);
     if (!alreadyPresent) { 
-      obj.items.push(item); 
-      localStorage.setItem(key, JSON.stringify(obj));
+      // Modifica: crea nuovi oggetti
+      const newCollections = { ...currentState.collections };
+      const newCollectStatus = { ...currentState.collectStatus };
+      newCollections[key] = { ...obj, items: [...obj.items, item] };
+      newCollectStatus[item.id] = true;
+      // Aggiornamento: modifica direttamente il singleton
+      stateManager.updateState({
+        collections: newCollections,
+        activeCollection: newCollections[key],
+        collectStatus: newCollectStatus
+      });
       setCounter(key);
       bsAlert('Item added to collection!', 'success');
-      state.collections[key] = obj;
-      state.activeCollection = obj;
-      state.collectStatus[item.id] = true;
       getCollectStatusBtn();
-      showCollection();
       return true;
     }
     bsAlert('Item already in collection!', 'info');
     return false;
   }
 
+  // Aggiunge più elementi a una collezione
+  async function addItems(key, items) {
+    let addedCount = 0;
+    for (const item of items) {
+      const added = await addItem(key, item);
+      if (added) addedCount++;
+    }
+    return addedCount;
+  }
+
   async function removeItem(itemId){
-    const key = state.activeCollectionKey;
-    if (!key) return false;
-    let obj = state.collections[key] || getFromStorage(key);
-    if (!obj) return false;
+    // Lettura: ottiene una copia snapshot dello stato centrale
+    const currentState = stateManager.getState();
+    const key = currentState.activeCollectionKey;
+    if (!key){
+      bsAlert('No active collection to remove item from!', 'warning');
+      return false;
+    } 
+    let obj = currentState.collections[key];
+    if (!obj){
+      bsAlert('Active collection not found!', 'danger');
+      return false;
+    } 
     const initialLength = obj.items.length;
-    obj.items = obj.items.filter(item => String(item.id) !== String(itemId));
-    localStorage.setItem(key, JSON.stringify(obj));
+    
+    const newCollections = { ...currentState.collections };
+    const newCollectStatus = { ...currentState.collectStatus };
+    newCollections[key] = { ...obj, items: obj.items.filter(item => String(item.id) !== String(itemId)) };
+    delete newCollectStatus[itemId];
+    stateManager.updateState({
+      collections: newCollections,
+      activeCollection: newCollections[key],
+      collectStatus: newCollectStatus
+    });
+
     setCounter(key);
-
-    state.collections[key] = obj;
-    state.activeCollection = obj;
-    delete state.collectStatus[itemId];
-
-    if (obj.items.length < initialLength) {
+    if (newCollections[key].items.length < initialLength) {
       getCollectStatusBtn();
       bsAlert('Item removed from collection!', 'success');
       return true;
@@ -263,18 +275,17 @@ export function collection(){
   }
 
   function setCounter(key){
+    // Lettura: ottiene una copia snapshot dello stato centrale
+    const currentState = stateManager.getState();
     const counterElem = document.getElementById('countCollection');
     if (!counterElem) return;
     if (!key) {
       counterElem.innerText = '0';
       return;
     }
-    const collection = state.collections[key] || getFromStorage(key);
+    const collection = currentState.collections[key];
     counterElem.innerText = collection ? collection.items.length : '0';
-  }
-
-
-  
+  } 
 
   function getUserId() {
     const jwt = localStorage.getItem("dyncol-jwt");
@@ -303,25 +314,14 @@ export function collection(){
     );
   }
 
-  function generateUUID() {
-    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-      return crypto.randomUUID();
-    }
-    // Fallback UUID v4 generator
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-      var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-      return v.toString(16);
-    });
-  }
-
   async function exportCollection(activeOnly = true) {
+    // Lettura: ottiene una copia snapshot dello stato centrale
+    const currentState = stateManager.getState();
     const zip = new JSZip();
     const dateString = getDateString().slice(0,3).join('');
 
     let readme = '';
     try {
-      console.log(`Fetching README from ${basePath}assets/readme/exported_collection.md`);
-      
       const response = await fetch(`${basePath}assets/readme/exported_collection.md`);
       readme = await response.text();
     } catch (error) {
@@ -340,11 +340,11 @@ export function collection(){
 
     let collectionsToExport = [];
     if (activeOnly) {
-      if (state.activeCollection) {
-        collectionsToExport = [state.activeCollection];
+      if (currentState.activeCollection) {
+        collectionsToExport = [currentState.activeCollection];
       }
     } else {
-      collectionsToExport = Object.values(state.collections);
+      collectionsToExport = Object.values(currentState.collections).filter(c => c);
     }
 
     collectionsToExport = collectionsToExport.filter(c => Array.isArray(c.items) && c.items.length > 0);
@@ -392,6 +392,8 @@ export function collection(){
   }
 
   async function importCollection(file) {
+    // Lettura: ottiene una copia snapshot dello stato centrale
+    const currentState = stateManager.getState();
     // 1. Controllo che sia un file JSON
     if (!file || !file.name.endsWith('.json') || file.type !== 'application/json') {
       return {status: 'danger', message: 'Please select a valid JSON file.'};
@@ -444,7 +446,7 @@ export function collection(){
 
     // 3. Controllo duplicato su metadata.title
     const title = importedData.metadata.title.trim();
-    const duplicate = Object.values(state.collections).find(
+    const duplicate = Object.values(currentState.collections).find(
       c => c.metadata?.title?.trim().toLowerCase() === title.toLowerCase()
     );
 
@@ -453,8 +455,9 @@ export function collection(){
     } else {
       // 7. Nuova collezione
       const key = "dyncoll_" + generateUUID();
-      localStorage.setItem(key, JSON.stringify(importedData));
-      state.collections[key] = importedData;
+      // Modifica: aggiorna il singleton invece di usare localStorage diretto
+      const newCollections = { ...currentState.collections, [key]: importedData };
+      stateManager.updateState({ collections: newCollections });
       await addCollection(key);
       return { status: 'success', title, key };
     }
@@ -465,9 +468,8 @@ export function collection(){
     getCollectionList,
     createCollection,
     setActiveCollection,
-    getActiveCollection, 
-    retrieveCollection,
     addItem, 
+    addItems,
     removeItem, 
     clearCollection,
     deleteCollection,

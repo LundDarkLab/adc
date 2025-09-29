@@ -1,42 +1,72 @@
-import { initGallery as gallery} from "./modules/gallery.js";
+import { initGallery as gallery } from "./modules/gallery.js";
 import { collection } from "./modules/collection.js";
-import { createGalleryItem,getCollectStatusBtn} from "./components/galleryCard.js"
-import {bsAlert, bsConfirm } from "./components/bsComponents.js"
+import { createGalleryItem, getCollectStatusBtn } from "./components/galleryCard.js";
+import { bsAlert, bsConfirm } from "./components/bsComponents.js";
 import { confirmAction } from "./helpers/helper.js";
+import { collectionState } from "./modules/collectionStorage.js";
+import { toggleCollectionListBtn } from "./helpers/collectionHelper.js";
 
-export const state = {
-  filters: {},
-  collectionList: {}, // localStorage 'collectionList' 
-  collections: {}, // { [key]: collectionObject }
-  activeCollectionKey: null,
-  activeCollection: null, // oggetto collection attiva
-  galleryItems: [], // tutti gli item della gallery
-  collectStatus: {}, // { [itemId]: true/false }
-  collectionFormMode: null, // 'create' | 'update'
-  editingCollectionKey: null,
-};
+const stateManager = await collectionState();
+const coll = await collection();
 
-const coll = collection();
-const filterForm = document.getElementById('filterForm');
-const resetCollectionBtn = document.getElementById('resetCollection');
-
-
-const byCounty = document.getElementsByName('byCounty')[0];
-const byInstitution = document.getElementsByName('byInstitution')[0];
-const byCategory = document.getElementsByName('byCategory')[0];
-const byMaterial = document.getElementsByName('byMaterial')[0];
-const byStart = document.getElementsByName('byStart')[0];
-const byEnd = document.getElementsByName('byEnd')[0];
-const sortByBtn = document.querySelectorAll('.sortBy');
-const toggleFilterBtn = document.querySelectorAll('.toggleFilter');
-const statToggle = document.getElementById('statToggleBtn');
-const toggleSpan = statToggle.querySelector('span');
-const createFromFilteredBtn = document.getElementById('createFromFiltered');
-const removeItemBtn = document.querySelectorAll(".removeItemBtn");
-
-let filter = [];
-let feature = []
-let currentFilter = [];
+const domEl = {
+  activeFilter: document.getElementById('activeFilter'),
+  addItemBtn: document.querySelectorAll('.addItemBtn'),
+  artifactTot: document.querySelector('#artifactTot > h2'),
+  btCancelMetadataFormRequest: document.getElementById('btCancelMetadataFormRequest'),
+  btClearCollection: document.getElementById('btClearCollection'),
+  btDeleteAllCollections: document.getElementById('btDeleteAllCollections'),
+  btDeleteCollection: document.getElementById('btDeleteCollection'),
+  btExportActive: document.getElementById('btExportActive'),
+  btExportAll: document.getElementById('btExportAll'),
+  btImportCollection: document.querySelectorAll('.btImportCollection'),
+  btNewCollection: document.querySelectorAll('.btNewCollection'),
+  btUpdateMetadata: document.getElementById('btUpdateMetadata'),
+  byCategory: document.getElementById('byCategory'),
+  byCounty: document.getElementById('byCounty'),
+  byEnd: document.getElementById('byEnd'),
+  byInstitution: document.getElementById('byInstitution'),
+  byMaterial: document.getElementById('byMaterial'),
+  byStart: document.getElementById('byStart'),
+  byDescription: document.getElementById('byDescription'),
+  changeCollectionDropdown: document.getElementById('changeCollectionDropdown'),
+  collectionBtnWrap: document.getElementById('collectionBtnWrap'),
+  collectionContainer: document.getElementById('collectionContainer'),
+  collectionForm: document.getElementById('collectionForm'),
+  // collectionListDropdown: document.getElementById('collectionListDropdown'),
+  collectionTitle: document.getElementById('collectionTitle'),
+  collectionTitleBtn: document.getElementById('collectionTitleBtn'),
+  collEmail: document.getElementById('collEmail'),
+  collAuthor: document.getElementById('collAuthor'),
+  collTitle: document.getElementById('collTitle'),
+  collDesc: document.getElementById('collDesc'),
+  countCollection: document.getElementById('countCollection'),
+  createFromFilteredBtn: document.getElementById('createFromFiltered'),
+  cronoChart: document.getElementById('crono_chart'),
+  filesTot: document.querySelector('#filesTot > h2'),
+  filterForm: document.getElementById('filterForm'),
+  filterWrap: document.getElementById('filterWrap'),
+  ifileJSON: document.getElementById('ifileJSON'),
+  institutionChart: document.getElementById('institution_chart'),
+  institutionTot: document.querySelector('#institutionTot > h2'),
+  itemTool: document.getElementById('itemTool'),
+  loader: document.getElementById('loadingDiv'),
+  modelTot: document.querySelector('#modelTot > h2'),
+  noCollection: document.getElementById('noCollection'),
+  noItemsInCollection: document.getElementById('noItemsInCollection'),
+  removeItemBtn: document.querySelectorAll(".removeItemBtn"),
+  resetCollectionBtn: document.getElementById('resetCollection'),
+  resetGallery: document.getElementById('resetGallery'),
+  scrollToTopBtn: document.getElementById('scrollToTopBtn'),
+  statWrap: document.getElementById('statWrap'),
+  statToggle: document.getElementById('statToggleBtn'),
+  sortByBtn: document.getElementById('sortByBtn'),
+  sortByList: document.querySelectorAll('#sortByBtn + .dropdown-menu .dropdown-item.sortBy'),
+  toggleFilterBtn: document.querySelectorAll('.toggleFilter'),
+  toggleTabBtn: document.querySelectorAll('button[data-bs-toggle="tab"]'),
+  wrapCollection: document.getElementById('wrapCollection'),
+}
+domEl.toggleSpan = domEl.statToggle ? domEl.statToggle.querySelector('span') : null;
 
 google.charts.load('current', { 'packages':['corechart']});
 
@@ -59,35 +89,14 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 async function stateInit() {
-  const storedList = localStorage.getItem('collectionList');
-  // Inizializza la lista delle collezioni se sono presenti, altrimenti un oggetto vuoto
-  state.collectionList = storedList ? JSON.parse(storedList) : {};
-  // Carica le collezioni esistenti dallo storage e aggiungile allo stato
-  for (const key of Object.keys(state.collectionList)) {
-    if (!key || key === "undefined") continue;
-    const obj = localStorage.getItem(key);
-    if (obj) state.collections[key] = JSON.parse(obj);
-  }
-
-  // Controlla se esiste una collezione attiva
-  const activeEntry = Object.entries(state.collectionList).find(([key, value]) => value === true);
-  if (activeEntry) {
-    state.activeCollectionKey = activeEntry[0];
-    // Imposta la collezione attiva nello stato
-    state.activeCollection = state.collections[state.activeCollectionKey];
-    // Aggiorna lo stato dei pulsanti delle cards della collezione attiva
-    getCollectStatusBtn();
-  } else {
-    state.activeCollectionKey = null;
-    state.activeCollection = null;
-    state.collectStatus = {};
-  }
+  // Lettura: ottiene una copia snapshot dello stato centrale
+  const currentState = stateManager.getState();
+  getCollectStatusBtn();
 }
 
 async function initializeApp() {
   try {
     await stateInit();
-    // Load data in parallel for better performance
     await Promise.all([
       currentPageActiveLink('index.php'),
       interfaceSetup(),
@@ -95,195 +104,157 @@ async function initializeApp() {
       getFilterList(),
       buildStat(),
     ]);
-
+    restoreFormValues();
     await showGallery();
     await showCollection();
     await initializeEventListeners();   
   } catch (error) {
     console.error('Error initializing app:', error);
   } finally {
-    const loader = document.getElementById('loadingDiv');
-    if (loader) loader.style.display = 'none';
+    if (domEl.loader) domEl.loader.style.display = 'none';
   }
 }
 
 export async function showCollection() {
-  const activeCollection = state.activeCollectionKey;
-  if (!activeCollection || !state.activeCollection) {
+  const currentState = stateManager.getState();
+  const activeCollection = currentState.activeCollectionKey;
+  if (!activeCollection || !currentState.activeCollection) {
     noCollection(true);
     collectionBtnGroup(false);
-    document.getElementById('wrapCollection').style.display = 'none';
-    document.getElementById('noItemsInCollection').style.display = 'none';
+    domEl.wrapCollection.style.display = 'none';
+    domEl.noItemsInCollection.style.display = 'none';
+    domEl.collectionTitleBtn.textContent = 'no collection';
     return;
   }
-  noCollection(false);
 
-  const collectionData = state.activeCollection;
+  const collectionData = currentState.activeCollection;
   const meta = collectionData.metadata || {};
+  domEl.collectionTitleBtn.textContent = meta.title || 'Collection metadata';
   const allMetaFilled = [meta.email, meta.author, meta.description].every(val => typeof val === 'string' && val.trim() !== '' && val !== 'undefined');
   const hasItems = Array.isArray(collectionData.items) && collectionData.items.length > 0;
 
+  noCollection(false);
+
   if (!allMetaFilled) {
     updateMetadataFormVisibility(true, activeCollection, meta);
-    document.getElementById('collectionTitle').textContent = meta.title || 'Default Collection';
-    document.getElementById('wrapCollection').style.display = 'none';
-    document.getElementById('noItemsInCollection').style.display = 'none';
-    state.collectionFormMode = 'update';
-    state.editingCollectionKey = activeCollection;
+    domEl.collectionTitle.textContent = meta.title || 'Default Collection';
+    domEl.wrapCollection.style.display = 'none';
+    domEl.noItemsInCollection.style.display = 'none';
+    currentState.collectionFormMode = 'update';
+    currentState.editingCollectionKey = activeCollection;
+    stateManager.updateState({
+      collectionFormMode: currentState.collectionFormMode,
+      editingCollectionKey: currentState.editingCollectionKey
+    });
     return;
   }
-    
-  if(!hasItems){
-    document.getElementById('noItemsInCollection').style.display = 'block';
-  }else{
-    document.getElementById('noItemsInCollection').style.display = 'none';
+  
+  // Se metadata completi, mostra la collezione
+  if (!hasItems) {
+    domEl.noItemsInCollection.style.display = 'block';
+  } else {
+    domEl.noItemsInCollection.style.display = 'none';
   }
   
   collectionBtnGroup(true);
   updateMetadataFormVisibility(false);
   buildCollection(collectionData);
+  getCollectStatusBtn();
   collectionMetadata(meta);
 }
 
 function collectionBtnGroup(show = true){
-  const collectionBtnWrap = document.getElementById('collectionBtnWrap');
-  if (collectionBtnWrap) {
-    collectionBtnWrap.style.display = show ? 'block' : 'none';
+  if (domEl.collectionBtnWrap) {
+    domEl.collectionBtnWrap.style.display = show ? 'block' : 'none';
   }
 }
 
 export function noCollection(show = true){
-  const noCollectionDiv = document.getElementById('noCollection');
-  const collectionContainer = document.getElementById('collectionContainer');
-  if (noCollectionDiv) { 
-    noCollectionDiv.style.display = show ? 'block' : 'none'; 
+  if (domEl.noCollection) { 
+    domEl.noCollection.style.display = show ? 'block' : 'none'; 
   }
-
-  if (collectionContainer) { 
-    collectionContainer.style.display = show ? 'none' : 'block'; 
+  if (domEl.collectionContainer) { 
+    domEl.collectionContainer.style.display = show ? 'none' : 'block'; 
   }
-
   if (show) {
-    document.getElementById('collectionTitleBtn').textContent = 'no collection';
-    document.getElementById('countCollection').textContent = '';
+    domEl.collectionTitleBtn.textContent = 'no collection';
+    domEl.countCollection.textContent = '';
   }
 }
 
 async function onCreateCollection() {
-  document.getElementById('collectionForm').reset();
-  document.getElementById('collectionTitle').textContent = 'Collection metadata';
-  document.getElementById('wrapCollection').style.display = 'none';
+  // Lettura: ottiene una copia snapshot dello stato centrale
+  const currentState = stateManager.getState();
+  domEl.collectionForm.reset();
+  domEl.collectionTitle.textContent = 'Collection metadata';
+  domEl.wrapCollection.style.display = 'none';
   updateMetadataFormVisibility(true);
-  state.collectionFormMode = 'create';
-  state.editingCollectionKey = null;
+  currentState.collectionFormMode = 'create';
+  currentState.editingCollectionKey = null;
+  // Aggiornamento: modifica direttamente il singleton
+  stateManager.updateState({collectionFormMode: currentState.collectionFormMode});
+  stateManager.resetState(['editingCollectionKey']);
 }
 
 async function onUpdateCollection() {
-  document.getElementById('wrapCollection').style.display = 'none';
-  const activeCollection = state.activeCollectionKey;
-  if (!activeCollection) return;
-  const collectionObj = JSON.parse(localStorage.getItem(activeCollection));
-  const meta = collectionObj?.metadata || {};
-  const collEmail = document.getElementById('collEmail');
-  const collAuthor = document.getElementById('collAuthor');
-  const collTitle = document.getElementById('collTitle');
-  const collDesc = document.getElementById('collDesc');
-  collEmail.value = meta.email || '';
-  collAuthor.value = meta.author || '';
-  collTitle.value = meta.title || '';
-  collDesc.value = meta.description || '';
-  document.getElementById('collectionTitle').textContent = meta.title || 'Collection metadata';
-  updateMetadataFormVisibility(true);
-  state.collectionFormMode = 'update';
-  state.editingCollectionKey = activeCollection;
-}
-
-document.getElementById('collectionForm').addEventListener('submit', async function(e) {
-  e.preventDefault();  
-  const collEmail = document.getElementById('collEmail');
-  const collAuthor = document.getElementById('collAuthor');
-  const collTitle = document.getElementById('collTitle');
-  const collDesc = document.getElementById('collDesc');
-  const metadata = {
-    email: collEmail.value,
-    author: collAuthor.value,
-    title: collTitle.value,
-    description: collDesc.value
-  };
-  if (state.collectionFormMode === 'create') {
-    if (coll.isTitleDuplicate(metadata.title)) {
-      bsAlert('Title already exists. Please choose another.', 'danger', 3000);
-      return;
-    }
-    const key = await coll.createCollection(metadata);
-    Object.keys(state.collectionList).forEach(k => state.collectionList[k] = false);
-    state.collectionList[key] = true;
-    state.activeCollectionKey = key;
-    state.activeCollection = state.collections[key];
-    getCollectStatusBtn();
-    localStorage.setItem('collectionList', JSON.stringify(state.collectionList));
-    await toggleCollectionListBtn();
-    bsAlert('Collection successfully created!', 'success');
-    updateMetadataFormVisibility(false, key, metadata);
-    collectionBtnGroup(true);
-    await showCollection();
-    state.collectionFormMode = null;
-    state.editingCollectionKey = null;
-  } else if (state.collectionFormMode === 'update') {   
-    if (coll.isTitleDuplicate(metadata.title, state.editingCollectionKey)) {
-      bsAlert('Title already exists. Please choose another.', 'danger', 3000);
-      return;
-    }
-    const collectionObj = JSON.parse(localStorage.getItem(state.editingCollectionKey));
-    collectionObj.metadata = metadata;
-    localStorage.setItem(state.editingCollectionKey, JSON.stringify(collectionObj));
-    state.collections[state.editingCollectionKey] = collectionObj;
-    state.activeCollection = collectionObj;
-    await toggleCollectionListBtn();
-    bsAlert('Metadata successfully updated!', 'success');
-    
-    updateMetadataFormVisibility(false, state.editingCollectionKey, metadata);
-    collectionBtnGroup(true);
-    document.getElementById('collectionTitleBtn').textContent = metadata.title;
-    document.getElementById('collectionTitle').textContent = metadata.title;
-    await showCollection();
-    state.collectionFormMode = null;
-    state.editingCollectionKey = null;
+  // Lettura: ottiene una copia snapshot dello stato centrale
+  const currentState = stateManager.getState();
+  domEl.wrapCollection.style.display = 'none';
+  const activeCollection = currentState.activeCollectionKey;
+  if (!activeCollection){
+    bsAlert('No active collection to update!', 'danger');
+    return;
   }
-});
+  const collectionObj = currentState.collections[activeCollection];
+  if (!collectionObj || !collectionObj.metadata) {
+    bsAlert('Collection not found!', 'danger');
+    return;
+  }
+  const meta = collectionObj.metadata;
+  const fields = [
+    { id: 'collEmail', value: meta.email || '' },
+    { id: 'collAuthor', value: meta.author || '' },
+    { id: 'collTitle', value: meta.title || '' },
+    { id: 'collDesc', value: meta.description || '' }
+  ];
+  fields.forEach(f => {
+    const el = domEl[f.id];
+    if (el) el.value = f.value;
+  });
+  domEl.collectionTitle.textContent = meta.title || 'Collection metadata';
+  updateMetadataFormVisibility(true);
+  currentState.collectionFormMode = 'update';
+  currentState.editingCollectionKey = activeCollection;
+  stateManager.updateState({
+    collectionFormMode: currentState.collectionFormMode,
+    editingCollectionKey: currentState.editingCollectionKey
+  });
+}
 
 function buildCollection(data){
   noCollection(false);
-  document.getElementById('collectionTitleBtn').textContent = data.metadata.title;
-  const countCollection = document.getElementById('countCollection');
-  if (countCollection) { countCollection.textContent = data.items.length; }
-  const wrapCollection = document.getElementById('wrapCollection');
-  wrapCollection.style.display = 'grid';
-  wrapCollection.innerHTML = '';
+  domEl.collectionTitleBtn.textContent = data.metadata.title;
+  if (domEl.countCollection) { domEl.countCollection.textContent = data.items.length; }
+  domEl.wrapCollection.style.display = 'grid';
+  domEl.wrapCollection.innerHTML = '';
 
   data.items.forEach(item => {
-    const itemEl = createGalleryItem(item, 'collection',null,galleryInstance.onUnCollect);
-    wrapCollection.appendChild(itemEl);
+    const itemEl = createGalleryItem(item,null,galleryInstance.onUnCollect);
+    domEl.wrapCollection.appendChild(itemEl);
   });
 }
 
 function collectionMetadata(metadata) {
-  document.getElementById('collectionTitle').textContent =  metadata.title || 'Collection metadata';
-  const email = document.getElementById('collEmail');
-  const author = document.getElementById('collAuthor');
-  const title = document.getElementById('collTitle');
-  const description = document.getElementById('collDesc');
-
-  if (email) {email.value = metadata.email || '';}
-  if (author) {author.value = metadata.author || '';}
-  if (title) {title.value = metadata.title || '';}
-  if (description) {description.value = metadata.description || '';}
+  domEl.collectionTitle.textContent =  metadata.title || 'Collection metadata';
+  if (domEl.collEmail) {domEl.collEmail.value = metadata.email || '';}
+  if (domEl.collAuthor) {domEl.collAuthor.value = metadata.author || '';}
+  if (domEl.collTitle) {domEl.collTitle.value = metadata.title || '';}
+  if (domEl.collDesc) {domEl.collDesc.value = metadata.description || '';}
 }
 
 function updateMetadataFormVisibility(display = true, activeCollection=null, metadata=null) {
   noCollection(false);
-  const metaForm = document.getElementById('collectionForm');
-  metaForm.style.display = display ? 'block' : 'none';
+  domEl.collectionForm.style.display = display ? 'block' : 'none';
   if (activeCollection && metadata) {
     collectionMetadata(metadata);
     return;
@@ -291,56 +262,130 @@ function updateMetadataFormVisibility(display = true, activeCollection=null, met
 }
 
 async function interfaceSetup() {
-  createFromFilteredBtn.style.visibility = 'hidden';
-  resetCollectionBtn.style.display = 'none';
-  if(logged.value == 0){ 
-    itemTool.classList.add('large');
-    statWrap.classList.add('large');
-  }else{
-    itemTool.classList.add(checkDevice()=='pc' ? 'small' :'large');
-    statWrap.classList.add(checkDevice()=='pc' ? 'small' :'large');
-  }
-  toggleCollectionListBtn();
-}
-
-export async function toggleCollectionListBtn(){
-  let listCollection = coll.getCollectionList();
-  if (listCollection.length === 0) {
-    const obj = localStorage.getItem('collectionList');
-    if (obj) {
-      state.collectionList = JSON.parse(obj);
-      listCollection = coll.getCollectionList();
-    }
-  }
-  let showCollectionBtn = listCollection.length > 1;
-  document.getElementById('changeCollectionDropdown').style.display = showCollectionBtn ? 'block' : 'none';
-  const activeKey = state.activeCollectionKey;
-  fillCollectionList(listCollection, activeKey);
-}
-
-function fillCollectionList(list, activeKey){
-  const collectionDropdown = document.getElementById('collectionListDropdown');
-  collectionDropdown.innerHTML = '';
+  const currentState = stateManager.getState();
+  console.log('Interface setup with state:', currentState.searchFilters);
   
-  list.forEach((collection) => {
-    const li = document.createElement('li');
-    const btn = document.createElement('button');
-    btn.textContent = collection.title || 'Untitled Collection';
-    btn.classList.add('dropdown-item');
-    if (collection.key === activeKey) {
-      btn.classList.add('active');
-       document.getElementById('collectionTitleBtn').textContent = collection.title || 'Untitled Collection';
-    }
-    btn.onclick = async () => {
-      document.querySelectorAll('#collectionListDropdown .dropdown-item.active').forEach(el => el.classList.remove('active'));
-      btn.classList.add('active');
-      await coll.setActiveCollection(collection.key);
-      showCollection();
-    };
-    li.appendChild(btn);
-    collectionDropdown.appendChild(li);
-  });
+  domEl.createFromFilteredBtn.style.visibility = 'hidden';
+  domEl.resetCollectionBtn.style.display = 'none';
+  if(logged.value == 0){ 
+    if(domEl.itemTool) domEl.itemTool.classList.add('large');
+    if(domEl.statWrap) domEl.statWrap.classList.add('large');
+  }else{
+    if(domEl.itemTool) domEl.itemTool.classList.add(checkDevice()=='pc' ? 'small' :'large');
+    if(domEl.statWrap) domEl.statWrap.classList.add(checkDevice()=='pc' ? 'small' :'large');
+  }
+  toggleCollectionListBtn(stateManager, showCollection, coll.setActiveCollection);
 }
+
+/////////////////////////////////////////////////////////
+// form submit handler init and helper functions /////////
+//////////////////////////////////////////////////////////
+async function handleCollectionFormSubmit(e) {
+  e.preventDefault();
+  // Lettura: ottiene una copia snapshot dello stato centrale
+  const currentState = stateManager.getState();
+  const metadata = getFormMetadata();
+  if (!validateMetadata(metadata, currentState)) return;
+  
+  try {
+    if (currentState.collectionFormMode === 'create') {
+      await handleCreateCollection(metadata, currentState);
+    } else if (currentState.collectionFormMode === 'update') {
+      await handleUpdateCollection(metadata, currentState);
+    }
+    
+    // Common post-action cleanup
+    resetFormMode(currentState);
+    refreshUI();
+  } catch (error) {
+    console.error('Form submission error:', error);
+    bsAlert('An error occurred. Please try again.', 'danger');
+  }
+}
+
+function getFormMetadata() {
+  return {
+    email: domEl.collEmail.value.trim(),
+    author: domEl.collAuthor.value.trim(),
+    title: domEl.collTitle.value.trim(),
+    description: domEl.collDesc.value.trim()
+  };
+}
+
+function validateMetadata(metadata, currentState) {
+  if (!metadata.title) {
+    bsAlert('Title is required.', 'danger');
+    return false;
+  }
+  if (currentState.collectionFormMode === 'create' && coll.isTitleDuplicate(metadata.title)) {
+    bsAlert('Title already exists. Please choose another.', 'danger');
+    return false;
+  }
+  if (currentState.collectionFormMode === 'update' && coll.isTitleDuplicate(metadata.title, currentState.editingCollectionKey)) {
+    bsAlert('Title already exists. Please choose another.', 'danger');
+    return false;
+  }
+  return true;
+}
+
+async function handleCreateCollection(metadata, currentState) {
+  const key = await coll.createCollection(metadata, showCollection);
+  
+  const updatedState = stateManager.getState();
+
+  updatedState.collectionList[key] = true;
+  updatedState.activeCollectionKey = key;
+  updatedState.activeCollection = updatedState.collections[key];
+  
+  stateManager.updateState({
+    collectionList: { ...updatedState.collectionList },
+    activeCollectionKey: updatedState.activeCollectionKey,
+    activeCollection: updatedState.activeCollection
+  });
+  
+  bsAlert('Collection successfully created!', 'success');
+  updateMetadataFormVisibility(false, key, metadata);
+}
+
+async function handleUpdateCollection(metadata, currentState) {
+  const collectionObj = currentState.collections[currentState.editingCollectionKey];
+  if (!collectionObj) {
+    bsAlert('Collection not found!', 'danger');
+    return;
+  }
+  
+  // Update metadata
+  collectionObj.metadata = metadata;
+  currentState.collections[currentState.editingCollectionKey] = collectionObj;
+  currentState.activeCollection = collectionObj;
+  
+  // Aggiornamento: modifica direttamente il singleton
+  stateManager.updateState({
+    collections: { ...currentState.collections },
+    activeCollection: currentState.activeCollection
+  });
+  
+  bsAlert('Metadata successfully updated!', 'success');
+  updateMetadataFormVisibility(false, currentState.editingCollectionKey, metadata);
+  domEl.collectionTitle.textContent = metadata.title;
+  domEl.collectionTitleBtn.textContent = metadata.title;
+}
+
+function resetFormMode(currentState) {
+  currentState.collectionFormMode = null;
+  currentState.editingCollectionKey = null;
+  // Aggiornamento: modifica direttamente il singleton
+  stateManager.resetState(['collectionFormMode', 'editingCollectionKey']);
+}
+
+// Helper: Refresh UI
+async function refreshUI() {
+  toggleCollectionListBtn(stateManager, showCollection, coll.setActiveCollection);
+  collectionBtnGroup(true);
+  getCollectStatusBtn();
+  await showCollection();
+}
+///////////////////////////////////////////////
 
 async function artifactByCounty() {
   const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
@@ -376,7 +421,7 @@ async function artifactByCounty() {
       option.value = county.gid_1;
       countyFragment.appendChild(option);
     });
-    byCounty.appendChild(countyFragment);
+    domEl.byCounty.appendChild(countyFragment);
 
     countyDataCache = data;
     cacheTimestamp = Date.now();
@@ -390,53 +435,60 @@ async function artifactByCounty() {
 async function getFilterList() {
   try {
     const formData = new FormData();
-    formData.append('trigger', 'getFilterList');
+    formData.append('trigger', 'getFilterList');   
+    const response = await fetch(API + "get.php", { method: 'POST', body: formData });
     
-    const response = await fetch(API + "get.php", {
-      method: 'POST',
-      body: formData
-    });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
+    if (!response.ok) { throw new Error(`HTTP error! status: ${response.status}`);}
     const data = await response.json();
-    
-    // Use native DocumentFragment for better performance
-    const categoryFragment = document.createDocumentFragment();
-    const materialFragment = document.createDocumentFragment();
-    const institutionFragment = document.createDocumentFragment();
-    
-    data.category.forEach((item) => {
-      const option = document.createElement('option');
-      option.textContent = item.value;
-      option.value = item.id;
-      categoryFragment.appendChild(option);
-    });
-    
-    data.material.forEach((item) => {
-      const option = document.createElement('option');
-      option.textContent = item.value;
-      option.value = item.id;
-      materialFragment.appendChild(option);
-    });
-    
-    data.institution.forEach((item) => {
-      const option = document.createElement('option');
-      option.textContent = item.value;
-      option.value = item.id;
-      institutionFragment.appendChild(option);
-    });
-    
-    // Append fragments to select elements
-    byCategory.appendChild(categoryFragment);
-    byMaterial.appendChild(materialFragment);
-    byInstitution.appendChild(institutionFragment);
-    
+    populateFilterSelects(data);
   } catch (error) {
     console.error('Error loading filter list:', error);
   }
+}
+
+// Funzione di utilità per popolare le select
+function populateFilterSelects(data) {
+  // Usa native DocumentFragment per performance
+  const categoryFragment = document.createDocumentFragment();
+  const materialFragment = document.createDocumentFragment();
+  const institutionFragment = document.createDocumentFragment();
+
+  [categoryFragment, materialFragment, institutionFragment].forEach(frag => {
+    const defaultOption = document.createElement('option');
+    defaultOption.textContent = 'Select an option';
+    defaultOption.value = '';
+    defaultOption.selected = true;
+    frag.appendChild(defaultOption);
+  });
+
+  data.category.forEach((item) => {
+    const option = document.createElement('option');
+    option.textContent = item.value;
+    option.value = item.id;
+    categoryFragment.appendChild(option);
+  });
+
+  data.material.forEach((item) => {
+    const option = document.createElement('option');
+    option.textContent = item.value;
+    option.value = item.id;
+    materialFragment.appendChild(option);
+  });
+
+  data.institution.forEach((item) => {
+    const option = document.createElement('option');
+    option.textContent = item.value;
+    option.value = item.id;
+    institutionFragment.appendChild(option);
+  });
+
+  // Svuota e riempi le select
+  domEl.byCategory.innerHTML = '';
+  domEl.byMaterial.innerHTML = '';
+  domEl.byInstitution.innerHTML = '';
+  domEl.byCategory.appendChild(categoryFragment);
+  domEl.byMaterial.appendChild(materialFragment);
+  domEl.byInstitution.appendChild(institutionFragment);
 }
 
 async function buildStat() {
@@ -465,11 +517,11 @@ async function buildStat() {
     data.institutionDistribution.forEach((v) => {
       institutionData.push([v.name, v.tot, v.color]);
     });
-    
-    document.querySelector("#artifactTot > h2").textContent = data.artifact.tot;
-    document.querySelector("#modelTot > h2").textContent = data.model.tot;
-    document.querySelector("#institutionTot > h2").textContent = data.institution.tot;
-    document.querySelector("#filesTot > h2").textContent = data.files.tot;
+
+    domEl.artifactTot.textContent = data.artifact.tot;
+    domEl.modelTot.textContent = data.model.tot;
+    domEl.institutionTot.textContent = data.institution.tot;
+    domEl.filesTot.textContent = data.files.tot;
 
     await new Promise((resolve) => {
       google.charts.setOnLoadCallback(resolve);
@@ -486,200 +538,252 @@ async function buildStat() {
 async function initializeEventListeners() {
   screen.orientation.addEventListener("change", debounce(resizeDOM, 500));
 
-  window.addEventListener('scroll', function() { 
+  window.addEventListener('scroll', () => { 
     const scrollTop = window.scrollY || document.documentElement.scrollTop;
     let backTopPos = scrollTop > 0 ? '10px' : '50px';
     backToTop.style.transform = 'translate(-50%, ' + backTopPos + ')';
     let activeTab = document.querySelector('#viewCollection')?.classList.contains('active');
-    if (activeTab) return;
-    scrollTop > 0 ? hideStats() : showStats();
+    if (activeTab) {  hideStats(); } else { scrollTop > 0 ? hideStats() : showStats(); }
   });
 
-  document.querySelectorAll('button[data-bs-toggle="tab"]').forEach((el) => {
-    el.addEventListener('show.bs.tab', handleTabChange);
-  });
-
-  toggleFilterBtn.forEach(btn => btn.addEventListener('click', toggleFilter));
-
-  if (createFromFilteredBtn){
-    createFromFilteredBtn.addEventListener('click', createFromFiltered);
+  if (domEl.collectionForm) {
+    domEl.collectionForm.addEventListener('submit', handleCollectionFormSubmit); 
   }
-
-  if (resetCollectionBtn){
-    resetCollectionBtn.addEventListener('click', resetCollection);
+  
+  domEl.toggleTabBtn.forEach((el) => { el.addEventListener('shown.bs.tab', handleTabChange); });
+  
+  domEl.toggleFilterBtn.forEach(btn => btn.addEventListener('click', toggleFilter));
+  
+  if (domEl.createFromFilteredBtn){
+    domEl.createFromFilteredBtn.addEventListener('click', createFromFiltered);
   }
-
-  document.getElementById('resetGallery').addEventListener('click', resetGallery);
-
+  
+  if (domEl.resetCollectionBtn){ 
+    domEl.resetCollectionBtn.addEventListener('click', resetCollection);
+  }
+  
+  domEl.resetGallery.addEventListener('click', resetGallery);
+  
   if (toggleMenuBtn){
     toggleMenuBtn.addEventListener('click', debounce(resizeDOM, 500));
   }
 
-  if (statToggle){
-    statToggle.addEventListener('click', toggleStats);
+  if (domEl.statToggle){ 
+    domEl.statToggle.addEventListener('click', toggleStats); 
   }
 
-  if (sortByBtn){
-    sortByBtn.forEach(btn => btn.addEventListener('click', handleSortChange));
-  }
 
-  if (backToTopBtn){
-    backToTopBtn.addEventListener('click', () => { 
+  domEl.sortByList.forEach(item => item.addEventListener('click', handleSortChange));
+
+  if (domEl.scrollToTopBtn){
+    domEl.scrollToTopBtn.addEventListener('click', () => { 
       window.scrollTo({ top: 0, behavior: 'smooth' }); 
     });
   }
 
-  filterForm.addEventListener('submit', function(e) {
-    e.preventDefault();
-    showGallery();
-  });
+  if(domEl.filterForm){
+    domEl.filterForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      showGallery();
+    });
+  }
 
-  document.querySelectorAll('.btImportCollection').forEach(btn => {
+  domEl.btImportCollection.forEach(btn => {
     btn.addEventListener('click', async () => {
-      const fileInput = document.getElementById('ifileJSON');
-      fileInput.value = ''; // reset per permettere re-import dello stesso file
-      fileInput.click();
-      fileInput.addEventListener('change', async (event) => {
-        const file = event.target.files[0];
-        if(!file) {return;}
-        try {
-          const result = await coll.importCollection(file);
-          if (result.status === 'success') {
-            const key = result.key;
-            state.collections[key] = result.importedData;
-            await coll.setActiveCollection(key);
-            bsAlert('Collection successfully imported!', 'success', 3000, async ()=>{
-              await toggleCollectionListBtn();
-              collectionBtnGroup(true);
-              getCollectStatusBtn();
-              await showCollection();
-              noCollection(false);
-            });
-          } else if (result.status === 'duplicate') {
-            await confirmAction(
-              `A collection named "${result.title}" already exists. Do you want to overwrite it and merge new items?`,
-              async () => { await mergeItems(result); },
-              () => { bsAlert('Import cancelled by user.', 'info'); }
-            );
-          } else {
-            bsAlert(result.message, result.status);
+      const currentState = stateManager.getState();
+      if(domEl.ifileJSON) {
+        domEl.ifileJSON.value = ''; // reset per permettere re-import dello stesso file
+        domEl.ifileJSON.click();
+        domEl.ifileJSON.addEventListener('change', async (event) => {
+          const file = event.target.files[0];
+          if(!file) {return;}
+          try {
+            const result = await coll.importCollection(file);
+            if (result.status === 'success') {
+              const key = result.key;
+              currentState.collections[key] = result.importedData;
+              await coll.setActiveCollection(key);
+              bsAlert('Collection successfully imported!', 'success', 3000, async ()=>{
+                toggleCollectionListBtn(stateManager, showCollection, coll.setActiveCollection);
+                collectionBtnGroup(true);
+                getCollectStatusBtn();
+                await showCollection();
+                noCollection(false);
+              });
+            } else if (result.status === 'duplicate') {
+              await confirmAction(
+                `A collection named "${result.title}" already exists. Do you want to overwrite it and merge new items?`,
+                async () => { await mergeItems(result); },
+                () => { bsAlert('Import cancelled by user.', 'info'); }
+              );
+            } else {
+              bsAlert(result.message, result.status);
+            }
+          } catch (error) {
+            bsAlert('Import failed: ' + error.message, 'danger');
+            console.error(error);
           }
-        } catch (error) {
-          bsAlert('Import failed: ' + error.message, 'danger');
-          console.error(error);
-        }
-      }, { once: true });
+        }, { once: true });
+      }
     });
   });
 
-  document.getElementById('btExportActive').addEventListener('click', async () => {
-    await coll.exportCollection(true);
+  if(domEl.btExportActive) {
+    domEl.btExportActive.addEventListener('click', async () => {
+      await coll.exportCollection(true);
+    });
+  }
+
+  if(domEl.btExportAll) {
+    domEl.btExportAll.addEventListener('click', async () => {
+      await coll.exportCollection(false);
+    });
+  }
+
+  domEl.btNewCollection.forEach(btn => { 
+    btn.addEventListener('click', onCreateCollection); 
   });
 
-  document.getElementById('btExportAll').addEventListener('click', async () => {
-    await coll.exportCollection(false);
-  });
+  if(domEl.btUpdateMetadata){
+    domEl.btUpdateMetadata.addEventListener('click', onUpdateCollection); 
+  }
 
-  document.querySelectorAll('.btNewCollection').forEach(btn => {
-    btn.addEventListener('click', onCreateCollection);
-  });
-
-  document.getElementById('btUpdateMetadata').addEventListener('click', onUpdateCollection);
-
-  document.getElementById('btCancelMetadataFormRequest').addEventListener('click', async () => {
-    document.getElementById('collectionForm').reset();
-    updateMetadataFormVisibility(false);
-    const activeCollection = state.activeCollectionKey;
-    if (activeCollection) {
-      const collectionObj = localStorage.getItem(activeCollection);
-      if (collectionObj) {
-        const meta = JSON.parse(collectionObj).metadata || {};
-        document.getElementById('collectionTitle').textContent = meta.title || 'Collection metadata';
-        document.getElementById('wrapCollection').style.display = 'grid';
-      }
-    } else {
-      document.getElementById('collectionTitle').textContent = 'Collection metadata';
-      state.activeCollection = null;
-      // state.collectionItems = [];
-      state.collectStatus = {};
-      noCollection(true);
-    }
-    if (coll.getCollectionList().length === 0) {
-      noCollection(true);
-    }
-  });
-
-  document.getElementById('btClearCollection').addEventListener('click', async () => {
-    await confirmAction(
-      'Are you sure you want to clear the entire collection? This action cannot be undone.', 
-      async () => {
-        await coll.clearCollection();
-        await toggleCollectionListBtn();
-        collectionBtnGroup(true);
+  if(domEl.btCancelMetadataFormRequest) {
+    domEl.btCancelMetadataFormRequest.addEventListener('click', async () => {
+      const currentState = stateManager.getState();
+      domEl.collectionForm.reset();
+      updateMetadataFormVisibility(false);
+      const activeCollection = currentState.activeCollectionKey;
+      if (activeCollection) {
+        const collectionObj = currentState.collections[activeCollection];
+        if (collectionObj) {
+          const meta = collectionObj.metadata || {};
+          domEl.collectionTitle.textContent = meta.title || 'Collection metadata';
+          domEl.wrapCollection.style.display = 'grid';
+        }
+      } else {
+        domEl.collectionTitle.textContent = 'Collection metadata';
+        currentState.activeCollection = null;
+        currentState.collectStatus = {};
+        stateManager.resetState(['activeCollection', 'activeCollectionKey', 'collectStatus']);
         getCollectStatusBtn();
-        await showCollection();
-      }
-    );
-  });
-
-  document.getElementById('btDeleteCollection').addEventListener('click', async () => {
-    await confirmAction(
-      'Are you sure you want to delete the entire collection? This action cannot be undone.', 
-      async () => {
-        await coll.deleteCollection();
-        await toggleCollectionListBtn();
-        collectionBtnGroup(true);
-        getCollectStatusBtn();
-        await showCollection();
-      }
-    );
-  })
-
-  document.getElementById('btDeleteAllCollections').addEventListener('click', async () => {
-    await confirmAction(
-      'Are you sure you want to delete all collections? This action cannot be undone.', 
-      async () => {
-        await coll.deleteCollection(true);
-        await toggleCollectionListBtn();
         collectionBtnGroup(false);
-        getCollectStatusBtn();
-        await showCollection();
+        noCollection(true);
       }
-    );
-  })
+
+      if (coll.getCollectionList().length === 0) { 
+        noCollection(true); 
+      }
+    });
+  }
+
+  if(domEl.btClearCollection) {
+    domEl.btClearCollection.addEventListener('click', async () => {
+      await confirmAction(
+        'Are you sure you want to clear the entire collection? This action cannot be undone.', 
+        async () => {
+          await coll.clearCollection();
+          toggleCollectionListBtn(stateManager, showCollection, coll.setActiveCollection);
+          collectionBtnGroup(true);
+          getCollectStatusBtn();
+          await showCollection();
+        }
+      );
+    });
+  }
+
+  if(domEl.btDeleteCollection) {
+    domEl.btDeleteCollection.addEventListener('click', async () => {
+      await confirmAction(
+        'Are you sure you want to delete the entire collection? This action cannot be undone.', 
+        async () => {
+          await coll.deleteCollection();
+          toggleCollectionListBtn(stateManager, showCollection, coll.setActiveCollection);
+          collectionBtnGroup(true);
+          getCollectStatusBtn();
+          await showCollection();
+        }
+      );
+    });
+  }
+
+  if(domEl.btDeleteAllCollections) {
+    domEl.btDeleteAllCollections.addEventListener('click', async () => {
+      await confirmAction(
+        'Are you sure you want to delete all collections? This action cannot be undone.', 
+        async () => {
+          await coll.deleteCollection(true);
+          toggleCollectionListBtn (stateManager, showCollection, coll.setActiveCollection);
+          collectionBtnGroup(false);
+          getCollectStatusBtn();
+          await showCollection();
+        }
+      );
+    });
+  }
 }
 
 async function mergeItems(result) {
+  const currentState = stateManager.getState();
   const existingIds = new Set(result.duplicate.items.map(item => item.id));
   const newItems = result.importedData.items.filter(item => !existingIds.has(item.id));
   result.duplicate.items.push(...newItems);
-  const key = Object.keys(state.collections).find(k => state.collections[k] === result.duplicate);
-  localStorage.setItem(key, JSON.stringify(result.duplicate));
-  state.collections[key] = result.duplicate;
-  bsAlert(`Collection "${result.title}" updated with ${newItems.length} new items.`, 'success', 3000, async ()=>{
-    await toggleCollectionListBtn();
-    collectionBtnGroup(true);
-    getCollectStatusBtn();
-    await showCollection();
-  }); 
+  const key = Object.keys(currentState.collections).find(k => currentState.collections[k] === result.duplicate);
+  currentState.collections[key] = result.duplicate;
+  stateManager.updateState({ collections: { ...currentState.collections } });
+  bsAlert(
+    `Collection "${result.title}" updated with ${newItems.length} new items.`, 
+    'success', 
+    3000, 
+    async ()=>{
+      toggleCollectionListBtn(stateManager, showCollection, coll.setActiveCollection);
+      collectionBtnGroup(true);
+      getCollectStatusBtn();
+      await showCollection();
+    }
+  ); 
 }
 
 function checkActiveFilter(){
-  let displayClass = activeFilter > 0 ? "visible" : "hidden";
-  createFromFilteredBtn.style.visibility = displayClass;
-  document.getElementById('activeFilter').textContent = activeFilter > 0 ? activeFilter : '';
+  const currentState = stateManager.getState();
+  let displayClass = currentState.searchFilters.activeFilter > 0 ? "visible" : "hidden";
+  domEl.createFromFilteredBtn.style.visibility = displayClass;
+  domEl.activeFilter.textContent = currentState.searchFilters.activeFilter > 0 ? currentState.searchFilters.activeFilter : '';
 }
 
-function createFromFiltered() {
+async function createFromFiltered() {
   try {
-    createFromFilteredBtn.disabled = true;
-    createFromFilteredBtn.innerHTML = '<i class="mdi mdi-loading mdi-spin"></i> Creating Collection...';
-
+    domEl.createFromFilteredBtn.disabled = true;
+    domEl.createFromFilteredBtn.innerHTML = '<i class="mdi mdi-loading mdi-spin"></i> adding items...';
+    const currentState = stateManager.getState();
+    const filters = currentState.searchFilters;
+    const body = {
+      class: 'Collection',
+      action: 'getGallery',
+      filterArr: filters.filter,
+      sortBy: filters.sortBy,
+      sortDir: filters.sortDir,
+      getAll: true
+    };
+    const result = await fetchApi({ url: ENDPOINT, body });
+    const allFilteredItems = result.data.gallery;
+    const activeKey = currentState.activeCollectionKey;
+    if (!activeKey) {
+      bsAlert('No active collection!', 'danger');
+      return;
+    }
+    const addedCount = await coll.addItems(activeKey, allFilteredItems);
+    bsAlert(`${addedCount} items added to collection!`, 'success');
+  
+    // Aggiorna UI
+    getCollectStatusBtn();
+    await showCollection();
   } catch (error) {
     console.error('Error creating collection:', error);
   } finally {
-    createFromFilteredBtn.style.visibility = 'hidden';
-    createFromFilteredBtn.innerHTML = 'Create Collection';
+    domEl.createFromFilteredBtn.disabled = false;
+    // domEl.createFromFilteredBtn.style.visibility = 'hidden';
+    domEl.createFromFilteredBtn.innerHTML = 'add all items';
   }
 }
 
@@ -695,105 +799,142 @@ function debounce(func, wait) {
   };
 }
 
+function restoreFormValues() {
+  const currentState = stateManager.getState();
+  const filterValues = currentState.searchFilters.currentFilter || {};
+  domEl.byCounty.value = filterValues.byCounty || '';
+  domEl.byInstitution.value = filterValues.byInstitution || '';
+  domEl.byCategory.value = filterValues.byCategory || '';
+  domEl.byMaterial.value = filterValues.byMaterial || '';
+  domEl.byStart.value = filterValues.byStart || '';
+  domEl.byEnd.value = filterValues.byEnd || '';
+  domEl.byDescription.value = filterValues.byDescription || '';
+}
+
 async function getFilter() {
-  filter = [];
-  let activeFilterCount = 0;
-  const formData = new FormData(filterForm);
+  const currentState = stateManager.getState();
+  const filters = { ...currentState.searchFilters };
+  const formData = new FormData(domEl.filterForm);
   const filterValues = Object.fromEntries(formData.entries());
   
-  if (filterValues.byCounty) {
-    filter.push("af.gid_1 = '" + filterValues.byCounty + "'");
-    activeFilterCount++;
-    if (typeof county !== 'undefined' && county) {
-      county.eachLayer(function(layer) {
-        if (layer.feature.properties.id === filterValues.byCounty) {
-          map2.fitBounds(layer.getBounds());
-        }
-      });
-    }
-  }
+  // Salva i valori grezzi per il ripristino del form
+  filters.currentFilter = filterValues;
   
-  if (filterValues.byInstitution) { 
-    filter.push("artifact.storage_place = " + filterValues.byInstitution); 
-    activeFilterCount++;
+  // Costruisci filterArr come array di stringhe SQL
+  let filterArr = [];
+  if (filterValues.byCounty) {
+    filterArr.push("af.gid_1 = '" + filterValues.byCounty + "'");
   }
-  if (filterValues.byCategory) { 
-    filter.push("class.id = " + filterValues.byCategory); 
-    activeFilterCount++;
+  if (filterValues.byInstitution) {
+    filterArr.push("artifact.storage_place = " + filterValues.byInstitution);
   }
-  if (filterValues.byMaterial) { 
-    filter.push("material.id = " + filterValues.byMaterial); 
-    activeFilterCount++;
+  if (filterValues.byCategory) {
+    filterArr.push("class.id = " + filterValues.byCategory);
   }
-  if (filterValues.byStart) { 
-    filter.push("artifact.start >= " + filterValues.byStart); 
-    activeFilterCount++;
+  if (filterValues.byMaterial) {
+    filterArr.push("material.id = " + filterValues.byMaterial);
   }
-  if (filterValues.byEnd) { 
-    filter.push("artifact.end <= " + filterValues.byEnd); 
-    activeFilterCount++;
+  if (filterValues.byStart) {
+    filterArr.push("artifact.start >= " + filterValues.byStart);
+  }
+  if (filterValues.byEnd) {
+    filterArr.push("artifact.end <= " + filterValues.byEnd);
   }
   if (filterValues.byDescription) {
-    filter.push("(artifact.description like '%" + filterValues.byDescription + "%' or artifact.name like '%" + filterValues.byDescription + "%')");
-    activeFilterCount++;
-  }  
-  activeFilter = activeFilterCount;
+    filterArr.push("(artifact.description like '%" + filterValues.byDescription + "%' or artifact.name like '%" + filterValues.byDescription + "%')");
+  }
+  
+  // Salva l'array costruito
+  filters.filter = filterArr;
+  
+  // Conta i filtri attivi
+  let activeFilterCount = Object.values(filterValues).filter(val => val.trim() !== '').length;
+  filters.activeFilter = activeFilterCount;
+  
+  stateManager.updateState({ searchFilters: filters });
   if(screen.width < 576 ) {hideStats();}
   checkActiveFilter();
 }
 
-function handleSortChange(ev) {
-  sort = ev.currentTarget.dataset.sort + " ASC";
-  getFilter();
+async function handleSortChange(ev) {
+  domEl.sortByList.forEach(item => item.classList.remove('active'));
+  ev.currentTarget.classList.add('active');
+  const sortBy = ev.currentTarget.dataset.sort;
+  const sortDir = ev.currentTarget.dataset.order;
+  
+  const currentState = stateManager.getState();
+  const updatedFilters = { ...currentState.searchFilters, sortBy, sortDir };
+  stateManager.updateState({ searchFilters: updatedFilters });
+  await showGallery();
 }
 
 function hideStats() {
-  statWrap.classList.add('statWrapHidden');
-  toggleSpan.classList.remove('mdi-chevron-left');
-  toggleSpan.classList.add('mdi-chevron-right');
+  domEl.statWrap.classList.add('statWrapHidden');
+  domEl.toggleSpan.classList.remove('mdi-chevron-left');
+  domEl.toggleSpan.classList.add('mdi-chevron-right');
 }
 
 function showStats() {
-  statWrap.classList.remove('statWrapHidden');
-  toggleSpan.classList.remove('mdi-chevron-right');
-  toggleSpan.classList.add('mdi-chevron-left');
+  domEl.statWrap.classList.remove('statWrapHidden');
+  domEl.toggleSpan.classList.remove('mdi-chevron-right');
+  domEl.toggleSpan.classList.add('mdi-chevron-left');
 }
 
-function handleTabChange(pane) {
+async function handleTabChange(pane) {
   if (pane.target.id === 'viewCollection') {
-    statToggle.style.transform = 'translate(-50px, 0)';
+    if(domEl.statToggle) domEl.statToggle.style.transform = 'translate(-50px, 0)';
     hideStats();
-    toggleFilterBtn.forEach(btn => btn.style.visibility = 'hidden');
-    document.getElementById('sortByBtn').style.visibility = 'hidden';
-    document.getElementById('createFromFiltered').style.visibility = 'hidden';
-    document.getElementById('filterWrap').classList.add('d-none');
+    domEl.toggleFilterBtn.forEach(btn => btn.style.visibility = 'hidden');
+    if(domEl.sortByBtn) domEl.sortByBtn.style.visibility = 'hidden';
+    if(domEl.createFromFilteredBtn) domEl.createFromFilteredBtn.style.visibility = 'hidden';
+    if(domEl.filterWrap) domEl.filterWrap.classList.add('d-none');
+    window.scrollTo(0, 0);
+    await showCollection();
   } else {
-    statToggle.style.transform = 'translate(5px, 0)';
+    if(domEl.statToggle) domEl.statToggle.style.transform = 'translate(5px, 0)';
     showStats();
-    window.scrollTo(0, 350);
-    toggleFilterBtn.forEach(btn => btn.style.visibility = 'visible');
-    document.getElementById('sortByBtn').style.visibility = 'visible';
-     checkActiveFilter();
+    window.scrollTo(0,0);
+    domEl.toggleFilterBtn.forEach(btn => btn.style.visibility = 'visible');
+    if(domEl.sortByBtn) domEl.sortByBtn.style.visibility = 'visible';
+    checkActiveFilter();
   }
+  getCollectStatusBtn(); 
 }
 
 function resetCollection() {
-  removeItemBtn.forEach(btn => btn.style.display = 'none');
-  addItemBtn.forEach(btn => btn.style.display = 'block');
+  if (domEl.removeItemBtn) { domEl.removeItemBtn.forEach(btn => btn.style.display = 'none'); }
+  if (domEl.addItemBtn) { domEl.addItemBtn.forEach(btn => btn.style.display = 'block'); }
+  
+  const currentState = stateManager.getState();
+  const updatedFilters = { ...currentState.searchFilters, activeFilter: 0, currentFilter: {}, filter: [] };
+  stateManager.updateState({ searchFilters: updatedFilters });
+  
   checkActiveFilter();
+  if (domEl.filterForm) domEl.filterForm.reset();
+  showGallery();
 }
 
 function resetGallery() {
-  filter = [];
-  sort = "artifact.id DESC";
-  activeFilter = 0;
-  filterForm.reset();    
+  const currentState = stateManager.getState();
+  const updatedFilters = { 
+    ...currentState.searchFilters, 
+    activeFilter: 0, 
+    currentFilter: {},
+    filter: [],
+    sortBy: "id",
+    sortDir: "DESC"
+  };
+  stateManager.updateState({ searchFilters: updatedFilters });
+  
+  domEl.filterForm.reset();
   if (countyGroup && typeof countyGroup.getBounds === 'function') {
     map2.fitBounds(countyGroup.getBounds());
   } else {
     console.error("countyGroup is not defined or does not have a getBounds method");
   }
-  galleryInstance.reset();
+  if (galleryInstance && typeof galleryInstance.reset === 'function') {
+    galleryInstance.reset();
+  }
   showGallery();
 }
 
@@ -812,30 +953,23 @@ function resizeDOM() {
 }
 
 function toggleFilter() {
-  const filterWrap = document.getElementById('filterWrap');
-  const toggleSpan = document.querySelector('.toggleFilter span');
-  
-  filterWrap.classList.toggle('d-none');
-  filterWrap.classList.toggle('d-block');
-  
-  toggleSpan.classList.toggle('mdi-chevron-down');
-  toggleSpan.classList.toggle('mdi-chevron-up');
+  domEl.filterWrap.classList.toggle('d-none');
+  domEl.filterWrap.classList.toggle('d-block');
+
+  domEl.toggleSpan.classList.toggle('mdi-chevron-down');
+  domEl.toggleSpan.classList.toggle('mdi-chevron-up');
 }
 
 function toggleStats(event) {
-  const toggleSpan = event.currentTarget.querySelector('span');
-  statWrap.classList.toggle('statWrapHidden');
-  
-  toggleSpan.classList.toggle('mdi-chevron-left');
-  toggleSpan.classList.toggle('mdi-chevron-right');
+  domEl.statWrap.classList.toggle('statWrapHidden');
+  domEl.toggleSpan.classList.toggle('mdi-chevron-left');
+  domEl.toggleSpan.classList.toggle('mdi-chevron-right');
 }
 
 async function showGallery() {
   await getFilter();
-  feature = [];
-  currentFilter = filter;
   if (galleryInstance && typeof galleryInstance.reset === 'function') { galleryInstance.reset();}
-  galleryInstance = gallery('index', feature, currentFilter);
+  galleryInstance = gallery(showCollection);
 }
 
 /******************/
@@ -863,8 +997,7 @@ function institutionChart(institutionData) {
       width: '100%',
       height: '300px'
     };
-    var chart = new google.visualization.PieChart(document.getElementById('institution_chart'));
-    
+    var chart = new google.visualization.PieChart(domEl.institutionChart);
     google.visualization.events.addListener(chart, 'select', function() {
       var selection = chart.getSelection();
       
@@ -876,7 +1009,7 @@ function institutionChart(institutionData) {
           var institutionId = getInstitutionIdByName(institutionName);
           
           if (institutionId) {
-            byInstitution.value = institutionId;
+            domEl.byInstitution.value = institutionId;
             showGallery();
           }
         }
@@ -925,7 +1058,7 @@ function cronoChart(cronoData) {
         }
       }
     };
-    var chart = new google.visualization.BarChart(document.getElementById('crono_chart'));
+    var chart = new google.visualization.BarChart(domEl.cronoChart);
 
     google.visualization.events.addListener(chart, 'select', function() {
       var selection = chart.getSelection();
@@ -941,8 +1074,8 @@ function cronoChart(cronoData) {
           var endValue = cronoData[rowIndex][3];
           
           if (startValue && endValue) {
-            byStart.value = startValue;
-            byEnd.value = endValue;
+            domEl.byStart.value = startValue;
+            domEl.byEnd.value = endValue;
             showGallery();
           }
         }
@@ -963,7 +1096,7 @@ function getInstitutionIdByName(name) {
       break;
     }
   }
-  const option = Array.from(byInstitution.options).find(opt => opt.textContent === name);
+  const option = Array.from(domEl.byInstitution.options).find(opt => opt.textContent === name);
   return option ? option.value : null;
 }
 
@@ -993,10 +1126,21 @@ function mapStat(countyData){
     options: { position: 'topleft'},
     onAdd: function (map) {
       let container = L.DomUtil.create('div', 'extentControl leaflet-bar leaflet-control leaflet-touch');
-      btnHome = $("<a/>",{href:'#', title:'max zoom', id:'maxZoomBtn'}).attr({"data-bs-toggle":"tooltip","data-bs-placement":"right"}).appendTo(container)
-      $("<i/>",{class:'mdi mdi-home'}).appendTo(btnHome)
       
-      btnHome.on('click', function (e) {
+      let btnHome = document.createElement('a');
+      btnHome.href = '#';
+      btnHome.title = 'max zoom';
+      btnHome.id = 'maxZoomBtn';
+      btnHome.setAttribute('data-bs-toggle', 'tooltip');
+      btnHome.setAttribute('data-bs-placement', 'right');
+      
+      let icon = document.createElement('i');
+      icon.className = 'mdi mdi-home';
+      btnHome.appendChild(icon);
+
+      container.appendChild(btnHome);
+      
+      btnHome.addEventListener('click', (e) => {
         e.preventDefault()
         e.stopPropagation()
         if(window.location.pathname.includes('artifact_view')){
@@ -1014,22 +1158,33 @@ function mapStat(countyData){
   legend.onAdd = function (map2) {
     let div = L.DomUtil.create('div', 'info legend border rounded')
     let grades = [0, 10, 20, 50, 100, 200, 500, 1000]
-    let labels = [];
+
     for (var i = 0; i < grades.length; i++) {
-      let row = $("<div/>").appendTo(div)
-      let img = $("<img/>",{class:'arrowGroup arrow'+grades[i], src:'img/ico/play.png'}).appendTo(row)
-      $("<i/>").css("background-color",getColorByGroup(grades[i] + 1)).appendTo(row)
-      $("<small/>").text(grades[i] + (grades[i + 1] ? '-' + grades[i + 1] : '+')).appendTo(row)
+      let row = document.createElement('div');
+      div.appendChild(row);
+
+      let img = document.createElement('img');
+      img.className = 'arrowGroup arrow' + grades[i];
+      img.src = 'img/ico/play.png';
+      row.appendChild(img);
+
+      let iEl = document.createElement('i');
+      iEl.style.backgroundColor = getColorByGroup(grades[i] + 1);
+      row.appendChild(iEl);
+
+      let small = document.createElement('small');
+      small.textContent = grades[i] + (grades[i + 1] ? '-' + grades[i + 1] : '+');
+      row.appendChild(small);
     }
     return div;
   };
   legend.addTo(map2);
-  $(".arrowGroup").css('visibility','hidden')
+  document.querySelectorAll('.arrowGroup').forEach(el => el.style.visibility = 'hidden');
   map2.fitBounds(countyGroup.getBounds())
 }
 
 function filterElement(e){
-  byCounty.value = e.target.feature.properties.id
+  domEl.byCounty.value = e.target.feature.properties.id
   map2.fitBounds(e.target.getBounds());
   showGallery();
 };

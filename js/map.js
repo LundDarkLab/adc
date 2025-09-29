@@ -1,4 +1,4 @@
-import { initGallery as gallery } from './gallery.js';
+import { initGallery as gallery } from './modules/gallery.js';
 
 let currentFilter = [];
 let galleryInstance = null;

@@ -12,7 +12,6 @@ class Collection {
     try {
       $sortBy    = $payload['sortBy']    ?? 'artifact.id';
       $sortDir   = $payload['sortDir']   ?? 'ASC';
-      $client    = $payload['client']    ?? 'index';
       $filterArr = $payload['filterArr'] ?? [];
       $page      = $payload['page']      ?? 1;
       $limit     = $payload['limit']     ?? 10;
@@ -23,19 +22,24 @@ class Collection {
       [$filterMaterial, $filterArtifact] = self::buildFilters($filterArr);
       $filter = !empty($filterArtifact) ? " AND " . implode(" AND ", $filterArtifact) : "";
   
-      $galleryFields = self::getGalleryFields($client);
+      $galleryFields = self::getGalleryFields();
       $conditions = self::getQueryConditions($filterMaterial, $filter);
-      $groupBy = self::getQueryGroupBy($client);
+      $groupBy = self::getQueryGroupBy();
   
       $totField = "count(distinct artifact.id) as tot";
-      $pagination = "ORDER BY " . $sortBy . " LIMIT " . $limit . " OFFSET " . $offset . ";";
+      $pagination = "ORDER BY $sortBy $sortDir LIMIT $limit OFFSET $offset";
   
-      $totSql = "SELECT " . $totField . " " . $conditions . ";";
-      $gallerySql = "SELECT " . $galleryFields . " " . $conditions . " ". $groupBy . " " . $pagination;
-  
+      $totSql = "SELECT $totField $conditions ;";
+      $gallerySql = "SELECT $galleryFields $conditions $groupBy $pagination;";
+
       error_log('Total SQL: ' . $totSql);
       error_log('Gallery SQL: ' . $gallerySql);
-  
+
+      if (isset($payload['getAll']) && $payload['getAll'] === true) {
+        $gallerySql = "SELECT $galleryFields $conditions $groupBy ORDER BY $sortBy $sortDir;";
+        error_log('Gallery SQL (no pagination): ' . $gallerySql);
+      }
+
       return ["tot" => $this->conn->simple($totSql), "gallery" => $this->conn->simple($gallerySql)];
     } catch (\Throwable $th) {
       return ['error' => 1, 'message' => $th->getMessage()];
@@ -81,40 +85,23 @@ class Collection {
     return [$filterMaterial, $filterArtifact];
   }
 
-  private static function getGalleryFields(string $client): string {
-    if ($client == 'index') {
-      return "
-        artifact.id,
-        artifact.name,
-        inst.name institution,
-        gadm0.country as nation,
-        COALESCE(gadm1.name_1, '') AS county,
-        COALESCE(artifact.description, 'no description available') AS description,
-        class.id AS category_id,
-        class.value AS category,
-        JSON_OBJECTAGG(material.id, material.value) AS material,
-        artifact.start,
-        artifact.end,
-        obj.object,
-        obj.thumbnail";
-    }
-
-    if ($client == 'map') {
-      return "
-        artifact.id,
-        artifact.name,
-        inst.name institution,
-        gadm0.country as nation,
-        COALESCE(gadm1.name_1, '') AS county,
-        class.value AS category,
-        artifact.start,
-        artifact.end,
-        obj.thumbnail,
-        COALESCE(artifact.description, 'no description available') AS description
-        ";
-    }
-
-    return "*"; // Default fallback
+  private static function getGalleryFields(): string {
+    return "
+      artifact.id,
+      artifact.name,
+      inst.name institution,
+      gadm0.country as nation,
+      COALESCE(gadm1.name_1, '') AS county,
+      COALESCE(artifact.description, 'no description available') AS description,
+      class.id AS category_id,
+      class.value AS category,
+      JSON_OBJECTAGG(material.id, material.value) AS material,
+      artifact.start,
+      artifact.end,
+      obj.object,
+      af.latitude,
+      af.longitude,
+      obj.thumbnail";
   }
 
   private static function getQueryConditions(string $filterMaterial, string $filter): string {
@@ -137,13 +124,8 @@ class Collection {
         " . $filterMaterial . " ) " . $filter;
   }
 
-  private static function getQueryGroupBy(string $client): string {
-    if($client == 'index'){
-      return "GROUP BY artifact.id, artifact.name, gadm0.country, gadm1.name_1, inst.name, class.id, class.value, artifact.start, artifact.end, obj.object, obj.thumbnail";
-    }
-    if($client == 'map'){
-      return "GROUP BY artifact.id, artifact.name, gadm0.country, gadm1.name_1, inst.name, class.id, class.value, artifact.start, artifact.end, obj.object, obj.thumbnail";
-    }
+  private static function getQueryGroupBy(): string {
+    return "GROUP BY artifact.id, artifact.name, gadm0.country, gadm1.name_1, inst.name, class.id, class.value, artifact.start, artifact.end, obj.object, obj.thumbnail";
   }
 }
 ?>

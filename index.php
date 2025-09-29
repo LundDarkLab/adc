@@ -119,7 +119,7 @@
                 </button>          
                 <div class="dropdown" id="changeCollectionDropdown">
                   <button type="button" class="btn btn-light rounded-0 dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                    <span class="mdi mdi-swap-horizontal"></span> change
+                    <span class="mdi mdi-swap-horizontal"></span> collections
                   </button>
                   <ul class="dropdown-menu" id="collectionListDropdown"></ul>
                 </div>

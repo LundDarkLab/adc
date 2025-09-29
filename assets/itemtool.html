@@ -5,7 +5,7 @@
       filters
       <span class="mdi mdi-chevron-down"></span>
     </button>
-    <button class="btn btn-light" type="button" id="createFromFiltered" data-bs-toggle="tooltip" data-bs-title="create a new collection from filtered items">create collection</button>
+    <button class="btn btn-light" type="button" id="createFromFiltered" data-bs-toggle="tooltip" data-bs-title="add filtered items to the active collection or create a new collection">add all items</button>
     <button class="btn bg-light me-1" type="button" id="resetCollection" data-bs-toggle="tooltip" data-bs-title="clear collection">clear collection</button>
   </div>
 
@@ -25,45 +25,47 @@
   <div class="itemToolBlock text-end">
     <div class="dropdown me-3">
       <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown" id="sortByBtn"><span class="mdi mdi-sort-reverse-variant"></span></button>
-      <ul class="dropdown-menu" id="sortBy">
-        <li><a class="dropdown-item sortBy" href="#" data-sort="category">name</a></li>
-        <li><a class="dropdown-item sortBy" href="#" data-sort="material">material</a></li>
-        <li><a class="dropdown-item sortBy" href="#" data-sort="start">chronology</a></li>
-      </ul>
+      <div id="sortBy" class="dropdown-menu">
+        <button class="dropdown-item sortBy" data-sort="id" data-order="asc">oldest first</button>
+        <button class="dropdown-item sortBy" data-sort="id" data-order="desc">newest first</button>
+        <button class="dropdown-item sortBy" data-sort="category" data-order="asc">name</button>
+        <button class="dropdown-item sortBy" data-sort="material" data-order="asc">material</button>
+        <button class="dropdown-item sortBy" data-sort="start" data-order="asc">chronology</button>
+      </div>
     </div>
   </div>
 
   <div id="filterWrap" class="d-none filterSmall">
     <form id="filterForm">
       <div class="d-block mb-1">
-        <select class="form-select form-select-sm buildGallery" name="byCounty">
+        <select class="form-select form-select-sm buildGallery" id="byCounty" name="byCounty">
           <option selected value="" disabled>County</option>
         </select>
       </div>
       <div class="d-block mb-1">
-        <select class="form-select form-select-sm buildGallery" name="byInstitution">
+        <select class="form-select form-select-sm buildGallery" id="byInstitution" name="byInstitution">
           <option selected value="" disabled>Institution</option>
         </select>
       </div>
       <div class="d-block mb-1">
-        <select class="form-select form-select-sm buildGallery" name="byCategory">
+        <select class="form-select form-select-sm buildGallery" id="byCategory" name="byCategory">
           <option selected value="" disabled>category</option>
         </select>
       </div>
       <div class="d-block mb-1">
-        <select class="form-select form-select-sm buildGallery" name="byMaterial">
+        <select class="form-select form-select-sm buildGallery" id="byMaterial" name="byMaterial">
           <option selected value="" disabled>material</option>
         </select>
       </div>
       <div class="d-block mb-1">
-        <input type="number" name="byStart" class="form-control form-select-sm" placeholder="from year" value="">
+        <input type="number" id="byStart" name="byStart" class="form-control form-select-sm" placeholder="from year" value="">
       </div>
       <div class="d-block mb-1">
-        <input type="number" name="byEnd" class="form-control form-select-sm" placeholder="to year" value="">
+        <input type="number" id="byEnd" name="byEnd" class="form-control form-select-sm" placeholder="to year" value="">
       </div>
       
       <div class="d-block mb-2">
-        <input type="search" name="byDescription" class="form-control form-select-sm" value="" placeholder="description">
+        <input type="search" id="byDescription" name="byDescription" class="form-control form-select-sm" value="" placeholder="description">
       </div>
       <div class="d-block ">
         <button class="btn btn-light btn-sm d-inline-block" type="submit" id="search" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-container="body" data-bs-title="search artifacts"><span class="mdi mdi-magnify"> search</span></button>
