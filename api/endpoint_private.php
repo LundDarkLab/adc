@@ -12,6 +12,7 @@ $availableClasses = [
   'Vocabulary' => Adc\Vocabulary::class,
   'Collection' => Adc\Collection::class,
   'User' => Adc\User::class,
+  'Geom' => Adc\Geom::class,
 ];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

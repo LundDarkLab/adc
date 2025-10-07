@@ -21,6 +21,11 @@ export async function collection(){
       author: '',
       title: 'My Collection',
       description: '',
+      color: { // used for UI theming and map cluster color
+        primary: '',     // primary color (e.g., for buttons)
+        gradientStart: '',   // light gradient color
+        gradientEnd: ''      // dark gradient color
+      }
     },
     items:[]
   };
@@ -41,6 +46,20 @@ export async function collection(){
     thumbnail: ''
   };
 
+  function generateCollectionColor() {
+    const hue = Math.floor(Math.random() * 360);
+    const saturation = 70;
+    const lightnessPrimary = 50;
+    const lightnessStart = 60;
+    const lightnessEnd = 35;
+    
+    return {
+      primary: `hsl(${hue}, ${saturation}%, ${lightnessPrimary}%)`,
+      gradientStart: `hsla(${hue}, ${saturation}%, ${lightnessStart}%, 0.6)`,
+      gradientEnd: `hsla(${hue}, ${saturation}%, ${lightnessEnd}%, 0.9)`
+    };
+  }
+
   function getCollectionList() {
     // Lettura: ottiene una copia snapshot dello stato centrale
     const currentState = stateManager.getState();
@@ -55,7 +74,7 @@ export async function collection(){
     return list;
   }
 
-  async function setActiveCollection(key){
+ async function setActiveCollection(key){
     // Lettura: ottiene una copia snapshot dello stato centrale
     const currentState = stateManager.getState();
     if (!key || !currentState.collections[key]){
@@ -105,6 +124,7 @@ export async function collection(){
     const collection = structuredClone(COLLECTIONTEMPLATE);
     if (metadata && typeof metadata === 'object') {
       collection.metadata = { ...collection.metadata, ...metadata };
+      collection.metadata.color = generateCollectionColor();
     }
     // Modifica: aggiorna prima currentState, poi passa a updateState
     const newCollections = { ...currentState.collections, [key]: collection };
@@ -143,6 +163,7 @@ export async function collection(){
     setCounter(key);
     const collectionEl = document.getElementById('wrapCollection');
     if (collectionEl) { collectionEl.innerHTML = ''; }
+    document.dispatchEvent(new CustomEvent('collectionUpdated'));
     bsAlert('Collection cleared!', 'success');
     return true;
   }
@@ -153,6 +174,7 @@ export async function collection(){
     if (all) {
       stateManager.resetAll();
       setCounter(null);
+      document.dispatchEvent(new CustomEvent('collectionUpdated'));
       bsAlert('All collections deleted!', 'success');
       return true;
     }
@@ -220,6 +242,7 @@ export async function collection(){
         collectStatus: newCollectStatus
       });
       setCounter(key);
+      document.dispatchEvent(new CustomEvent('collectionUpdated'));
       bsAlert('Item added to collection!', 'success');
       getCollectStatusBtn();
       return true;
@@ -266,6 +289,7 @@ export async function collection(){
     setCounter(key);
     if (newCollections[key].items.length < initialLength) {
       getCollectStatusBtn();
+      document.dispatchEvent(new CustomEvent('collectionUpdated'));
       bsAlert('Item removed from collection!', 'success');
       return true;
     } else {
@@ -476,5 +500,6 @@ export async function collection(){
     isTitleDuplicate,
     exportCollection,
     importCollection,
+    generateCollectionColor
   };
 }

@@ -23,7 +23,7 @@ export async function collectionState(){
       try {
         localStorage.setItem(COLLECTION_STATE, JSON.stringify(state));
       } catch (e) {
-        console.error('❌ Error syncing to localStorage (quota exceeded?):', e);
+        console.error('Error syncing to localStorage (quota exceeded?):', e);
       }
     }
     

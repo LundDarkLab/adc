@@ -9,11 +9,14 @@ class Geom extends Conn{
 
   function __construct(){}
 
-  public function getAvailableLevels(): array {
-    $levels = [0,1,2,3,4,5];
+  public function getAvailableLevels(array $payload): array {
+    // $levels = [0,1,2,3,4,5];
     $availableLevels = [];
-    
-    foreach ($levels as $level) {
+    error_log("Payload received: " . print_r($payload, true));
+    if (!isset($payload['levels']) || !is_array($payload['levels'])) {
+      return ['success' => false, 'message' => 'Invalid levels parameter'];
+    }
+    foreach ($payload['levels'] as $level) {
       // Query per contare le features distinte
       $sql = "SELECT COUNT(DISTINCT af.gid_$level) as tot FROM artifact_findplace af INNER JOIN artifact a ON af.artifact = a.id and a.status = 2 AND af.gid_$level IS NOT NULL;";
 
@@ -68,11 +71,18 @@ class Geom extends Conn{
     return ["query"=>$sql,"items"=>$this->simple($sql)];
   }
 
-  public function getBoundaries(int $level, ?string $filter): array {
+  public function getBoundaries(array $payload): array {
+    $start = microtime(true);
     try {
+      $level = $payload['level'] ?? 0;
+      $filter = $payload['filter'] ?? null;
+
+      $tolerances = [0 => 3000, 1 => 100, 2 => 80, 3 => 60, 4 => 40, 5 => 20];
+      $tolerance = $tolerances[$level] ?? 20;
+
       $fields = "g.gid_$level as gid";
       $fields .= $level == 0 ? ", g.country as name" : ", g.name_$level as name";
-      $geom = "st_asgeojson(g.SHAPE) as geom";
+      $geom = "ST_AsGeoJSON(ST_Transform(ST_Simplify(ST_Transform(g.SHAPE, 3857), $tolerance), 4326)) as geom";
 
       $subquery = "SELECT af.gid_$level FROM artifact_findplace af INNER JOIN artifact a ON af.artifact = a.id and a.status = 2 GROUP BY af.gid_$level";
 
@@ -81,25 +91,30 @@ class Geom extends Conn{
       }
 
       $sql = "SELECT $fields, $geom FROM ( $subquery ) artifact INNER JOIN gadm$level g ON g.gid_$level = artifact.gid_$level;";
-      
+      $result = $this->simple($sql);
+      $end = microtime(true);
+      error_log("level: $level, tolerance: $tolerance");
+      error_log("getBoundaries query time: " . ($end - $start) . " seconds for level " . $level);
+      return ["query"=>$sql,"items"=>$result];
+    } catch (\Throwable $th) {
+      return ["error" => "API Error: " . $th->getMessage(), "sql" => $sql];
+    }
+  }
+
+  public function getInstitutionPoint(array $payload): array {
+    try {
+      $id = $payload['id'] ?? null;
+      $filter = $id === null ? '' : "and i.id = $id";
+      $sql = "SELECT i.id, i.name, i.abbreviation, i.lat, i.lon, i.logo, count(a.id) AS count FROM institution i INNER JOIN artifact a ON a.storage_place = i.id where a.status = 2 $filter GROUP BY i.id, i.name, i.abbreviation, i.lat, i.lon, i.logo ORDER BY i.name ASC;";
       return ["query"=>$sql,"items"=>$this->simple($sql)];
     } catch (\Throwable $th) {
       return ["error" => "API Error: " . $th->getMessage(), "sql" => $sql];
     }
   }
 
-  public function getInstitutionPoint(?int $id): array {
+  public function getFindPlacePoint(array $payload): array {
     try {
-      $where = $id === null ? '' : "WHERE id = $id";
-      $sql = "SELECT id, name, abbreviation, lat,lon, logo FROM institution $where order by name asc;";
-      return ["query"=>$sql,"items"=>$this->simple($sql)];
-    } catch (\Throwable $th) {
-      return ["error" => "API Error: " . $th->getMessage(), "sql" => $sql];
-    }
-  }
-
-  public function getFindPlacePoint(?int $id): array {
-    try {
+      $id = $payload['id'] ?? null;
       $payload = [
         'table' => 'artifact_findplace af',
         'columns' => ['a.id', 'a.name', 'class.value AS category', 'i.name as institution', 'a.description', 'a.start', 'a.end', 'af.latitude', 'af.longitude', "COALESCE(gadm0.country, '') AS nation", "COALESCE(gadm1.name_1, '') AS county", 'm.thumbnail'],

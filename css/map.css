@@ -30,19 +30,26 @@
   color:#fff;
 }
 
-#layerSwitcher{
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  width: 160px;
-  padding: 0;
+#collectionDiv,#layerSwitcher{
+  position: absolute; 
+  top: 10px; 
   z-index: 1000;
+}
+#collectionDiv{
+  left: 50%; 
+  transform: translateX(-50%); 
+}
+#layerSwitcher{
+  right: 20px;
+  /* width: 170px; */
+  padding: 0;
   transition: all 0.3s ease-in-out;
 }
-#layerSwitcher h5{
-  font-size: 1rem;
+#layerSwitcherContent p{
+  font-weight: bold;
+  border-bottom: 1px solid #ddd;
 }
-#layerSwitcherToggle button{font-size: 1.3rem;}
+/* #layerSwitcherToggle button{font-size: 1.3rem;} */
 #layerSwitcherToggle button:active{border-color:transparent;}
 #layerSwitcherContent{padding:15px;}
 #mapGuide{
@@ -68,9 +75,47 @@
   overflow-y: auto;
 }
 
-.leaflet-popup-content{margin:30px 0px 0px 0px;}
+.leaflet-popup-content{margin:0px;}
 .popUpCard{ width:250px; border:0;}
 .popUpCard .card-header{border:0; border-radius:0px;}
+
+
+#institutions-checkBox:checked {
+  accent-color: rgb(135,94,42);
+  background-color: rgb(135,94,42);
+  border-color: rgb(135,94,42);
+}
+
+#findplace-checkBox:checked {
+  accent-color: green;
+  background-color: green;
+  border-color: green;
+}
+
+#institutions-checkBox:hover {accent-color: rgb(78, 55, 25);}
+#findplace-checkBox:hover {accent-color: darkgreen;}
+
+#mapGalleryWrap.show{left:0;}
+#mapGalleryTitle{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom:1rem;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: .5rem;
+}
+.collection-control{
+  position: absolute; 
+  top: 20px; 
+  left: 50%; 
+  transform: translateX(-50%); 
+  z-index: 1000;
+  background: white; 
+  padding: 8px 12px; 
+  border-radius: 4px; 
+  box-shadow: 0 1px 5px rgba(0,0,0,0.65); 
+}
 /* Media queries per controllo più granulare */
 @media (max-width: 576px) {
 

@@ -23,6 +23,8 @@ export function initGallery(onShowCollection = async () => {}) {
     allLoaded: false,
     items: [],
   };
+  console.log('Initialized gallery state:', galleryState);
+  
 
   let observer = null;
 
