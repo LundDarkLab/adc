@@ -42,7 +42,7 @@ class Institution extends Conn{
   }
 
   public function getInstitution(int $id){
-    $sql="select i.is_storage_place, i.color, i.category catid, cat.value category, i.name, i.abbreviation, i.city, i.address, i.lat, i.lon, i.url, i.logo, i.uuid FROM institution i INNER JOIN list_institution_category cat ON i.category = cat.id where i.id = ".$id.";";
+    $sql="select i.id, i.is_storage_place, i.color, i.category catid, cat.value category, i.name, i.abbreviation, i.city, i.address, i.lat, i.lon, i.url, i.logo, i.uuid FROM institution i INNER JOIN list_institution_category cat ON i.category = cat.id where i.id = ".$id.";";
     return $this->simple($sql)[0];
   }
 

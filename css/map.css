@@ -41,7 +41,6 @@
 }
 #layerSwitcher{
   right: 20px;
-  /* width: 170px; */
   padding: 0;
   transition: all 0.3s ease-in-out;
 }
@@ -49,7 +48,6 @@
   font-weight: bold;
   border-bottom: 1px solid #ddd;
 }
-/* #layerSwitcherToggle button{font-size: 1.3rem;} */
 #layerSwitcherToggle button:active{border-color:transparent;}
 #layerSwitcherContent{padding:15px;}
 #mapGuide{

@@ -85,12 +85,19 @@ class Geom extends Conn{
       $geom = "ST_AsGeoJSON(ST_Transform(ST_Simplify(ST_Transform(g.SHAPE, 3857), $tolerance), 4326)) as geom";
 
       $subquery = "SELECT af.gid_$level FROM artifact_findplace af INNER JOIN artifact a ON af.artifact = a.id and a.status = 2 GROUP BY af.gid_$level";
-
+      $where = "";
       if (!empty($filter)) {
-        $where .= $level == 0 ? " and g.country = '$filter'" : " and g.gid_$level = '$filter'";
+        $where = " WHERE ";
+        if(is_array($filter)){
+          $where .= implode(" AND ", $filter);
+        } else {
+          $where .= " $filter ";
+        }
       }
 
-      $sql = "SELECT $fields, $geom FROM ( $subquery ) artifact INNER JOIN gadm$level g ON g.gid_$level = artifact.gid_$level;";
+      $sql = "SELECT $fields, $geom FROM ( $subquery ) artifact INNER JOIN gadm$level g ON g.gid_$level = artifact.gid_$level $where;";
+      error_log("SQL: $sql");
+      error_log("filter: $filter");
       $result = $this->simple($sql);
       $end = microtime(true);
       error_log("level: $level, tolerance: $tolerance");

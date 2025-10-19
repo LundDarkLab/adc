@@ -1,6 +1,6 @@
 const L = window.L;
 import mapsConfig from "../helpers/mapsConfig.js";
-import { betterScale, mousePosition, myToolBar, layerControl } from "../components/mapsComponent.js";
+import { betterScale, mousePosition, myToolBar } from "../components/mapsComponent.js";
 import { fetchFindPlace, addFindPlaceMarkers, fetchInstitution, addInstitutionMarkers,fetchCollection, addCollectionMarkers, getAvailableLevels, zoomEvent} from "../helpers/mapHelper.js";
 
 const mapElementTemplate = {
@@ -113,7 +113,6 @@ export async function addLayers(mapElement, options={}) {
 }
 
 const refreshQueues = new WeakMap();
-
 export function refreshClusters(mapElement, options = {}) {
   if (!mapElement) return Promise.resolve();
 

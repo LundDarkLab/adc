@@ -7,6 +7,7 @@ error_log("POST data: " . print_r($_POST, true));
 require 'vendor/autoload.php';
 
 $availableClasses = [
+  'Artifact' => Adc\Artifact::class,
   'Get' => Adc\Get::class,
   'Timeline' => Adc\Timeline::class,
   'Vocabulary' => Adc\Vocabulary::class,

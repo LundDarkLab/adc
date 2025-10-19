@@ -3,7 +3,6 @@ import { collectionState } from "../modules/collectionStorage.js";
 import mapsConfig from "./mapsConfig.js";
 import { showLoading } from "../helpers/helper.js";
 import { collection } from "../modules/collection.js";
-import { layerControl, collectionControl } from "../components/mapsComponent.js";
 
 const stateManager = await collectionState();
 const coll = await collection();
@@ -229,6 +228,19 @@ export function toggleLayer(map, layer, checked){
   checked ? map.addLayer(layer) : map.removeLayer(layer);
 }
 
+export function toggleBaseLayer(event,map){
+  const selectedValue = event.currentTarget.value;
+  const selectedLayer = map.layerControl.baseLayers[selectedValue];
+  if(selectedLayer){
+    for (const otherLayer of Object.values(map.layerControl.baseLayers)) {
+      if (otherLayer.tile !== selectedLayer.tile) {
+        map.map.removeLayer(otherLayer.tile);
+      }
+    }
+    selectedLayer.tile.addTo(map.map);
+  };
+}
+
 export async function handleAdminLevel(mapElement, level, checked, add = true, onClickCallback = null) {
   if (checked || !add) {
     if (mapElement.adminGroup[level]) {
@@ -241,34 +253,15 @@ export async function handleAdminLevel(mapElement, level, checked, add = true, o
       if (add) showLoading(false);
       
       if (geoData && geoData.data && geoData.data.items) {
-        const features = geoData.data.items.map(item => {
-          if (item.geom) {           
-            const geom = JSON.parse(item.geom);
-            const simplified = turf.simplify(geom, { tolerance: 0.05, highQuality: true });
-            return {
-              type: "Feature",
-              geometry: geom,
-              properties: {
-                feature: 'admin',
-                level: level,
-                gid: item.gid, 
-                name: item.name 
-              }
-            };
-          }
-          return null;
-        }).filter(f => f);
-
         const levelGroup = L.featureGroup();
-        const geoJsonData = { type: "FeatureCollection", features: features };
-        const geoJsonOptions = getGeoJsonOptions(level, onClickCallback);
-        L.geoJSON(geoJsonData, geoJsonOptions).addTo(levelGroup);
-
-        mapElement.adminGroup[level] = { layer: levelGroup, geoJson: features };
-
-        if (add) {
-          toggleLayer(mapElement.map, levelGroup, checked);
-        }        
+        const geoJsonLayer = createGeoJsonLayer(geoData.data.items, { level, onClickCallback });
+        if (geoJsonLayer) {
+          geoJsonLayer.addTo(levelGroup);
+          mapElement.adminGroup[level] = { layer: levelGroup, geoJson: geoJsonLayer };
+          if (add) {
+            toggleLayer(mapElement.map, levelGroup, checked);
+          }        
+        }
       }
     }
   } else {
@@ -278,17 +271,62 @@ export async function handleAdminLevel(mapElement, level, checked, add = true, o
   }
 }
 
+export function createGeoJsonLayer(data, options = {}) {
+  if (!data || !Array.isArray(data)) {
+    console.warn('Dati non validi per createGeoJsonLayer:', data);
+    return null;
+  }
+  const features = data.map(item => {
+    if (item.geom) {
+      const geom = JSON.parse(item.geom);
+      const simplified = options.simplify !== false ? turf.simplify(geom, { tolerance: options.tolerance || 0.05, highQuality: true }) : geom;
+      return {
+        type: "Feature",
+        geometry: simplified,
+        properties: {
+          feature: options.feature || 'admin',
+          level: options.level || 0,
+          gid: item.gid,
+          name: item.name
+        }
+      };
+    }
+    return null;
+  }).filter(f => f);
+
+  if (features.length === 0) return null;
+
+  const geoJsonData = { type: "FeatureCollection", features: features };
+  const geoJsonOptions = getGeoJsonOptions(options.level || 0, options.onClickCallback);
+  if (options.style) {
+    geoJsonOptions.style = { ...geoJsonOptions.style, ...options.style };
+  }
+
+  return L.geoJSON(geoJsonData, geoJsonOptions);
+}
+
 export function calculateMaxBoundsAndZoom(map) {
   let overallBounds = L.latLngBounds();
+  let hasValidBounds = false;
+
   map.eachLayer(function(layer) {
-    if (layer.getBounds) {
-      overallBounds.extend(layer.getBounds());
+    if (layer.getBounds && typeof layer.getBounds === 'function') {
+      try {
+        const bounds = layer.getBounds();
+        if (bounds && bounds.isValid && bounds.isValid()) {
+          overallBounds.extend(bounds);
+          hasValidBounds = true;
+        }
+      } catch (e) {
+        console.warn('Error getting bounds for layer:', e);
+      }
     }
   });
-  if (overallBounds.isValid()) {
+
+  if (hasValidBounds && overallBounds.isValid()) {
     map.fitBounds(overallBounds);
   } else {
-    map.setView(mapsConfig.mapExt,mapsConfig.defaultZoom);
+    map.setView(mapsConfig.mapExt, mapsConfig.defaultZoom);
   }
 }
 

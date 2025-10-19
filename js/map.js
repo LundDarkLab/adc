@@ -3,7 +3,7 @@ import { initMap, addLayers, refreshClusters } from "./modules/initMaps.js";
 import { collectionState } from "./modules/collectionStorage.js";
 import { showLoading } from "./helpers/helper.js";
 import { domEl, layerControl, openGallery, openPopUp, showGalleryForProps,collectionControl} from "./components/mapsComponent.js";
-import { toggleLayer, handleAdminLevel, calculateMaxBoundsAndZoom} from "./helpers/mapHelper.js";
+import { toggleLayer, toggleBaseLayer, handleAdminLevel, calculateMaxBoundsAndZoom} from "./helpers/mapHelper.js";
 
 const turf = window.turf;
 const L = window.L;
@@ -18,7 +18,9 @@ async function initializeMap() {
       try { 
         map.map.off(); 
         map.map.remove(); 
-      } catch (e) { console.warn('Error removing previous map:', e); }
+      } catch (e) { 
+        console.warn('Error removing previous map:', e); 
+      }
       map = null;
     }
     // svuota i contenitori dei controlli (se esistono)
@@ -31,32 +33,32 @@ async function initializeMap() {
 
     const mapElement = await initMap('map');
     const result = await addLayers(mapElement, { 
-    layers: { findplace: true, institutions: true, collections:true, admin: [0,1,2,3,4,5] },
-    onClickCallback: {
-      findplace: openPopUp,
-      institutions: showGalleryForProps,
-      collections: openPopUp,
-      admin: openGallery,
+      layers: { findplace: true, institutions: true, collections:true, admin: [0,1,2,3,4,5] },
+      onClickCallback: {
+        findplace: openPopUp,
+        institutions: showGalleryForProps,
+        collections: openPopUp,
+        admin: openGallery,
+      }
+    });
+    map = result.mapElement;
+    const availableLevels = result.availableLevels;
+    // Ottieni le collection per i controlli
+    const stateManager = await collectionState();
+    const currentState = stateManager.getState();    
+    await Promise.all([
+      calculateMaxBoundsAndZoom(map.map),
+      layerControl(map, { baseLayers: true, poi: ['findplace', 'institutions'], admin: availableLevels }),
+    ]);
+    // Aggiungi il controllo collezione se ci sono collezioni
+    if (Object.values(currentState.collections).length > 0) {
+      collectionControl(currentState.collections, currentState.activeCollectionKey);
     }
-  });
-  map = result.mapElement;
-  const availableLevels = result.availableLevels;
-  // Ottieni le collection per i controlli
-  const stateManager = await collectionState();
-  const currentState = stateManager.getState();    
-  await Promise.all([
-    calculateMaxBoundsAndZoom(map.map),
-    layerControl(map, { baseLayers: true, poi: ['findplace', 'institutions'], admin: availableLevels }),
-  ]);
-  // Aggiungi il controllo collezione se ci sono collezioni
-  if (Object.values(currentState.collections).length > 0) {
-    collectionControl(currentState.collections, currentState.activeCollectionKey);
-  }
-  const controlElements = [domEl.controlDiv, domEl.mapGalleryWrap, domEl.mapInfo, domEl.collectionDiv].filter(el => el);
-  controlElements.forEach(element => {
-    L.DomEvent.disableClickPropagation(element);
-    L.DomEvent.disableScrollPropagation(element);
-  });
+    const controlElements = [domEl.controlDiv, domEl.mapGalleryWrap, domEl.mapInfo, domEl.collectionDiv].filter(el => el);
+    controlElements.forEach(element => {
+      L.DomEvent.disableClickPropagation(element);
+      L.DomEvent.disableScrollPropagation(element);
+    });
     const maxZoomBtn = document.getElementById('maxZoomBtn');
     if (maxZoomBtn) {
       maxZoomBtn.addEventListener('click', (e) => {
@@ -85,17 +87,9 @@ async function initializeMap() {
         await handleAdminLevel(map, level, this.checked, true, result.onClickCallback.admin);
       });
     });
-  
-    document.getElementsByName('baseLayer').forEach(input => {    
-      input.addEventListener('change', function() {
-        if (this.checked) {
-          const selectedLayer = map.layerControl.baseLayers[this.value];
-          for (const otherLayer of Object.values(map.layerControl.baseLayers)) {
-            if (otherLayer.tile !== selectedLayer.tile) { map.map.removeLayer(otherLayer.tile); }
-          }
-          if (selectedLayer) { selectedLayer.tile.addTo(map.map); }
-        }        
-      });
+
+    document.getElementsByName('baseLayer').forEach(input => {
+      input.addEventListener('change', (event) => toggleBaseLayer(event, map));
     });
   
     // Aggiungi event listener per checkbox collection

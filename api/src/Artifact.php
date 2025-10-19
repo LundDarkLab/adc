@@ -121,12 +121,13 @@ class Artifact extends Conn{
     return $this->simple($sql);
   }
 
-  public function getArtifact(int $id){
+  public function getArtifact(array $payload){
+    $id = $payload['id'];
     $artifact = "select * from artifact_view where id = ".$id.";";
     $out['artifact'] = $this->simple($artifact)[0];
     $out['artifact_material_technique'] = $this->getArtifactMaterial($id);
     $out['storage_place'] = $this->institution->getInstitution($out['artifact']['storage_place']);
-    if(count($this->getArtifactMeasure($id))>0){$out['artifact_measure'] = $this->getArtifactMeasure($id);}
+    $out['artifact_measure'] = $this->getArtifactMeasure($id);
     $out['artifact_metadata'] = $this->getArtifactMetadata($id);
     $out['artifact_findplace'] = $this->getArtifactFindplace($id);
     $modelId = $this->getModelId($id);
