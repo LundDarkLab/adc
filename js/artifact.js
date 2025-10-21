@@ -37,22 +37,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   if(domEl.btInstitutionFilter){
-  domEl.btInstitutionFilter.addEventListener('click', (ev) => {
-    const institutionId = ev.currentTarget.dataset.institutionId;
-    stateManager.resetAll();
-    const currentState = stateManager.getState();
-    stateManager.updateState({
-      searchFilters: {
-        ...currentState.searchFilters,
-        currentFilter: {
-          ...currentState.searchFilters.currentFilter,
-          byInstitution: institutionId
+    domEl.btInstitutionFilter.addEventListener('click', (ev) => {
+      const institutionId = ev.currentTarget.dataset.institutionId;
+      stateManager.resetAll();
+      const currentState = stateManager.getState();
+      stateManager.updateState({
+        searchFilters: {
+          ...currentState.searchFilters,
+          currentFilter: {
+            ...currentState.searchFilters.currentFilter,
+            byInstitution: institutionId
+          }
         }
-      }
+      });
+      window.location.href = 'index.php';
     });
-    // Optionally, navigate to the gallery page or trigger a gallery update
-    window.location.href = 'index.php'; // Assuming index.php is the gallery page
-  });
-}
+  }
 });
 

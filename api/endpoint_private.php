@@ -8,12 +8,13 @@ require 'vendor/autoload.php';
 
 $availableClasses = [
   'Artifact' => Adc\Artifact::class,
+  'Collection' => Adc\Collection::class,
+  'File' => Adc\File::class,
+  'Geom' => Adc\Geom::class,
   'Get' => Adc\Get::class,
   'Timeline' => Adc\Timeline::class,
-  'Vocabulary' => Adc\Vocabulary::class,
-  'Collection' => Adc\Collection::class,
   'User' => Adc\User::class,
-  'Geom' => Adc\Geom::class,
+  'Vocabulary' => Adc\Vocabulary::class,
 ];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

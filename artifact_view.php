@@ -1,4 +1,11 @@
-<?php require 'init.php'; ?>
+<?php 
+  require 'init.php';
+  echo $_SERVER['DOCUMENT_ROOT'];
+  echo "<br/>";
+  echo $_SERVER['REQUEST_URI'];
+  echo "<br/>";
+  echo __DIR__;
+?>
 
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
@@ -23,7 +30,7 @@
       <div id="mainContent">
         <div id="artifact">
           <div class="artifact-left">
-            <div id="status" class="alert text-center" role="alert"></div>
+            <div id="status" class="alert text-center p-1" role="alert"></div>
             <div class="accordion accordion-flush accordionArtifact" id="accordionArtifact">
               <?php require('assets/artifact_accordion.html'); ?>
             </div>
@@ -55,7 +62,23 @@
       </div>
     </main>
 
-    <div id="fullScreenImg"></div>
+    <div id="fullScreenImg">
+      <div id="fullScreenContent">
+        <div id="fullScreenHeader" class="bg-light">
+          <button type="button" id="closeFullScreenImage" class="btn-close" aria-label="Close"></button>
+        </div>
+        <div id="fullScreenBody">
+          <img src="" alt="" id="modalImg">
+        </div>
+        <div id="fullScreenFooter">
+          <div class="btn-group me-5" role="group">
+            <button type="button" class="btn btn-sm btn-secondary" disabled="">Image licensed under:</button>
+            <a href="" class="btn btn-sm btn-adc-blue" id="licenseLink" title="view license properties [new tab]" target="_blank"></a>
+          </div>
+          <button type="button" class="btn btn-sm btn-adc-blue" id="downloadImg" style="display: block;"><span class="mdi mdi-download"></span> download</button>
+        </div>
+      </div>
+    </div>
     <?php 
       require("assets/menu.php");
       require("assets/js.html"); 

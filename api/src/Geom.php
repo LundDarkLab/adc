@@ -76,6 +76,7 @@ class Geom extends Conn{
     try {
       $level = $payload['level'] ?? 0;
       $filter = $payload['filter'] ?? null;
+      $status = !isset($payload['status']) ? ' and a.status = 2 ' : '';
 
       $tolerances = [0 => 3000, 1 => 100, 2 => 80, 3 => 60, 4 => 40, 5 => 20];
       $tolerance = $tolerances[$level] ?? 20;
@@ -84,7 +85,7 @@ class Geom extends Conn{
       $fields .= $level == 0 ? ", g.country as name" : ", g.name_$level as name";
       $geom = "ST_AsGeoJSON(ST_Transform(ST_Simplify(ST_Transform(g.SHAPE, 3857), $tolerance), 4326)) as geom";
 
-      $subquery = "SELECT af.gid_$level FROM artifact_findplace af INNER JOIN artifact a ON af.artifact = a.id and a.status = 2 GROUP BY af.gid_$level";
+      $subquery = "SELECT af.gid_$level FROM artifact_findplace af INNER JOIN artifact a ON af.artifact = a.id $status GROUP BY af.gid_$level";
       $where = "";
       if (!empty($filter)) {
         $where = " WHERE ";

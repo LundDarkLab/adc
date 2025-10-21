@@ -35,3 +35,15 @@ export function generateUUID() {
 }
 
 export function cutString(str, len) { return str.length > len ? str.slice(0, len) + '…' : str; }
+
+export const groupBy = (keys, separator = '-') => array => {
+  if (!Array.isArray(keys) || !Array.isArray(array)) {
+    throw new Error('Invalid input: keys and array must be arrays');
+  }
+  return array.reduce((objectsByKeyValue, obj) => {
+    if (obj == null) return objectsByKeyValue; // Salta oggetti null/undefined
+    const value = keys.map(key => obj[key] ?? '').join(separator); // Usa '' per valori mancanti
+    objectsByKeyValue[value] = (objectsByKeyValue[value] || []).concat(obj);
+    return objectsByKeyValue;
+  }, {});
+};

@@ -83,6 +83,11 @@ export function bsConfirm(message/*, onConfirm, onCancel = null*/) {
 export function bsTooltips(selector = '[data-bs-toggle="tooltip"]') {
   const tooltipTriggerList = [].slice.call(document.querySelectorAll(selector));
   tooltipTriggerList.forEach(function (tooltipTriggerEl) {
-    new bootstrap.Tooltip(tooltipTriggerEl, {trigger:'focus', html: true });
+    new bootstrap.Tooltip(tooltipTriggerEl, {
+      trigger: 'hover focus',
+      html: true,
+      container: 'body',
+      zIndex: 9999
+    });
   });
 }

@@ -1,6 +1,9 @@
 import { initMap } from "../modules/initMaps.js";
 import { layerControl } from "./mapsComponent.js";
-import { toggleBaseLayer,fetchAdminBoundaries,createGeoJsonLayer, calculateMaxBoundsAndZoom } from "../helpers/mapHelper.js";  
+import { toggleBaseLayer,fetchAdminBoundaries,createGeoJsonLayer, calculateMaxBoundsAndZoom } from "../helpers/mapHelper.js";
+import { groupBy } from "../helpers/utils.js";
+import { fullImage, deleteMedia } from "../helpers/artifactHelper.js";
+import { confirmAction } from "../helpers/helper.js";
 
 const L = window.L;
 
@@ -164,10 +167,13 @@ export async function artifactMap(data) {
         break;
       }
     }
+    console.log(`bounds: ${selectedBound}, level: ${selectedLevel}`);
+
     if (selectedBound && selectedLevel !== null) {
       try {
-        const adminData = await fetchAdminBoundaries(selectedLevel, `g.gid_${selectedLevel} = '${selectedBound}'`);
+        const adminData = await fetchAdminBoundaries(selectedLevel, `g.gid_${selectedLevel} = '${selectedBound}'`, true);
         if (adminData && adminData.data && adminData.data.items) {
+          console.log(`Admin boundaries fetched for level ${selectedLevel}:`, adminData.data.items);
           const adminLayer = createGeoJsonLayer(adminData.data.items, {
             level: selectedLevel,
             style: { color: 'red', weight: 2, fillOpacity: 0.1 },
@@ -200,7 +206,23 @@ export async function artifactMap(data) {
 
     mapElement.map.whenReady(() => {
       setTimeout(() => {
-        calculateMaxBoundsAndZoom(mapElement.map);
+        // Enhanced safety checks
+        const hasLayers = Object.keys(mapElement.map._layers).length > 0;
+        const hasValidBounds = mapElement.map.getBounds && mapElement.map.getBounds().isValid();
+        const hasValidCenter = mapElement.map.getCenter && mapElement.map.getCenter() && !isNaN(mapElement.map.getCenter().lat) && !isNaN(mapElement.map.getCenter().lng);
+        
+        if (hasLayers || hasValidBounds) {
+          try {
+            calculateMaxBoundsAndZoom(mapElement.map);
+          } catch (error) {
+            console.warn('Error in calculateMaxBoundsAndZoom:', error);
+            // Fallback: set a default view
+            mapElement.map.setView([0, 0], 2);
+          }
+        } else if (!hasValidCenter) {
+          // Ensure a valid center if no layers/bounds
+          mapElement.map.setView([0, 0], 2);
+        }
       }, 500);
     });
 
@@ -208,7 +230,21 @@ export async function artifactMap(data) {
     if (maxZoomBtn) {
       maxZoomBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        calculateMaxBoundsAndZoom(mapElement.map);
+        // Enhanced safety checks for button click
+        const hasLayers = Object.keys(mapElement.map._layers).length > 0;
+        const hasValidBounds = mapElement.map.getBounds && mapElement.map.getBounds().isValid();
+        const hasValidCenter = mapElement.map.getCenter && mapElement.map.getCenter() && !isNaN(mapElement.map.getCenter().lat) && !isNaN(mapElement.map.getCenter().lng);
+        
+        if (hasLayers || hasValidBounds) {
+          try {
+            calculateMaxBoundsAndZoom(mapElement.map);
+          } catch (error) {
+            console.warn('Error in calculateMaxBoundsAndZoom:', error);
+            mapElement.map.setView([0, 0], 2);
+          }
+        } else if (!hasValidCenter) {
+          mapElement.map.setView([0, 0], 2);
+        }
       });
     }
 
@@ -222,4 +258,126 @@ function isValidValue(value) {
   if (value === null || value === undefined) return false;
   const strValue = value.toString().toLowerCase().trim();
   return strValue !== '' && strValue !== 'not defined';
+}
+
+export function createMediaTab(mediaItems){
+  const usr = document.getElementById('activeUsr').value;  
+  const mediaTabContent = document.getElementById('media');
+
+  const navTabs = document.createElement('ul');
+  navTabs.classList.add('nav','nav-tabs','mb-3');
+  navTabs.id = 'mediaTab';
+  navTabs.role = 'tablist';
+
+  const navPanes = document.createElement('div');
+  navPanes.classList.add('tab-content');
+  navPanes.id = 'mediaTabContent';
+  mediaTabContent.append(navTabs, navPanes);
+
+  const groupMedia = groupBy(['type'])(mediaItems);
+  Object.keys(groupMedia).forEach((key, index) => {
+    if (!key.trim()) return;
+    let active = index === 0 ? 'active' : '';
+    let show = index === 0 ? 'show' : '';
+    
+    const li = document.createElement('li');
+    li.classList.add('nav-item');
+    li.role = 'presentation';
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.classList.add('nav-link');
+    if (active) button.classList.add('active');
+    button.role = 'tab';
+    button.id = `${key}Tab`;
+    button.dataset.bsTarget = `#${key}Pane`;
+    button.dataset.bsToggle = 'tab';
+    button.ariaControls = `${key}Pane`;
+    button.ariaSelected = index == 0 ? 'true' : 'false';
+    button.textContent = key;
+    li.appendChild(button);
+    navTabs.appendChild(li);
+
+    const tabPane = document.createElement('div');
+    tabPane.classList.add('fade', 'tab-pane');
+    if (show) tabPane.classList.add('show');
+    if (active) tabPane.classList.add('active');
+    tabPane.id = `${key}Pane`;
+    tabPane.role = 'tabpanel';
+    tabPane.ariaLabelledby = `${key}Tab`;
+    navPanes.appendChild(tabPane);
+
+    if(key.toLowerCase() === 'image'){
+      const imgWrap = document.createElement('div');
+      imgWrap.id = 'imgDiv';
+      tabPane.appendChild(imgWrap);
+      groupMedia[key].forEach(item => {
+        console.log(item);
+        const imgCard = document.createElement('div');
+        imgCard.classList.add('imgCard', 'bg-white', 'rounded', 'border', 'p-2', 'mb-3');
+        imgWrap.appendChild(imgCard);
+
+        const imgElement = document.createElement('div');
+        imgElement.classList.add('imgCard-img');
+        imgElement.style.backgroundImage = `url("../../archive/image/${item.path}")`;
+
+        const textElement = document.createElement('div');
+        textElement.classList.add('imgCard-text');
+        textElement.textContent = item.text || 'No description available';
+
+        const btnElement = document.createElement('div');
+        btnElement.classList.add('imgCard-btn');
+        const btnFullImage = document.createElement('button');
+        btnFullImage.classList.add('btn', 'btn-sm', 'btn-adc-blue', 'me-1');
+        btnFullImage.innerHTML = '<span class="mdi mdi-magnify-expand"></span>';
+        btnFullImage.title = 'View Full Image';
+        btnFullImage.onclick = () => {  fullImage(item); };
+        btnElement.appendChild(btnFullImage);
+
+        if (isNaN(usr)) {
+          const editBtn = document.createElement('button');
+          editBtn.type = 'button';
+          editBtn.className = 'btn btn-sm btn-adc-blue me-1';
+          editBtn.innerHTML = '<span class="mdi mdi-file-document-edit"></span>';
+          editBtn.title = 'Edit Image Metadata';
+          editBtn.addEventListener('click', function() { imageMetadataEdit(item); });
+          btnElement.appendChild(editBtn);
+
+          const deleteBtn = document.createElement('button');
+          deleteBtn.type = 'button';
+          deleteBtn.className = 'btn btn-sm btn-danger';
+          deleteBtn.innerHTML = '<span class="mdi mdi-delete-forever"></span>';
+          deleteBtn.title = 'Delete Image';
+          deleteBtn.addEventListener('click', () => {
+            const deleteAlert = 'Are you sure you want to delete the image? If you confirm the image will be permanently deleted from the server and it will not be possible to restore it';
+            confirmAction(deleteAlert, ()=>{
+              const res = deleteMedia(item.file, item.path || null);
+              if(res){imgCard.remove();}
+            })
+          });
+          btnElement.appendChild(deleteBtn);
+        }
+
+        imgCard.append(imgElement, textElement, btnElement);
+      });
+    }
+
+    if(key.toLowerCase() === 'document'){
+      const docWrap = document.createElement('div');
+      docWrap.id = 'docDiv';
+      tabPane.appendChild(docWrap);
+      groupMedia[key].forEach(item => {
+        console.log(item);
+        
+      });
+    }
+
+    if(key.toLowerCase() === 'video'){
+      const videoWrap = document.createElement('div');
+      videoWrap.id = 'videoDiv';
+      tabPane.appendChild(videoWrap);
+      groupMedia[key].forEach(item => {
+        console.log(item);
+      });
+    }
+  });
 }

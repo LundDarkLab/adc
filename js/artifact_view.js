@@ -171,7 +171,9 @@ $.ajax(ajaxSettings).done(function(data) {
       let show = idx == 0 ? 'show' : '';
       let elTab = $("<li/>", {class:'nav-item', role:'presentation'}).appendTo(navTabs)
       $("<button/>",{class:'nav-link '+active, id: element[0]+'Tab', type:'button', role:'tab'}).attr({"data-bs-toggle":'tab', "data-bs-target":'#'+element[0]+'Pane'}).text(element[0]).appendTo(elTab)
+      
       let panes = $("<div/>", {class:'bg-light p-3 tab-pane fade '+show+' '+active, id: element[0]+'Pane', role:'tabpanel'}).appendTo(navPanes)
+      
       if(element[0] == 'image'){
         let imgDiv = $("<div/>",{id:'imgDiv'}).appendTo('#imagePane')
         element[1].forEach(img => {

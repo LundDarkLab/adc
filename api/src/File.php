@@ -31,6 +31,7 @@ class File extends Conn{
 
   public function __construct() {
     $this->uuid = Uuid::uuid4();
+    
     $currentDir = __DIR__;
     if (strpos($currentDir, 'prototype_dev') !== false) {
       $rootFolder = 'prototype_dev';
@@ -144,8 +145,10 @@ class File extends Conn{
     try {
       if(isset($dati['file'])){
         $file = $this->imageDir.$dati['file'];
-        if (!file_exists($file)){ throw new \Exception("Error: file $file does not exist", 1); }
-        if(!unlink($file)){ throw new \Exception("Error: file $file has not been deleted", 1); }
+        // if (!file_exists($file){ throw new \Exception("Error: file $file does not exist", 1); }
+        // if(!unlink($file){ throw new \Exception("Error: file $file has not been deleted", 1); }
+        $res = $this->deleteFile($file);
+        if($res['error'] === 1){ throw new \Exception($res['output'], 1); }
       }
       $sql = "delete from files where id = :id;";
       $this->prepared($sql,["id"=>$dati['id']]);
@@ -157,6 +160,10 @@ class File extends Conn{
 
   public function deleteFile(string $path){
     try {
+      if (!file_exists($path)){ 
+        error_log("File does not exist: " . $path);
+        return ["error"=> 0, "output"=>'File does not exist, skipping deletion.'];
+      }
       if(!unlink($path)){ 
         error_log("Failed to delete file:" . $path . " Error: " . print_r(error_get_last(), true));
         throw new \Exception("Error: file has not been deleted", 1); 

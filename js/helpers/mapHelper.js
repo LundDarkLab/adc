@@ -209,9 +209,10 @@ export async function getAvailableLevels(levels) {
   }
 }
 
-export async function fetchAdminBoundaries(level, filter = '') {
+export async function fetchAdminBoundaries(level, filter = '', status = false) {
   try {
     const body = { class: 'Geom', action: 'getBoundaries', level: level, filter: filter };
+    if(status){body.status = status;}
     const result = await fetchApi({ url: ENDPOINT, body });
     return result;
   } catch (error) {
