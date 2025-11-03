@@ -236,6 +236,23 @@ export function initAnnotations( presenter, viewerState, viewerEl, viewerAnnotat
     }
     
     setViewerState(viewerAnnotations.views[viewName].state);
+
+      // Ripristina eventuali measurements salvati
+    if(viewerAnnotations.views[viewName].state.activeMeasurement) {
+      const measurement = viewerAnnotations.views[viewName].state.activeMeasurement;
+      switch(measurement.type) {
+        case 'distance':
+          measureTool.restoreDistance(measurement.p0, measurement.p1, measurement.value);
+          break;
+        case 'pick':
+          measureTool.restorePickpoint(measurement.p0);
+          break;
+        case 'angle':
+          measureTool.restoreAngle(measurement.p0, measurement.p1, measurement.p2, measurement.value);
+          break;
+      }
+    }
+
     // Rimuovi la classe active al primo drag della trackball
     const canvas = viewerEl.canvas;
     let startX, startY;

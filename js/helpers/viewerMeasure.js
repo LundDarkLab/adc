@@ -114,19 +114,23 @@ export function measureTool(presenter, viewerState, viewerEl, measure_unit) {
 
   function displayDistance(){
     const pointsBuffer = [];
-    for(let ii=0; ii<distanceStage; ii++){
-      pointsBuffer.push(distancePoints[ii]);
-    }
+    for(let ii=0; ii<distanceStage; ii++){ pointsBuffer.push(distancePoints[ii]); }
     const angleP = presenter.createEntity("distanceP", "points", pointsBuffer);
     angleP.color = [0.5, 1.0, 0.5, 1.0];
     angleP.pointSize = 10;
     angleP.useSeethrough = true;
 
     if(distanceStage == 2){
-      var distance = SglVec3.length(SglVec3.sub(distancePoints[0], distancePoints[1]));
-      var thickness = Math.min((measure_unit == "mm")? 0.25 : 0.25/1000.0, distance/20.0);
-      var triBuffer = tube(distancePoints[0], distancePoints[1], thickness);
-      var distanceBar = presenter.createEntity("distanceL", "triangleStrip", triBuffer);
+      const distance = SglVec3.length(SglVec3.sub(distancePoints[0], distancePoints[1]));
+
+      // Spessore basato sulla scena con limiti min/max
+      const sceneSize = 1.0 / presenter.sceneRadiusInv;
+      const minThickness = sceneSize * 0.001;  // 0.2% della scena
+      const maxThickness = sceneSize * 0.005;   // 1% della scena
+      const thickness = Math.max(minThickness, Math.min(maxThickness, distance/30.0));
+      
+      const triBuffer = tube(distancePoints[0], distancePoints[1], thickness);
+      const distanceBar = presenter.createEntity("distanceL", "triangleStrip", triBuffer);
       distanceBar.color = [0.5, 1.0, 0.5, 1.0];
       distanceBar.useTransparency = false;
       distanceBar.useSeethrough = true;
@@ -292,6 +296,45 @@ function tube(p0, p1, thickness){
     viewerState.activeMeasurement = null;
   }
 
+  // Aggiungi questi metodi prima del return
+
+  function restoreDistance(p0, p1, value) {
+    distancePoints[0] = p0.slice();
+    distancePoints[1] = p1.slice();
+    distanceStage = 2;
+    computeDistance();
+    // Mostra il pannello con il risultato
+    measurePanelSwitch(true, 'Click to measure distance', 'Distance', value.toFixed(getDecimalPlaces(measure_unit)) + measure_unit);
+  }
+
+  function restorePickpoint(p0) {
+    pickPoints[0] = p0.slice();
+    pickStage = 1;
+    computePickpoint();
+    // Mostra il pannello con il risultato
+    const opoint = [p0[0], p0[1], p0[2], 1.0];	
+    const tpoint = SglMat4.mul4(SglMat4.inverse(presenter._scene.modelInstances["mesh_0"].transform.matrix), opoint);
+    const clampTo = getDecimalPlaces(measure_unit);
+    const x = tpoint[0].toFixed(clampTo);
+    const y = tpoint[1].toFixed(clampTo);
+    const z = tpoint[2].toFixed(clampTo);
+    measurePanelSwitch(true, 'Click to pick a point', 'Point', `[ ${x} , ${y} , ${z} ]`);
+  }
+
+  function restoreAngle(p0, p1, p2, value) {
+    anglePoints[0] = p0.slice();
+    anglePoints[1] = p1.slice();
+    anglePoints[2] = p2.slice();
+    angleStage = 3;
+    computeAngle();
+    // Mostra il pannello con il risultato
+    const v0 = SglVec3.sub(p0, p1);
+    const v1 = SglVec3.sub(p2, p1);
+    const dot = SglVec3.dot(SglVec3.normalize(v0), SglVec3.normalize(v1));
+    const angle = Math.acos(dot) * 180.0 / Math.PI;
+    measurePanelSwitch(true, 'Click to measure angle', 'Angle', angle.toFixed(2) + "°");
+  }
+
   function getDecimalPlaces(measure_unit) {
     return measure_unit === "m" ? 3 : 2;
   }
@@ -302,6 +345,9 @@ function tube(p0, p1, thickness){
     measureAngle, 
     measurePanelSwitch,
     stopMeasure,
-    onEndPick
+    onEndPick,
+    restoreDistance,
+    restorePickpoint,
+    restoreAngle
   };
 }
