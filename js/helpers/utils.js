@@ -1,3 +1,5 @@
+export const basePath = () => {return window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '/');}
+
 export function getDateString() {
   const d = new Date();
   const year = d.getFullYear();
@@ -47,3 +49,21 @@ export const groupBy = (keys, separator = '-') => array => {
     return objectsByKeyValue;
   }, {});
 };
+
+export function isIOS() {
+  // Controllo moderno: usa navigator.userAgentData se disponibile
+  if (navigator.userAgentData && navigator.userAgentData.platform) {
+    return navigator.userAgentData.platform === 'iOS';
+  }
+  // Fallback: regex semplificata su userAgent (per browser vecchi, evita navigator.platform deprecata)
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !/MSStream/.test(navigator.userAgent);
+}
+
+export function isMobile() {
+  // Controllo moderno: usa navigator.userAgentData.mobile se disponibile
+  if (navigator.userAgentData && typeof navigator.userAgentData.mobile === 'boolean') {
+    return navigator.userAgentData.mobile;
+  }
+  // Fallback: regex semplificata su userAgent (per browser vecchi, senza navigator.vendor deprecato)
+  return /Mobi|Android/i.test(navigator.userAgent) || /iPad|iPhone|iPod/.test(navigator.userAgent);
+}

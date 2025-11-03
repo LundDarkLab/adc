@@ -1,13 +1,17 @@
 <?php
 $currentDir = __DIR__;
-if (strpos($currentDir, 'prototype_dev') !== false) {
+// Same detection
+$requestUri = $_SERVER['REQUEST_URI'] ?? '';
+if (strpos($requestUri, '/prototype_dev/') !== false) {
   $rootFolder = 'prototype_dev';
-} else {
+} elseif (strpos($requestUri, '/plus/') !== false) {
   $rootFolder = 'plus';
+} else {
+  $rootFolder = '';
 }
 $fileName = $_FILES["nxz"]["name"];
 $fileTmpLoc = $_FILES["nxz"]["tmp_name"];
-$fileLoc = $_SERVER['DOCUMENT_ROOT']."/".$rootFolder."/archive/models/preview/".$fileName;
+$fileLoc = $_SERVER['DOCUMENT_ROOT'] . "/" . $rootFolder . "/archive/models/preview/" . $fileName;
 $fileType = $_FILES["nxz"]["type"];
 $fileSize = $_FILES["nxz"]["size"];
 $fileExt = pathinfo($fileName, PATHINFO_EXTENSION);

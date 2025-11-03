@@ -1,7 +1,6 @@
 .tdhop{
   position:relative; 
   width:100%;
-  /* height:780px; */
   height:100%;
   background: rgba(222, 226, 230,0.5);
   background: -moz-linear-gradient(180deg, rgba(222, 226, 230,0.5) 0%, #2b3035 100%);
@@ -9,28 +8,86 @@
   background: linear-gradient(180deg, rgba(222,226,230,0.5) 0%, #2b3035 100%);
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr="#ffffff",endColorstr="#797979",GradientType=1);
 }
-.tdhop>canvas:focus-visible{outline: none !important;}
+.tdhop > canvas:focus-visible{outline: none !important;}
 
-/*annotation panel*/
-#wrapAnnotations{top:10px; left:10px; width:20%; padding:10px;}
-/*
-#viewSpotDiv{position: relative; height: auto; max-height: 500px; overflow: auto;}
-#viewSpotDiv::-webkit-scrollbar { width: .2em;}
-#viewSpotDiv::-webkit-scrollbar-track { -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);}
-#viewSpotDiv::-webkit-scrollbar-thumb {background-color: darkgrey;outline: 1px solid slategrey;}
-*/
+#wrapAnnotations{
+  top:10px; 
+  left:10px; 
+  bottom:100px;
+  width:auto;
+  max-width: 33%;
+  padding:10px;
+}
+
+#headerAnnotations {
+  height:30px;
+}
+
+#bodyAnnotations {
+  position:relative;
+  height:calc(100% - 85px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+#pills-tabContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: start;
+  align-items: start;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+#noteDiv { width:100%; height:100%; }
+
+.annotationPane {
+  width: 100%;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+
+/* Toolbar fisso in fondo */
+#annotationsToolbar {
+  /* flex-shrink: 0; */
+  margin-top: 0;
+  height:50px;
+}
+
+.viewListItem.active{
+  color: #000;
+  font-weight: bold;
+  background-color: var(--bs-warning);
+  border-color: var(--bs-warning);
+}
+
+#lightcontroller{
+  position:absolute; 
+  top:50px; 
+  right:50px; 
+  display:none;
+  z-index:1500;
+}
 
 .modelTools{ position:absolute; background-color: rgba(255, 255, 255, 0.9);}
 #modelToolsH{top:10px; padding:10px; left:50%; width:auto; transform: translateX(-50%);}
-#modelToolsV{top:10px; right:10px; width:150px; padding:10px;}
+#modelToolsV{top:10px; right:10px; width:auto; padding:10px;}
 
 
-#measure-box{ position:absolute; background-color: rgba(255, 255, 255, 0.7); bottom:10px; padding:5px 10px; font-size: 12px;}
-/* #panel_instructions{left: 50%; transform: translateX(-50%); width: 35%;} */
-#measure-box{left:10px;}
+#measure-box{ 
+  position:absolute; 
+  background-color: rgba(255, 255, 255, 0.7); 
+  bottom:10px;
+  left:10px;
+  height:80px;
+  padding:5px 10px; 
+  font-size: 12px;
+}
 #sections-box,#lightCanvas-box{position: absolute; bottom: 10px; right: 10px;}
 #sections-box{width: 350px;}
-/* #lightCanvas-box, #lightcontroller{height:250px; width:250px;} */
 
 .view > div, .spot > div{display: inline-block; vertical-align: middle;}
 .view > .viewToolbar, .spot > .spotToolbar{width:35px;}
@@ -83,7 +140,7 @@
   left: 5px; 
   width: 450px; 
   height:auto; 
-  max-height: 750px; 
+  max-height: 80vh; 
   background-color: #fff; 
   padding: 10px 20px; 
   border-radius: 0.375rem;
@@ -101,3 +158,29 @@
 #paradata-modal > .paradata-body > #objects-metadata span:first-child{width:125px; font-weight: bold;}
 #paradata-modal > .paradata-body > #objects-metadata span:last-child{width:135px;}
 #objects-metadata > #listWrap{height:auto; max-height: 550px; overflow-x: hidden; overflow-y: auto;}
+
+#trackballControlsWrap {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  grid-column-gap: 1px;
+  grid-row-gap: 1px;
+}
+
+#trackballControlsWrap .btView {
+  text-align: center;
+}
+
+#trackballControlsWrap .btView:nth-child(1) { grid-area: 1 / 2 / 2 / 3; } /* top */
+#trackballControlsWrap .btView:nth-child(2) { grid-area: 2 / 1 / 3 / 2; } /* left */
+#trackballControlsWrap .btView:nth-child(3) { grid-area: 2 / 2 / 3 / 3; } /* front */
+#trackballControlsWrap .btView:nth-child(4) { grid-area: 2 / 3 / 3 / 4; } /* right */
+#trackballControlsWrap .btView:nth-child(5) { grid-area: 2 / 4 / 3 / 5; } /* back */
+#trackballControlsWrap .btView:nth-child(6) { grid-area: 3 / 2 / 4 / 3; } /* bottom */
+
+#trackballControlsWrap > #btOrtho {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+}

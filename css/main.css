@@ -120,8 +120,8 @@ footer a:hover{
   left:0; 
   height:45px; 
   width:100%;
-  background-color: #dddddd;
-  padding:5px; 
+  background-color: var(--bs-light);
+  padding:0px 10px; 
   overflow:visible;
   display: flex;
   flex-direction: row;

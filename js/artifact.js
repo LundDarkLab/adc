@@ -1,7 +1,8 @@
-import { showLoading } from "./helpers/helper.js";
+import { showLoading, loadScript } from "./helpers/helper.js";
 import { initSetUp } from './helpers/artifactHelper.js';
 import { artifactMap } from "./components/artifactComponents.js";
 import { collectionState } from "./modules/collectionStorage.js";
+import { initModel, resizeCanvas } from "./3dhop_function.js";
 
 const stateManager = await collectionState();
 
@@ -11,28 +12,30 @@ const domEl = {
   artifactId: document.getElementById('artifactId'),
   activeUsr: document.getElementById('activeUsr'),
   role: document.getElementById('role'),
-  btWidescreen: document.getElementById('btWidescreen'),
-  btSaveModelParam: document.getElementsByName('saveModelParam')[0],
-  btParadata: document.getElementById('btParadata'),
-  paradataModal: document.getElementById('paradata-modal'),
   btInstitutionFilter: document.getElementById('btInstitutionFilter'),
+  btWidescreen: document.getElementById('btWidescreen'),
+  lineChartContainer: document.getElementById('lineChart'),
+  columnChartContainer: document.getElementById('columnChart'),
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
   showLoading(true);
   const artifactData = await initSetUp(domEl);
+  if(artifactData.model) { initModel(artifactData.model); }
   showLoading(false);
 
   if(domEl.btWidescreen){
     domEl.btWidescreen.addEventListener('click', () => {
       domEl.mainContent.classList.toggle('expanded');
-      setTimeout(function(){ artifactMap(artifactData) },100)
-    });
-  }
-  
-  if(domEl.btParadata){
-    domEl.btParadata.addEventListener('click', () => {
-      domEl.paradataModal.classList.toggle('hide');
+
+      // const wrapAnnotations = document.getElementById('wrapAnnotations');
+      // if(wrapAnnotations) {
+      //   wrapAnnotations.classList.toggle('invisible');
+      // }
+
+      domEl.mainContent.offsetWidth; 
+      artifactMap(artifactData);
+      resizeCanvas();
     });
   }
 

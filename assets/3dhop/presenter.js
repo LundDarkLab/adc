@@ -4217,3 +4217,16 @@ isInstanceLightingEnabled : function (tag) {
 }
 
 }; // Presenter.prototype END
+
+// export default Presenter;
+// export { 
+//     HOP_VERSION,
+//     HOP_ALL,
+//     HOP_DEBUGMODE,
+//     HOP_DEFAULTLIGHT,
+//     SGL_TRACKBALL_NO_ACTION,
+//     SGL_TRACKBALL_ROTATE,
+//     SGL_TRACKBALL_PAN,
+//     SGL_TRACKBALL_DOLLY,
+//     SGL_TRACKBALL_SCALE
+// };

@@ -34,3 +34,21 @@ export function showLoading(show) {
     }
   }
 }
+
+// Carica gli script in ordine di dipendenza
+export function loadScript(src) {
+  return new Promise((resolve) => {
+    const script = document.createElement('script');
+    script.src = src;
+    script.onload = resolve;
+    document.head.appendChild(script);
+  });
+}
+
+export function copy_to_clipboard(el) {
+  const host = window.location.origin+'/'+window.location.pathname.split('/')[1]
+  const element = el.split('-')[0]
+  const text = document.getElementById(el).innerHTML;
+  const link = host+'/'+element+'_view.php?uuid='+text
+  navigator.clipboard.writeText(link);
+}

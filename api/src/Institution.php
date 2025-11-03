@@ -7,7 +7,17 @@ class Institution extends Conn{
   public $logoFolder;
   function __construct(){
     $this->fileCls = new File();
-    $this->logoFolder = $_SERVER['DOCUMENT_ROOT']."/plus/img/logo/";
+    
+    // Same detection
+    $requestUri = $_SERVER['REQUEST_URI'] ?? '';
+    if (strpos($requestUri, '/prototype_dev/') !== false) {
+      $rootFolder = '/prototype_dev';
+    } elseif (strpos($requestUri, '/plus/') !== false) {
+      $rootFolder = '/plus';
+    } else {
+      $rootFolder = '';
+    }
+    $this->logoFolder = $_SERVER['DOCUMENT_ROOT'] . $rootFolder . "/img/logo/";
   }
 
   public function catList(){

@@ -19,13 +19,22 @@ class Stats extends Conn{
     ];
   }
  
-  public function artifactTot(){ return $this->simple("select count(*) tot from artifact where status = 2;")[0]; }
-  public function modelTot(){ return $this->simple("select count(*) tot from model where status = 2;")[0]; }
-  public function institutionTot(){ return $this->simple("select count(*) tot from institution;")[0]; }
-  public function filesTot(){ return $this->simple("select count(*) tot from files;")[0]; }
+  public function artifactTot(){ 
+    return $this->simple("select count(*) tot from artifact where status = 2;")[0]; 
+  }
+  public function modelTot(){ 
+    return $this->simple("select count(*) tot from model where status = 2;")[0]; 
+  }
+  public function institutionTot(){ 
+    return $this->simple("select count(*) tot from institution;")[0]; 
+  }
+  public function filesTot(){ 
+    return $this->simple("select count(*) tot from files;")[0]; 
+  }
 
-  public function typeChronologicalDistribution(int $type = null){
-    $filter = $type !== null ? "artifact.category_class = ".$type." and ": ''; 
+  public function typeChronologicalDistribution(array $payload = []): array{
+    // $filter = $type !== null ? "artifact.category_class = ".$type." and ": ''; 
+    $filter = isset($payload['id']) ? "artifact.category_class = ".$payload['id']." and ": '';
     $sql = "select c.definition crono, count(*) tot, c.start, c.end
     from cultural_generic_period c, artifact 
     where 
@@ -35,11 +44,16 @@ class Stats extends Conn{
       and artifact.status = 2
     group by c.definition, c.start, c.end
     order by c.id asc;";
+    error_log("typeChronologicalDistribution SQL: ".$sql);
+    error_log("typeChronologicalDistribution filter: ".$filter);
     return $this->simple($sql);
   }
-  public function institutionDistribution(int $i = null){
-    $filter = $i != null ? 'and i.id = '.$i : '';
-    $sql = "select i.name, count(a.id) tot, i.color from institution i inner join artifact a on a.storage_place = i.id where a.status = 2 ".$filter." group by i.id;";
+  public function institutionDistribution(array $payload = []): array{
+    $filter = ["a.status = 2"];
+    if(isset($payload['filter'])){
+      $filter = array_merge($filter, $payload['filter']);
+    }
+    $sql = "select i.name, count(a.id) tot, i.color from institution i inner join artifact a on a.storage_place = i.id where ".join(" AND ", $filter)." group by i.id;";
     return $this->simple($sql);
   }
 

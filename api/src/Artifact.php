@@ -201,12 +201,17 @@ class Artifact extends Conn{
     $db_files = [];
     $files = $this->simple("select object from model_object;");
     foreach ($files as $file) {$db_files[]=$file['object'];}
-    if (strpos(__DIR__, 'prototype_dev') !== false) {
-      $rootFolder = $_SERVER['DOCUMENT_ROOT'].'/prototype_dev/archive/models/';
+    $requestUri = $_SERVER['REQUEST_URI'] ?? '';
+    if (strpos($requestUri, '/prototype_dev/') !== false) {
+      $rootFolder = '/prototype_dev';
+    } elseif (strpos($requestUri, '/plus/') !== false) {
+      $rootFolder = '/plus';
     } else {
-      $rootFolder = $_SERVER['DOCUMENT_ROOT'].'/plus/archive/models/';
+      $rootFolder = '';
     }
-    $folder_files = array_diff(scandir($rootFolder), array('..', '.'));
+    $folder = $_SERVER['DOCUMENT_ROOT'] . $rootFolder . "/archive/models/";
+    $folder_files = array_diff(scandir($folder), array('..', '.'));
+    
     $missingModel = array_diff($db_files,$folder_files);
     $missingModelList = implode("','", array_map('addslashes', $missingModel));
     $missingModelList = "'".$missingModelList."'";

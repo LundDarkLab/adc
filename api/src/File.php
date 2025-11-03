@@ -31,15 +31,33 @@ class File extends Conn{
 
   public function __construct() {
     $this->uuid = Uuid::uuid4();
+
+  // Detect environment based on request URI
+  $requestUri = $_SERVER['REQUEST_URI'] ?? '';
+  if (strpos($requestUri, '/prototype_dev/') !== false) {
+    $rootFolder = '/prototype_dev';
+  } elseif (strpos($requestUri, '/plus/') !== false) {
+    $rootFolder = '/plus';
+  } else {
+    // Local Docker (root path)
+    $rootFolder = '';
+  }
+  
+  // Build paths
+  $this->imageDir = $_SERVER['DOCUMENT_ROOT'] . $rootFolder . "/archive/image/";
+  $this->documentDir = $_SERVER['DOCUMENT_ROOT'] . $rootFolder . "/archive/document/";
+  
+  // Update upload_tmp_dir to use detected root folder
+  ini_set('upload_tmp_dir', $_SERVER['DOCUMENT_ROOT'] . $rootFolder . '/archive/tmp/');
     
-    $currentDir = __DIR__;
-    if (strpos($currentDir, 'prototype_dev') !== false) {
-      $rootFolder = 'prototype_dev';
-    } else {
-      $rootFolder = 'plus';
-    }
-    $this->imageDir = $_SERVER['DOCUMENT_ROOT']."/".$rootFolder."/archive/image/";
-    $this->documentDir = $_SERVER['DOCUMENT_ROOT']."/".$rootFolder."/archive/document/";
+    // $currentDir = __DIR__;
+    // if (strpos($currentDir, 'prototype_dev') !== false) {
+    //   $rootFolder = 'prototype_dev';
+    // } else {
+    //   $rootFolder = 'plus';
+    // }
+    // $this->imageDir = $_SERVER['DOCUMENT_ROOT']."/".$rootFolder."/archive/image/";
+    // $this->documentDir = $_SERVER['DOCUMENT_ROOT']."/".$rootFolder."/archive/document/";
   }
 
   public function addMedia($data, $file=null){
@@ -72,6 +90,7 @@ class File extends Conn{
   public function getMedia(int $id){
     return $this->simple("
       select f.id file
+        , f.artifact
         , file.id filetype
         , file.value type
         , f.path
@@ -145,8 +164,6 @@ class File extends Conn{
     try {
       if(isset($dati['file'])){
         $file = $this->imageDir.$dati['file'];
-        // if (!file_exists($file){ throw new \Exception("Error: file $file does not exist", 1); }
-        // if(!unlink($file){ throw new \Exception("Error: file $file has not been deleted", 1); }
         $res = $this->deleteFile($file);
         if($res['error'] === 1){ throw new \Exception($res['output'], 1); }
       }

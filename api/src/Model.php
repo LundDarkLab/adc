@@ -8,17 +8,23 @@ class Model extends Conn{
   public $modelDir;
   public $modelPreview;
   public $thumbDir;
-  function __construct(){
+  
+  public function __construct(){
     $this->uuid = Uuid::uuid4();
-    $currentDir = __DIR__;
-    if (strpos($currentDir, 'prototype_dev') !== false) {
-      $rootFolder = 'prototype_dev';
+  
+    // Same detection as File.php
+    $requestUri = $_SERVER['REQUEST_URI'] ?? '';
+    if (strpos($requestUri, '/prototype_dev/') !== false) {
+      $rootFolder = '/prototype_dev';
+    } elseif (strpos($requestUri, '/plus/') !== false) {
+      $rootFolder = '/plus';
     } else {
-      $rootFolder = 'plus';
+      $rootFolder = '';
     }
-    $this->modelDir = $_SERVER['DOCUMENT_ROOT']."/".$rootFolder."/archive/models/";
-    $this->modelPreview = $_SERVER['DOCUMENT_ROOT']."/".$rootFolder."/archive/models/preview/";
-    $this->thumbDir = $_SERVER['DOCUMENT_ROOT']."/".$rootFolder."/archive/thumb/";
+  
+    $this->modelDir = $_SERVER['DOCUMENT_ROOT'] . $rootFolder . "/archive/models/";
+    $this->modelPreview = $_SERVER['DOCUMENT_ROOT'] . $rootFolder . "/archive/models/preview/";
+    $this->thumbDir = $_SERVER['DOCUMENT_ROOT'] . $rootFolder . "/archive/thumb/";
   }
 
   public function saveModel($data, $files){

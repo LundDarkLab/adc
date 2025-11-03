@@ -12,6 +12,7 @@ $availableClasses = [
   'File' => Adc\File::class,
   'Geom' => Adc\Geom::class,
   'Get' => Adc\Get::class,
+  'Stats' => Adc\Stats::class,
   'Timeline' => Adc\Timeline::class,
   'User' => Adc\User::class,
   'Vocabulary' => Adc\Vocabulary::class,
