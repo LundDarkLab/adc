@@ -13,6 +13,7 @@ import { measureTool } from "./helpers/viewerMeasure.js";
 const artifactId = document.getElementById('artifactId').value;
 const activeUser = document.getElementById('activeUsr').value;
 const role = document.getElementById('role').value;
+const isLoggedUser = activeUser && activeUser !== 'unregistered' && !isNaN(Number(activeUser));
 
 const viewerEl = {
   canvas: document.getElementById('draw-canvas'),
@@ -64,28 +65,6 @@ const tooltipBtnList = toolBtnList.map(tooltipBtn => new bootstrap.Tooltip(toolt
 //////////////// FUNCTIONS //////////////////////////////////
 /////////////////////////////////////////////////////////////
 
-function changeModelStatus(model) {
-  const status = document.querySelector("button[name=modelVisibility").value;
-  const dati = {trigger:'changeModelStatus', dati:{id:model, status:status}};
-  fetch(API+"model.php", {
-    method: 'POST',
-    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-    body: new URLSearchParams(dati)
-  })
-  .then(res => res.json())
-  .then(data => {
-    if (data.res==1) {
-      document.querySelector("#toastDivError .errorOutput").textContent = data.msg;
-      document.querySelector("#toastDivError").classList.remove("d-none");
-    }else {
-      document.querySelector(".toastTitle").textContent = data.msg;
-      document.querySelector("#toastDivSuccess").classList.remove("d-none");
-      setTimeout(() => location.reload(), 3000);
-    }
-    document.querySelector("#toastDivContent").classList.remove('d-none');
-  });
-}
-
 async function initModel(model) {
   const mainData = model.model;
   const modelId = mainData.id;
@@ -116,7 +95,7 @@ async function initModel(model) {
   }
   const modelStatus = document.querySelector("#model-status");
   modelStatus.classList.add(statusAlert);
-  if(activeUser){
+  if(isLoggedUser){
     const btn = document.querySelector("button[name=modelVisibility");
     btn.classList.add(statusBtnClass);
     btn.value = statusBtnValue;
@@ -124,8 +103,10 @@ async function initModel(model) {
   }else{
     document.querySelector("#toolBarModel").remove();
   } 
-  Object.keys(mainData).forEach(key => {
-    if(mainData[key]){
+
+  const isEmpty = (value) => value === null || value === undefined || value === '';
+  Object.keys(mainData).forEach(key => {    
+    if(!isEmpty(mainData[key])) {
       if(key == 'doi' && mainData.doi){
         const doi = document.querySelector("#model-doi");
         if(doi){
@@ -143,20 +124,17 @@ async function initModel(model) {
         document.querySelector('#itemTool>.btn-group').appendChild(btn);
       }else{
         const el = document.querySelector("#model-"+key);
-        if(el) el.textContent = mainData[key];
+        if(el) {el.textContent = mainData[key];}
       }
     }
-    if(!mainData[key] && !role){
-      if(key == 'doi'){
-        const doiItem = document.querySelector("#doiItem");
-        if(doiItem) doiItem.remove();
-      }
-      const el = document.querySelector("#model-"+key);
-      if(el) el.parentElement.remove();
+    else if(!isLoggedUser){
+      if(key == 'doi'){ document.querySelector("#doiItem")?.remove(); }
+      document.querySelector(`#model-${key}`)?.parentElement?.remove();
     }
-  })
+  });
   
   object.forEach((element, index) => {
+    // se ci sono più modelli nel canvas crea le miniature per cambiare mesh
     const thumbPath = 'archive/thumb/'+element.thumbnail;
     const thumbDiv = document.createElement('div');
     thumbDiv.className = 'thumb';
@@ -209,7 +187,7 @@ async function initModel(model) {
         }
       }
     })
-    if(activeUser){
+    if(isLoggedUser){
       const navBarObj = document.createElement('nav');
       navBarObj.className = "my-3 pb-2 border-bottom";
       metadata.appendChild(navBarObj);
@@ -261,14 +239,13 @@ function initListeners() {
   if(btScreenshot) btScreenshot.addEventListener('click', () => screenshot());
 
   const btParadataToggle = document.getElementsByClassName('btParadataToggle');
-  if(btParadataToggle && btParadataToggle.length > 0){
-    for (let i = 0; i < btParadataToggle.length; i++) {
-      btParadataToggle[i].addEventListener('click', () => {
-        document.querySelectorAll('.paradata-wrapper').forEach(el => el.classList.toggle('d-none'));
-      });
-    }
-  }
-  
+  [...btParadataToggle].forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const paradataModal = document.getElementById('paradata-modal');
+      paradataModal.classList.toggle('d-none');
+    });
+  });
+
   const btTexture = document.getElementById('btTexture');
   if(btTexture) btTexture.addEventListener('click', () => setTexture());
   
@@ -290,25 +267,11 @@ function initListeners() {
 
   const btOrtho = document.getElementById('btOrtho');
   if (btOrtho) btOrtho.addEventListener('click', () => setOrtho());
-
-  const measureTools = document.getElementsByName('measureTool');
-  [...measureTools].forEach(tool => {
-    tool.addEventListener('click', function(ev) {
-      const isChecked = ev.currentTarget.checked;
-      const toolId = ev.currentTarget.id;
-      if (measure) measure.stopMeasure();
-    
-      if (isChecked && window[toolId]) {
-        ev.currentTarget.checked = true;
-        window[toolId](true);
-      }
-    });
-  });
 }
 
 function startupViewer(object) {
   presenter = new Presenter("draw-canvas");
-  init3dhop(presenter);
+  init3dhop(isLoggedUser);
   const myScene = {
     meshes: { 
       "sphere": { url: "archive/models/sphere.ply" },  
@@ -416,6 +379,28 @@ function startupViewer(object) {
 
   presenter._onTrackballUpdate = onTrackballUpdate;
   presenter.ui._onCanvasScroll = event => event.preventDefault();
+}
+
+function changeModelStatus(model) {
+  const status = document.querySelector("button[name=modelVisibility").value;
+  const dati = {trigger:'changeModelStatus', dati:{id:model, status:status}};
+  fetch(API+"model.php", {
+    method: 'POST',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body: new URLSearchParams(dati)
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.res==1) {
+      document.querySelector("#toastDivError .errorOutput").textContent = data.msg;
+      document.querySelector("#toastDivError").classList.remove("d-none");
+    }else {
+      document.querySelector(".toastTitle").textContent = data.msg;
+      document.querySelector("#toastDivSuccess").classList.remove("d-none");
+      setTimeout(() => location.reload(), 3000);
+    }
+    document.querySelector("#toastDivContent").classList.remove('d-none');
+  });
 }
 
 ////// VIEWERSTATE MANAGEMENT //////////////////////////////////////
@@ -695,32 +680,6 @@ function onEndMeasure(measure, p0, p1) {
   };
 }
 
-function buildModelParamArray() {
-  return [
-    document.getElementById('navigation').value,
-    document.getElementById('grid').value,
-    document.getElementById('lighting').checked,
-    document.getElementById('texture').checked,
-    document.getElementById('transparency').checked,
-    document.getElementById('specular').checked
-  ];
-}
-
-function saveModelParam(dati) {
-  fetch(API+"modelPreview.php", {
-    method: 'POST',
-    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-    body: new URLSearchParams(dati)
-  })
-  .then(res => res.json())
-  .then(data => {
-    if (data.res==1) {
-      bsAlert(data.msg, 'danger', 3000);
-    }else {
-      bsAlert(data.msg, 'success', 3000);
-    }
-  });
-}
 
 function resizeCanvas() {
   if(!presenter) return;
@@ -751,26 +710,5 @@ function resizeCanvas() {
     presenter.ui.postDrawEvent();
   });
 }
-
-window.distanceTool = (state) => {
-  if(!measure) return;
-  measure.measureDistance(state);
-  if(state) {measure.measurePanelSwitch(true, "Pick two points A-B on the object to measure their distance", "Measured length", "0.00 "+measure_unit);}
-  else {measure.measurePanelSwitch(false);}
-};
-
-window.pickTool = (state) => {
-  if(!measure) return;
-  measure.measurePickpoint(state);
-  if(state) measure.measurePanelSwitch(true, "Pick a point on the object to get its coordinates", "Point coordinates", "[ 0.00 , 0.00 , 0.00 ]");
-  else measure.measurePanelSwitch(false);
-};
-
-window.angleTool = (state) => {
-  if(!measure) return;
-  measure.measureAngle(state);
-  if(state) measure.measurePanelSwitch(true, "Pick three points A-B-C on the object to measure angle ABC", "Measured angle", "0.00°");
-  else measure.measurePanelSwitch(false);
-};
 
 export { initModel, startupViewer, resizeCanvas };

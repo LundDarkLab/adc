@@ -7,6 +7,38 @@ export function measureTool(presenter, viewerState, viewerEl, measure_unit) {
   let pickStage = 0;
   let pickPoints = [0.0,0.0,0.0];
 
+  function initListeners() {
+    const measureTools = document.getElementsByName('measureTool');
+    [...measureTools].forEach(tool => {
+      tool.addEventListener('click', function(ev) {
+        const isChecked = ev.currentTarget.checked;
+        const toolId = ev.currentTarget.id;
+        stopMeasure();
+      
+        if (isChecked) {
+          ev.currentTarget.checked = true;
+          
+          switch(toolId) {
+            case 'distanceTool':
+              measureDistance(true);
+              measurePanelSwitch(true, "Pick two points A-B on the object to measure their distance", "Measured length", "0.00 "+measure_unit);
+              break;
+            case 'pickTool':
+              measurePickpoint(true);
+              measurePanelSwitch(true, "Pick a point on the object to get its coordinates", "Point coordinates", "[ 0.00 , 0.00 , 0.00 ]");
+              break;
+            case 'angleTool':
+              measureAngle(true);
+              measurePanelSwitch(true, "Pick three points A-B-C on the object to measure angle ABC", "Measured angle", "0.00°");
+              break;
+          }
+        } else {
+          measurePanelSwitch(false);
+        }
+      });
+    });
+  }
+
   // Callbacks
   function onEndPick(point) {
     const coords = `[${point[0].toFixed(getDecimalPlaces(measure_unit))}, ${point[1].toFixed(getDecimalPlaces(measure_unit))}, ${point[2].toFixed(getDecimalPlaces(measure_unit))}]`;
@@ -338,6 +370,8 @@ function tube(p0, p1, thickness){
   function getDecimalPlaces(measure_unit) {
     return measure_unit === "m" ? 3 : 2;
   }
+
+  initListeners();
 
   return { 
     measureDistance, 

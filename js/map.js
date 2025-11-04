@@ -51,9 +51,7 @@ async function initializeMap() {
       layerControl(map, { baseLayers: true, poi: ['findplace', 'institutions'], admin: availableLevels }),
     ]);
     // Aggiungi il controllo collezione se ci sono collezioni
-    if (Object.values(currentState.collections).length > 0) {
-      collectionControl(currentState.collections, currentState.activeCollectionKey);
-    }
+    collectionControl(currentState.collections, currentState.activeCollectionKey);
     const controlElements = [domEl.controlDiv, domEl.mapGalleryWrap, domEl.mapInfo, domEl.collectionDiv].filter(el => el);
     controlElements.forEach(element => {
       L.DomEvent.disableClickPropagation(element);
@@ -164,6 +162,12 @@ async function refreshCollectionMarkers() {
     // Ricarica i controlli dei layer con tutte le opzioni per evitare svuotamenti
     const availableLevels = result.availableLevels;  // availableLevels da addLayers
     layerControl(map, { baseLayers: true, poi: ['findplace', 'institutions'], admin: availableLevels });
+
+    // AGGIUNGI QUESTA PARTE - Aggiorna anche il collectionControl
+    const stateManager = await collectionState();
+    const currentState = stateManager.getState();
+    collectionControl(currentState.collections, currentState.activeCollectionKey);
+
 
     // Riattacca gli event listener per le checkbox (poiché il DOM è stato ricreato)
     document.getElementsByName('poi').forEach(input => {

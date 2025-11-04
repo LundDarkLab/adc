@@ -72,9 +72,23 @@
   z-index:1500;
 }
 
-.modelTools{ position:absolute; background-color: rgba(255, 255, 255, 0.9);}
-#modelToolsH{top:10px; padding:10px; left:50%; width:auto; transform: translateX(-50%);}
-#modelToolsV{top:10px; right:10px; width:auto; padding:10px;}
+.modelTools{ 
+  position:absolute; 
+  background-color: rgba(255, 255, 255, 0.9);
+}
+#modelToolsH{
+  top:10px; 
+  padding:10px; 
+  left:50%; 
+  width:auto; 
+  transform: translateX(-50%);
+}
+#modelToolsV{
+  top:10px; 
+  right:10px; 
+  width:auto; 
+  padding:10px;
+}
 
 
 #measure-box{ 
@@ -136,27 +150,26 @@
 
 #paradata-modal{
   position: absolute; 
-  top: 5px; 
-  left: 5px; 
-  width: 450px; 
+  top: 10px; 
+  left: 10px; 
+  width: 38%; 
   height:auto; 
-  max-height: 80vh; 
+  max-height: calc(100% - 20px); 
   background-color: #fff; 
   padding: 10px 20px; 
   border-radius: 0.375rem;
 }
-#paradata-modal.hide{visibility: hidden;}
 
 #paradata-modal #model-uuid{cursor: pointer;}
 #paradata-modal > .paradata-body{font-size: 0.85rem;}
 #paradata-modal > .paradata-body span{display: inline-block; vertical-align: top;}
 #paradata-modal > .paradata-body > #model-metadata span:first-child{width:100px; font-weight: bold;}
-#paradata-modal > .paradata-body > #model-metadata span:last-child{width:275px;}
+#paradata-modal > .paradata-body > #model-metadata span:last-child{width:calc(100% - 100px);}
 #paradata-modal .list-group-item{padding:1px}
 #doiLi > span{padding:10px 0 !important;}
 
 #paradata-modal > .paradata-body > #objects-metadata span:first-child{width:125px; font-weight: bold;}
-#paradata-modal > .paradata-body > #objects-metadata span:last-child{width:135px;}
+#paradata-modal > .paradata-body > #objects-metadata span:last-child{width:calc(100% - 125px);}
 #objects-metadata > #listWrap{height:auto; max-height: 550px; overflow-x: hidden; overflow-y: auto;}
 
 #trackballControlsWrap {

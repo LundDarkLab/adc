@@ -266,19 +266,21 @@
     </div>
   </div>
 
-  <div id="paradata-modal" class="hide">
-    <div class="paradata-header border-bottom text-end">
+  <div id="paradata-modal" class="d-none">
+    <div class="paradata-header border-bottom d-flex justify-content-between align-items-center mb-3">
+      <h5>Model paradata</h5>
       <button type="button" class="btn-close btParadataToggle" aria-label="Close" id="dismiss-paradata-modal"></button>
     </div>
     <div class="paradata-body">
       <div id="model-metadata" class="mb-3">
-        <h5>Model paradata</h5>
-        <div class="alert alert-light p-1 d-flex justify-content-between align-items-center" id="alertArtifactModelConnection">
+        <!-- Il div deve comparire solo in artifact_view, aggiungilo dinamicamente -->
+        <!-- <div class="alert alert-light p-1 d-flex justify-content-between align-items-center" id="alertArtifactModelConnection">
           <p id="modelConnectedText" class="w-auto m-0"></p>
           <a href="#" class="btn btn-sm btn-adc-dark w-auto" id="modelConnectedBtn"></a>
-        </div>
-        <div class="alert p-1 text-center" id="model-status"></div>
+        </div> -->
+        <!-- <div class="alert p-1 text-center" id="model-status"></div> -->
         <ul class="list-group list-group-flush">
+          <li class="list-group-item"><span>Status</span><span id="model-status" class="alert p-1 text-center"></span></li>
           <li class="list-group-item"><span>Name</span><span id="model-name"></span></li>
           <li class="list-group-item"><span>Description</span><span id="model-description"></span></li>
           <li class="list-group-item"><span>Note</span><span id="model-note"></span></li>

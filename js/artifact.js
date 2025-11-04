@@ -27,12 +27,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   if(domEl.btWidescreen){
     domEl.btWidescreen.addEventListener('click', () => {
       domEl.mainContent.classList.toggle('expanded');
-
-      // const wrapAnnotations = document.getElementById('wrapAnnotations');
-      // if(wrapAnnotations) {
-      //   wrapAnnotations.classList.toggle('invisible');
-      // }
-
       domEl.mainContent.offsetWidth; 
       artifactMap(artifactData);
       resizeCanvas();

@@ -7,6 +7,53 @@ const stateManager = await collectionState();
 const coll = await collection();
 let galleryInstance = null;
 
+window.collectToggle = async function(itemKey, btn) {
+  try {
+    const item = window.popupItems.get(itemKey);
+    if (!item) {
+      console.error('Item not found for key:', itemKey);
+      return;
+    }
+    const currentState = stateManager.getState();
+    const isCollected = currentState.collectStatus && currentState.collectStatus[item.id];
+    
+    // Usa sempre le funzioni dalla gallery SE esistono, altrimenti usa il modulo collection direttamente
+    if (window.onCollect && window.onUncollect) {
+      if (isCollected) {
+        await window.onUncollect(btn, null);
+      } else {
+        await window.onCollect(item, btn, null);
+      }
+    } else {
+      // Fallback quando la gallery non è stata ancora aperta
+      if (isCollected) {
+        await coll.removeItem(item.id);
+      } else {
+        if (!currentState.activeCollectionKey) {
+          console.warn('No active collection');
+          return;
+        }
+        await coll.addItem(currentState.activeCollectionKey, item);
+      }
+      // Aggiorna lo stato del bottone manualmente
+      if (btn) {
+        if (isCollected) {
+          btn.classList.remove('btn-danger');
+          btn.classList.add('btn-adc-blue');
+          btn.textContent = 'Collect';
+        } else {
+          btn.classList.remove('btn-adc-blue');
+          btn.classList.add('btn-danger');
+          btn.textContent = 'Uncollect';
+        }
+      }
+      document.dispatchEvent(new CustomEvent('collectionUpdated'));
+    }
+  } catch (error) {
+    console.error('Errore in collectToggle:', error);
+  }
+};
+
 export const domEl = {
   mapGalleryWrap: document.getElementById('mapGalleryWrap'),
   wrapGallery: document.getElementById('wrapGallery'),
@@ -249,19 +296,19 @@ export function layerControl(mapElement, options={}) {
       input.checked = true;
       if (collection?.metadata?.color?.primary) {
         const color = collection.metadata.color.primary;
-        input.addEventListener('change', function() {
-          if (this.checked) {
-            this.style.backgroundColor = color;
-            this.style.borderColor = color;
-            this.style.accentColor = color;
-          }
-        });
         // Applica subito se è checked
         if (input.checked) {
           input.style.backgroundColor = color;
           input.style.borderColor = color;
           input.style.accentColor = color;
         }
+        // input.addEventListener('change', function() {
+        //   if (this.checked) {
+        //     this.style.backgroundColor = color;
+        //     this.style.borderColor = color;
+        //     this.style.accentColor = color;
+        //   }
+        // });
       }
       const label = document.createElement('label');
       label.className = 'form-check-label';
@@ -270,6 +317,7 @@ export function layerControl(mapElement, options={}) {
       div.appendChild(input);
       div.appendChild(label);
       domEl.collectionsControl.appendChild(div);
+      domEl.collectionsControl.classList.remove('d-none');
     });
   }
 
@@ -304,6 +352,7 @@ export function openGallery(feature, layer) {
 }
 
 export async function showGalleryForProps(props) {
+  
   if (!props) return;
   let filter = [];
   if (props.feature === 'institution' && props.id) {
@@ -314,9 +363,8 @@ export async function showGalleryForProps(props) {
     console.warn('Proprietà non valide per la galleria:', props);
     return;
   }
-  if (domEl.mapGalleryWrap && !domEl.mapGalleryWrap.classList.contains('show')) {
-    await buildGallery(filter,props)    
-  }
+  
+  await buildGallery(filter, props);
 
   if (domEl.closeGalleryBtn && !domEl.closeGalleryBtn.hasListener) {
     domEl.closeGalleryBtn.addEventListener('click', () => {
@@ -326,8 +374,14 @@ export async function showGalleryForProps(props) {
   }
 }
 
-async function buildGallery(filter,props) {
+async function buildGallery(filter, props) {
   if (!props) return;
+  
+  // Resetta la gallery se esiste già
+  if (galleryInstance && galleryInstance.reset) {
+    galleryInstance.reset();
+  }
+  
   const stateManager = await collectionState();
   const currentState = stateManager.getState();
   stateManager.updateState({
@@ -338,8 +392,10 @@ async function buildGallery(filter,props) {
     }
   });
 
-  if (!galleryInstance) { galleryInstance = initGallery(); }
-  if (!domEl.mapGalleryWrap.galleryInstance) { domEl.mapGalleryWrap.galleryInstance = galleryInstance;}
+  // Ricrea sempre la galleryInstance
+  galleryInstance = initGallery();
+  domEl.mapGalleryWrap.galleryInstance = galleryInstance;
+  
   window.onCollect = galleryInstance.onCollect;
   window.onUncollect = galleryInstance.onUnCollect;
 
@@ -354,7 +410,7 @@ function toggleGalleryWrap(show) {
       domEl.mapGalleryWrap.classList.remove('show');
       if (domEl.mapGalleryWrap.galleryInstance) {
         domEl.mapGalleryWrap.galleryInstance.reset();
-        domEl.mapGalleryWrap.galleryInstance = null;
+        // domEl.mapGalleryWrap.galleryInstance = null;
       }
       if (domEl.wrapGallery) domEl.wrapGallery.innerHTML = '';
       if (domEl.mapGalleryTitle) domEl.mapGalleryTitle.innerHTML = '';
@@ -401,49 +457,19 @@ export function openPopUp(properties) {
   return popupContent;
 }
 
-window.collectToggle = async function(itemKey, btn) {
-  try {
-    const item = window.popupItems.get(itemKey);
-    if (!item) {
-      console.error('Item not found for key:', itemKey);
-      return;
-    }
-    const currentState = stateManager.getState();
-    const isCollected = currentState.collectStatus && currentState.collectStatus[item.id];
-    
-    if (window.onCollect && window.onUncollect) {
-      if (isCollected) {
-        await window.onUncollect(btn, null);
-      } else {
-        await window.onCollect(item, btn, null);
-      }
-    } else {
-      const coll = await collection();
-      if (isCollected) {
-        await coll.removeItem(item.id);
-      } else {
-        if (!currentState.activeCollectionKey) {
-          return;
-        }
-        await coll.addItem(currentState.activeCollectionKey, item);
-      }
-      document.dispatchEvent(new CustomEvent('collectionUpdated'));
-    }
-  } catch (error) {
-    console.error('Errore in collectToggle:', error);
-  }
-};
-
 export function collectionControl(collections, currentCollection) {
+  console.log(collections, currentCollection);
+  
   if (collections && Object.values(collections).length > 0) {
     if (!domEl.collectionDiv) {
       console.error('Elemento collectionDiv non trovato');
       return;
     }
-    const currentCollectionData = collections[currentCollection];
+    domEl.collectionDiv.classList.remove('d-none');
+    const currentCollectionData = collections[currentCollection];    
     const currentTitle = currentCollectionData?.metadata?.title || 'Titolo non trovato';
     domEl.activeCollectionTitle.innerHTML = `Active collection: <strong>${currentTitle}</strong>`;
-
+    
     if(Object.values(collections).length > 1){
       domEl.collectionListDropdown.innerHTML = '';
       
@@ -454,8 +480,11 @@ export function collectionControl(collections, currentCollection) {
     } else {
       domEl.collectionListDropdownBtn.classList.add('invisible');
     }
-
+    
   }else{
+    domEl.collectionDiv.classList.remove('d-none');
+    console.log('no collections');
+    
     domEl.activeCollectionTitle.textContent = 'No available collection';
   }
 }

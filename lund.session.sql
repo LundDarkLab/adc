@@ -1,15 +1,2 @@
--- select 
---   artifact.category_class,
---   c.definition crono, 
---   count(*) tot, 
---   c.start, 
---   c.end
--- from cultural_generic_period c, artifact 
--- where 
--- --      ".$filter."
---   artifact.start between c.start and c.end 
---   and artifact.end between c.start and c.end 
---   and artifact.status = 2
--- group by artifact.category_class, c.definition, c.start, c.end
--- order by 1 asc;
-select id from artifact where category_class = 75 and status = 2;
+select * from model
+inner join artifact_model on model.id = artifact_model.model and artifact = 468;

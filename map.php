@@ -61,7 +61,7 @@
         <p id="countItems"></p>
         <div id="wrapGallery" class="mapGallery"></div>
       </div>
-      <div id="collectionDiv" class="card">
+      <div id="collectionDiv" class="card d-none">
         <div class="card-body p-0">
           <div class="collectionSwitchContent p-1">
             <span id="activeCollectionTitle"></span>
@@ -75,8 +75,8 @@
           <button class="btn btn-sm btn-white m-0 w-100" data-bs-toggle="collapse" data-bs-target="#layerSwitcherContent" aria-expanded="false" aria-controls="layerSwitcherContent"><span class="float-start">Layers</span> <span class="mdi mdi-chevron-double-down float-end"></span></button>
         </div>
         <div id="layerSwitcherContent" class="collapse">
-          <p class="card-title">My Collections</p>
-          <div id="collectionsControl" class="mb-3"></div>
+          <p class="card-title myCollectionControl d-none">My Collections</p>
+          <div id="collectionsControl" class="mb-3 myCollectionControl d-none"></div>
           <p class="card-title">Find and Institutions</p>
           <div id="poiControl" class="mb-3"></div>
           <p class="card-title">Admin boundaries</p>
