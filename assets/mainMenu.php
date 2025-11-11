@@ -1,6 +1,6 @@
-<a href="index.php" class="animated">home <i class="mdi mdi-home"></i></a>
-<a href="map.php" class="animated">map <i class="mdi mdi-map"></i></a>
-<a href="credits.php" class="animated">credits <i class="mdi mdi-account-group"></i></a>
-<a href="policy.php" class="animated">legal <i class="mdi mdi-shield-check"></i></a>
-<a href="db_model.php" class="animated">db model <i class="mdi mdi-database"></i> </a>
-<?php if (!isset($_SESSION['id'])) {echo '<a href="login.php" class="animated">login</a>';} ?>
+<a href="index.php" title="home page" data-bs-toggle="tooltip" data-bs-placement="bottom" class="animated">home <i class="mdi mdi-home"></i></a>
+<a href="map.php" title="interactive map" data-bs-toggle="tooltip" data-bs-placement="bottom" class="animated">map <i class="mdi mdi-map"></i></a>
+<a href="https://www.darklab.lu.se/digital-collections/dynamic-collections/credits/" title="link to the Darklab Credit page [external link]" data-bs-toggle="tooltip" data-bs-placement="bottom" target="_blank" class="animated">credits <i class="mdi mdi-account-group"></i></a>
+<a href="policy.php" title="privacy policy" data-bs-toggle="tooltip" data-bs-placement="bottom" class="animated">legal <i class="mdi mdi-shield-check"></i></a>
+<a href="db_model.php" title="database architecture" data-bs-toggle="tooltip" data-bs-placement="bottom" class="animated">db model <i class="mdi mdi-database"></i> </a>
+<?php if (!isset($_SESSION['id'])) {echo '<a href="login.php" title="login page" data-bs-toggle="tooltip" data-bs-placement="bottom" class="animated">login</a>';} ?>

@@ -28,7 +28,7 @@
       </button>
     </div>
 
-    <div id="statWrap" class="bg-light border-bottom mainSection">
+    <div id="statWrap" class="bg-light border-bottom">
 
       <div id="itemsCount" class="">
         <div class="statSection text-center" id="institutionTot" >

@@ -12,8 +12,6 @@ let map;
 async function initializeMap() {
   try {
     showLoading(true);
-
-    // Rimuovi eventuale mappa precedente e pulisci i controlli UI per evitare duplicazioni
     if (map && map.map) {
       try { 
         map.map.off(); 
@@ -23,7 +21,6 @@ async function initializeMap() {
       }
       map = null;
     }
-    // svuota i contenitori dei controlli (se esistono)
     if (domEl.baseLayerControl) domEl.baseLayerControl.innerHTML = '';
     if (domEl.poiControl) domEl.poiControl.innerHTML = '';
     if (domEl.collectionsControl) domEl.collectionsControl.innerHTML = '';

@@ -1,4 +1,19 @@
-export const basePath = () => {return window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '/');}
+export const basePath = () => {
+  return window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '/');
+}
+export const currentPage = () => {
+  return  window.location.pathname.split('/').pop();
+}
+
+export const ENDPOINT = () => {
+  const path = window.location.pathname;
+  let root = '/';
+  if (path.includes('/prototype_dev/')) { root = '/prototype_dev/'; }
+  if (path.includes('/plus/')) { root = '/plus/'; }
+  const API = root + 'api/';
+  return `${API}endpoint_private.php`;
+};
+
 
 export function getDateString() {
   const d = new Date();

@@ -4,10 +4,23 @@ import { domEl, layerControl } from "./mapsComponent.js";
 import { toggleBaseLayer,fetchAdminBoundaries,createGeoJsonLayer, calculateMaxBoundsAndZoom } from "../helpers/mapHelper.js";
 import { groupBy, basePath, cutString } from "../helpers/utils.js";
 import { fullImage, deleteMedia } from "../helpers/artifactHelper.js";
-import { confirmAction } from "../helpers/helper.js";
+import { confirmAction, fetchApi } from "../helpers/helper.js";
 
 const L = window.L;
-google.charts.load('current', { 'packages':['corechart']});
+let googleChartsLoaded = false;
+async function loadGoogleCharts() {
+  if (googleChartsLoaded) return;
+  if (typeof google === 'undefined' || !google.charts) {
+    throw new Error('Google Charts library not available');
+  }
+  return new Promise((resolve) => {
+    google.charts.load('current', { 'packages': ['corechart'] });
+    google.charts.setOnLoadCallback(() => {
+      googleChartsLoaded = true;
+      resolve();
+    });
+  });
+}
 
 export function setStatusAlert(el, status,status_id){
   if(!el || !status || !status_id) return;
@@ -536,6 +549,7 @@ export function createMediaTab(mediaItems) {
 }
 
 export async function lineChart(id,type, container){
+  await loadGoogleCharts();
   let statData = [['chronology', 'tot']]
   const body = { class: 'Stats', action: 'typeChronologicalDistribution', id: id }
   try {
@@ -569,6 +583,7 @@ export async function lineChart(id,type, container){
 }
 
 export async function columnChart(id, type, container){
+  await loadGoogleCharts();
   let statData = [['chronology', 'tot', { role: 'style' }]]
   const body = { class: 'Stats', action: 'institutionDistribution', filter:[`a.category_class = ${id}`] }
   try {
@@ -594,6 +609,21 @@ export async function columnChart(id, type, container){
     });
   } catch (error) {
     bsAlert(`Error fetching Artifact statistics: ${error}`, 'danger');
+    return false;
+  }
+}
+
+export async function artifactList(payload={}){
+  try {
+    payload.class = 'Artifact';
+    payload.action = 'artifactList';
+    console.log(payload);
+    
+    const response = await fetchApi({ url: ENDPOINT, body: payload });
+    if (response.error === 1) throw new Error("Error fetching Artifact list");
+    return response.data;
+  } catch (error) {
+    bsAlert(`Error fetching Artifact list: ${error}`, 'danger');
     return false;
   }
 }

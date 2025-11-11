@@ -24,6 +24,10 @@ class Institution extends Conn{
     return $this->simple("select distinct c.id, c.value from list_institution_category c inner join institution i on i.category = c.id order by 2 asc;");
   }
 
+  public function institutionsList(){
+    return $this->simple("select id, name from institution order by name asc;");
+  }
+
   public function getInstitutions(array $search = null){
     $filters = [];
     $search = $search ?? [];

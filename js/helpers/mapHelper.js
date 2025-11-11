@@ -192,7 +192,11 @@ export function addInstitutionMarkers(mapElement, data, onClickCallback) {
       });
 
       if (onClickCallback && typeof onClickCallback === 'function') {
-        marker.on('click', () => onClickCallback(item));
+        if (onClickCallback.name === 'institutionPopUp') {
+          marker.bindPopup(() => onClickCallback(item));
+        } else {
+          marker.on('click', () => onClickCallback(item));
+        }
       }
       mapElement.institutionsGroup.addLayer(marker);
     }

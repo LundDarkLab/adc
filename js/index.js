@@ -71,6 +71,7 @@ domEl.toggleSpan = domEl.statToggle ? domEl.statToggle.querySelector('span') : n
 google.charts.load('current', { 'packages':['corechart']});
 
 document.addEventListener('DOMContentLoaded', function() {
+  initNav();
   const popoverElement = document.querySelector('[data-bs-toggle="popover"]');
   if (popoverElement) {   
     const popover = new bootstrap.Popover(popoverElement, {
@@ -267,13 +268,13 @@ async function interfaceSetup() {
   
   domEl.createFromFilteredBtn.style.visibility = 'hidden';
   domEl.resetCollectionBtn.style.display = 'none';
-  if(logged.value == 0){ 
-    if(domEl.itemTool) domEl.itemTool.classList.add('large');
-    if(domEl.statWrap) domEl.statWrap.classList.add('large');
-  }else{
-    if(domEl.itemTool) domEl.itemTool.classList.add(checkDevice()=='pc' ? 'small' :'large');
-    if(domEl.statWrap) domEl.statWrap.classList.add(checkDevice()=='pc' ? 'small' :'large');
-  }
+  // if(logged.value == 0){ 
+  //   if(domEl.itemTool) domEl.itemTool.classList.add('large');
+  //   if(domEl.statWrap) domEl.statWrap.classList.add('large');
+  // }else{
+  //   if(domEl.itemTool) domEl.itemTool.classList.add(checkDevice()=='pc' ? 'small' :'large');
+  //   if(domEl.statWrap) domEl.statWrap.classList.add(checkDevice()=='pc' ? 'small' :'large');
+  // }
   toggleCollectionListBtn(stateManager, showCollection, coll.setActiveCollection);
 }
 

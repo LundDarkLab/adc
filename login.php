@@ -69,7 +69,7 @@
                         <h6 class="fw-bold">We collect:</h6>
                         <ul class="list-unstyled">
                           <li><i class="mdi mdi-check text-success"></i> Name and email address</li>
-                          <li><i class="mdi mdi-check text-success"></i> Your research contributions</li>
+                          <li><i class="mdi mdi-check text-success"></i> Your contributions</li>
                           <li><i class="mdi mdi-check text-success"></i> Usage analytics (anonymized)</li>
                         </ul>
                       </div>

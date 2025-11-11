@@ -13,6 +13,11 @@ class Person extends Conn{
     $this->mail = new PHPMailer(true);
   }
 
+  public function listPositions(){
+    $sql = "select id, value from list_person_position order by value asc;";
+    return $this->simple($sql);
+  }
+
   public function addPerson(array $dati){
     try {
       $this->pdo()->beginTransaction();

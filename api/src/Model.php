@@ -302,6 +302,51 @@ class Model extends Conn{
     return $this->simple($sql);
   }
 
+  public function modelList(array $payload): array{
+    $whereClauses = [];
+    $params = [];
+    $filterMapping = [
+      'status' => 'status_id',
+      'owner' => 'owner_id', 
+      'author' => 'author_id'
+    ];
+    
+    if(!empty($payload)){
+      foreach ($payload as $key => $value) {
+        if(array_key_exists($key, $filterMapping)){
+          $column = $filterMapping[$key];
+          $whereClauses[] = "$column = :filter_$key";
+          $params["filter_$key"] = $value;
+        }
+        elseif($key === 'to_connect'){
+          $operator = $value == 1 ? "NOT" : "";
+          $whereClauses[] = "id $operator IN (SELECT model FROM artifact_model)";
+        }
+        else {
+          if(is_int($value)){
+            $whereClauses[] = "$key = :filter_$key";
+            $params["filter_$key"] = $value;
+          } else {
+            $whereClauses[] = "$key LIKE :filter_$key";
+            $params["filter_$key"] = "%$value%";
+          }
+        }
+      }
+    }
+    
+    $where = count($whereClauses) > 0 ? " WHERE ".implode(" AND ", $whereClauses) : "";
+    $sql = "SELECT id, model, description, thumbnail, author, owner, CAST(updated_at AS DATE) last_update 
+            FROM model_query_view $where ORDER BY 1 ASC";
+
+    error_log("Model SQL: " . $sql);
+    error_log("Model Params: " . json_encode($params));
+
+    $stmt = $this->pdo()->prepare($sql);
+    $stmt->execute($params);
+    return $stmt->fetchAll();
+
+  }
+
   public function saveModelParam(array $dati){
     try {
       $sql = $this->buildInsert('model_view', $dati);

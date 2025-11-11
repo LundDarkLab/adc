@@ -14,6 +14,17 @@ class User extends Conn{
     $this->person = new Person();
   }
 
+  public function roleList(){
+    return $this->simple("select id, value from list_user_role order by value asc;");
+  }
+
+  public function  usersList($filters=[]){
+    $where = isset($filters['institution']) ? " where p.institution = ".$filters['institution'] : "";
+    $sql="select u.id, concat(p.first_name, ' ', p.last_name) as name, p.institution FROM user u JOIN person p ON u.person = p.id ".$where." ORDER BY name asc;";
+    error_log("usersList query: ".$sql);
+    return $this->simple($sql);
+  }
+
   public function addUser(array $dati){
     try {
       $this->pdo()->beginTransaction();
@@ -24,7 +35,7 @@ class User extends Conn{
       unset($dati['role'],$dati['is_active']);
       
       $personSql = $this->buildInsert("person", $dati);
-      $this->prepared($personSql, $dati);
+      $this->prepared($personSql, $dati); 
       $personId = $this->pdo()->lastInsertId();
       $usr['person']=$personId;
       $userSql = $this->buildInsert("user", $usr);
@@ -49,9 +60,7 @@ class User extends Conn{
       return ["res"=>0, "output"=>$e->getMessage()];
     }
   }
-  public function addUsrFromPerson(array $dati){
-    
-  }
+  public function addUsrFromPerson(array $dati){}
 
   public function changePassword(array $dati){
     try {

@@ -1,92 +1,132 @@
-.dashboardFlex{ display: flex; flex-direction: row; flex-wrap: wrap; align-content: flex-start; justify-content: flex-start; align-items: flex-start;}
-
-#dashboardWrap{margin: 0 20px;}
-#modelDashboardGallery{position: relative; width: 100%; margin:0; padding:0; overflow: auto;}
-
-.toolbarDiv{ padding:15px 0; }
-.listWrap{position: relative; width: 100%; height: 500px; overflow: auto;}
-.listWrap a, #modelDashboardGallery .card-body, .wrapIssuesTable>table>tbody td:not(:last-child), .tableIssuesFoot {font-size:12px;}
-
-div.listDashBoard span{display:inline-block; vertical-align: top; padding:2px;}
-
-#issuesSection{width:100%; padding:20px; min-height:50px; height:auto;}
-#issuesBody{display: flex; flex-direction: row; flex-wrap: nowrap; justify-content: flex-start; align-items: flex-start;}
-#issuesBody>div{display: inline-block;}
-.wrapIssuesTable{position: relative; width: 100%; height: 300px; overflow-x: auto;}
-.tableIssuesFoot > span{display: inline-block;}
-.tableIssuesFoot > span:first-child{width: 10px; vertical-align: top;}
-.tableIssuesFoot > span:last-child{width: calc(100% - 20px); margin-left: 5px;}
-#issuesBody>div, #artifactList, #modelList{width:100%;}
-#artifactList{margin-right:1%;}
-#artifactList p{margin:0;}
-#artifactList p span:nth-child(1){width: 25%; }
-#artifactList p span:nth-child(2){width: 48%; }
-#artifactList p span:nth-child(3){width: 20%; }
-#artifactList p span:nth-child(4){width: 5%; }
-
-.toolbarDiv>div{width:100%;}
-.toolbarDiv>div{position:relative; display: inline-block;}
-.modelCardSmall{ position:relative; width:24%; margin:2px; height:50%;}
-.thumbDiv{ position:relative; width:100%; height:100px; background-position: center; background-repeat: no-repeat; background-size: contain;}
-
-/* #institutionList, #userList{width:35%; margin-right:1%} */
-#institutionList{width:59%; margin-right:1%}
-
-#institutionDasboardList a, #institutionDasboardList p{font-size:16px;}
-#institutionDasboardList .cardLogo{
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: cover;
+#dashboardWrap {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  padding:20px;
 }
 
-#userList a.disabled{margin-right:2%;}
-#userList a span{ width: 18%; }
-#userList a span:nth-child(1){width: 28%; }
-
-/* #personList{width:calc(100% - 72%);} */
-#personList{width:40%;}
-#personList li span{display:block; }
-
-#mapWrap{width:100%;}
-#map{position:relative;width: 100%; height: 500px;}
-
-@media (min-width: 576px) {
+#issuesSection, 
+#mapWrap {
+  grid-column: 1 / -1; /* Occupa entrambe le colonne */
+  overflow-y: hidden;
+}
+#issuesSection {
+  height:auto;
+  max-height: 500px;
+} 
+#issuesBody{
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+#mapWrap {
+  height: 500px;
+}
+#artifactList,
+#modelList,
+#institutionList,
+#personList {
+  height: 600px;
+  overflow-y: hidden;
 }
 
-/* Medium devices (tablets, 768px and up) */
-@media (min-width: 768px) {
+#mapWrap #map {
+  height: 100%;
+  width: 100%;
+}
+
+.dashboardSection{
+  border: 1px solid #dee2e6;
+  border-radius: 0.375rem;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  padding: 1rem;
+}
+
+#artifactList,
+#modelList{
+  display: flex;
+  flex-direction: column;
+}
+.issuesElement {
+  display: flex;
+  flex-direction: column;
+  max-height: 430px;
+}
+
+.table-wrapper {
+  overflow-y: auto;
+  flex: 1;
+}
+
+.table-wrapper table {
+  margin-bottom: 0;
+  font-size: .8rem;
+}
+
+.table-wrapper thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bs-light);
+}
+
+.mainDataTable .table {
+  width: 100%;
+}
+
+#artifactDataWrap td:nth-child(1) { width: 10%; word-break: break-word; }  /* name */
+#artifactDataWrap td:nth-child(2) { width: 40%; } /* description */
+#artifactDataWrap td:nth-child(3) { width: 20%; }  /* institution */
+#artifactDataWrap td:nth-child(4) { width: 15%; }  /* author */
+#artifactDataWrap td:nth-child(5) { width: 10%; }  /* last_update */
+#artifactDataWrap td:nth-child(6) { width: 5%; }  /* ID */
+
+#artifactDataWrap .table td {
+  max-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#artifactDataWrap .table td:hover {
+  overflow: visible;
+  white-space: normal;
+  background: white;
+  position: relative;
+  z-index: 10;
+}
+
+#modelDataWrap{
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  flex: 1;
+  font-size: .8rem;
+}
+.empty-models-message {
+  grid-column: 1 / -1; 
+  margin: 0;
+}
+
+.toolbarDiv {
+  display:flex;
+  flex-direction: row;
+  gap: 0.3rem;
+  justify-content: space-between;   
+}
+
+.toolbarDiv > div {
+  flex: 1;
+}
+/* Responsive: mobile = 1 colonna */
+@media (max-width: 768px) {
+  #dashboardWrap {  grid-template-columns: 1fr; }
   
-}
-
-/* Large devices (desktops, 992px and up) */
-@media (min-width: 992px) {
-  #issuesBody>div:nth-child(even){margin:0 5px;}
-  #issuesBody>div{width:calc(100% / 4 - 5px);}
-  #artifactList, #modelList{width:calc(99% / 2);}
-  .toolbarDiv>div:nth-child(1){width:49%;}
-  .toolbarDiv>div:nth-child(2){width:49%;}
-  /* #personList .toolbarDiv>div:nth-child(1){width:25%;}
-  #personList .toolbarDiv>div:nth-child(2){width:73%;} */
-}
-
-/* X-Large devices (large desktops, 1200px and up) */
-@media (min-width: 1200px) {
-  #issuesBody>div:nth-child(even){margin:0 5px;}
-  #issuesBody>div{width:calc(100% / 4 - 5px);}
-  #artifactList, #modelList{width:calc(99% / 2);}
-  .toolbarDiv>div:nth-child(1){width:49%;}
-  .toolbarDiv>div:nth-child(2){width:49%;}
-  /* #personList .toolbarDiv>div:nth-child(1){width:25%;}
-  #personList .toolbarDiv>div:nth-child(2){width:73%;} */
-}
-
-/* XX-Large devices (larger desktops, 1400px and up) */
-@media (min-width: 1400px) {
-  #issuesBody>div:nth-child(even){margin:0 5px;}
-  #issuesBody>div{width:calc(100% / 4 - 5px);}
-  #artifactList, #modelList{width:calc(99% / 2);}
-  .toolbarDiv>div:nth-child(1){width:49%;}
-  .toolbarDiv>div:nth-child(2){width:49%;}
-  /* #personList .toolbarDiv>div:nth-child(1){width:25%;}
-  #personList .toolbarDiv>div:nth-child(2){width:73%;} */
+  #issuesSection,
+  #artifactList,
+  #modelList,
+  #mapWrap,
+  #institutionList,
+  #personList {
+    grid-column: 1;
+  }
 }

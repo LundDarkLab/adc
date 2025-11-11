@@ -23,6 +23,7 @@ main {
   height:fit-content;
   top:115px; 
   left:0;
+  width:100%;
   padding:10px; 
   z-index:500;
   display: grid;

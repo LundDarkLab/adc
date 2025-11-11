@@ -1,2 +1,2 @@
-select * from model
-inner join artifact_model on model.id = artifact_model.model and artifact = 468;
+select id, model,description,thumbnail,author,owner,cast(updated_at as date) last_update from model_query_view  WHERE m.status_id LIKE :filter_status AND m.owner = :filter_owner AND m.author = :f
+ilter_author order by 1 asc;
