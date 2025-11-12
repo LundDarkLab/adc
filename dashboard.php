@@ -9,8 +9,8 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI=" crossorigin=""/>
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
-    <link rel="stylesheet" href="./maps/mousePosition/mousePosition.css">
-    <link rel="stylesheet" href="./maps/mapScale/mapScale.css">
+    <link rel="stylesheet" href="./js/maps/mousePosition/mousePosition.css">
+    <link rel="stylesheet" href="./js/maps/mapScale/mapScale.css">
     <link rel="stylesheet" href="css/dashboard.css">
   </head>
   <body>
