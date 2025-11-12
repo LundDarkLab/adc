@@ -15,8 +15,8 @@ function initNav(){
   const backdrop = document.getElementById("backdrop");
   const loggedValue = document.querySelector("[name=logged]").value;
   const device = checkDevice();
+  if(userMenu) {userMenu.classList.add('closed');}
   
-  userMenu.classList.add('closed');
   if(loggedValue == 0){
     switch (device) {
       case 'tablet-landscape': 
@@ -27,8 +27,8 @@ function initNav(){
       break;
       case 'pc': 
       toggleMenuBtn.style.display = 'none';
-      backdrop.remove();
-      userMenu.remove();
+      // backdrop.remove();
+      // userMenu.remove();
       break;
       default: 
       toggleMenuBtn.style.display = 'inline-block'; 
