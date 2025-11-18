@@ -2,7 +2,6 @@ api/config/
 api/vendor/
 archive/
 documentation/site/
-node_modules/
 notes/
 .vscode/
 workfile/

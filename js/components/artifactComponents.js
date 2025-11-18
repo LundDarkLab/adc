@@ -617,8 +617,6 @@ export async function artifactList(payload={}){
   try {
     payload.class = 'Artifact';
     payload.action = 'artifactList';
-    console.log(payload);
-    
     const response = await fetchApi({ url: ENDPOINT, body: payload });
     if (response.error === 1) throw new Error("Error fetching Artifact list");
     return response.data;

@@ -20,7 +20,7 @@ class Institution extends Conn{
     $this->logoFolder = $_SERVER['DOCUMENT_ROOT'] . $rootFolder . "/img/logo/";
   }
 
-  public function catList(){
+  public function categoryList(){
     return $this->simple("select distinct c.id, c.value from list_institution_category c inner join institution i on i.category = c.id order by 2 asc;");
   }
 
@@ -28,36 +28,33 @@ class Institution extends Conn{
     return $this->simple("select id, name from institution order by name asc;");
   }
 
-  public function getInstitutions(array $search = null){
-    $filters = [];
-    $search = $search ?? [];
-    $search['cat'] = isset($search['cat']) ? (int) $search['cat'] : 0;
-    array_push($filters, $search['cat'] == 0 ? 'cat.id > 0' : 'cat.id = '.$search['cat']);
-    if(isset($search['name'])){
-      $searchByName = [];
-      $string = trim($search['name']);
-      $arrString = explode(" ",$string);
-      foreach ($arrString as $value) {
-        if(strlen($value)>3){ 
-          array_push($searchByName, "i.name like '%".$value."%'"); 
-          array_push($searchByName, "i.abbreviation like '%".$value."%'"); 
-        }
-      }
-      array_push($filters, "(".join(" or ", $searchByName).")");
-    }
-    $joinFilters = join(" and ", $filters);
-    $where = "where ".$joinFilters; 
-    $sql = "SELECT i.id, i.name, i.abbreviation, cat.id as category_id, cat.value AS category, i.city, i.address, i.lat, i.lon, i.url, i.logo, COALESCE(b.tot, 0) AS artifact_count
-     FROM institution i
-     INNER JOIN list_institution_category cat ON i.category = cat.id
-     LEFT JOIN (SELECT owner, COUNT(*) AS tot FROM artifact GROUP BY owner) b ON b.owner = i.id
-     ".$where." ORDER BY i.id ASC;";
-    return $this->simple($sql);
+  public function locationList(){
+    return $this->simple("select distinct geo.`OGR_FID`, geo.gid_0, geo.name_1 `district` from institution i join gadm1 geo on ST_Within(ST_SRID(Point(i.lon, i.lat), 4326), geo.`SHAPE`) order by geo.name_1 asc;");
   }
 
-  public function getInstitution(int $id){
-    $sql="select i.id, i.is_storage_place, i.color, i.category catid, cat.value category, i.name, i.abbreviation, i.city, i.address, i.lat, i.lon, i.url, i.logo, i.uuid FROM institution i INNER JOIN list_institution_category cat ON i.category = cat.id where i.id = ".$id.";";
-    return $this->simple($sql)[0];
+  public function getInstitutions(array $payload = []): array {
+    $filters = [];
+    if (!empty($payload['filters'])) {
+      if(isset($payload['filters']['id']) && is_int($payload['filters']['id'])) {
+        $filters[] = 'i.id = '.$payload['filters']['id'];
+      } 
+      if(isset($payload['filters']['category']) && is_int($payload['filters']['category'])) {
+        $filters[] = 'i.category = '.$payload['filters']['category'];
+      }
+      if(isset($payload['filters']['location']) && is_int($payload['filters']['location'])) {
+        $filters[] = 'ST_Within(ST_SRID(Point(i.lon, i.lat), 4326), (select geo.`SHAPE` from gadm1 geo where geo.`OGR_FID` = '.$payload['filters']['location'].'))';
+      }
+      if(isset($payload['filters']['description']) && is_string($payload['filters']['description'])) {
+        $desc = trim($payload['filters']['description']);
+        $filters[] = "(i.name LIKE '%".$desc."%' OR i.abbreviation LIKE '%".$desc."%' OR i.address LIKE '%".$desc."%')";
+      }
+    }
+    $where = '';
+    if (count($filters) > 0) {
+      $where = "WHERE " . join(" AND ", $filters);
+    }
+    $sql = "SELECT i.id, i.name, i.abbreviation, cat.id as category_id, cat.value AS category, i.city, i.address, i.lat, i.lon, i.url, i.logo, COALESCE(b.tot, 0) AS artifact_count FROM institution i INNER JOIN list_institution_category cat ON i.category = cat.id LEFT JOIN (SELECT owner, COUNT(*) AS tot FROM artifact GROUP BY owner) b ON b.owner = i.id ".$where." ORDER BY i.id ASC;";
+    return $this->simple($sql);
   }
 
   public function addInstitution(array $dati, $file){

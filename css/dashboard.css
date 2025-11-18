@@ -1,27 +1,36 @@
-#dashboardWrap {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-  padding:20px;
+:root {
+  --grid: grid;
+  --fs-small: 0.8rem;
 }
 
-#issuesSection, 
+#dashboardWrap {
+  display: var(--grid);
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  padding: 20px;
+}
+
+#issuesSection,
 #mapWrap {
-  grid-column: 1 / -1; /* Occupa entrambe le colonne */
+  grid-column: 1 / -1;
   overflow-y: hidden;
 }
+
 #issuesSection {
-  height:auto;
+  height: auto;
   max-height: 500px;
-} 
-#issuesBody{
-  display: grid;
+}
+
+#issuesBody {
+  display: var(--grid);
   grid-template-columns: repeat(4, 1fr);
   gap: 1rem;
 }
+
 #mapWrap {
   height: 500px;
 }
+
 #artifactList,
 #modelList,
 #institutionList,
@@ -30,12 +39,20 @@
   overflow-y: hidden;
 }
 
+#artifactDataWrap,
+#institutionDataWrap,
+#personDataWrap {
+  height: 100%;
+  overflow-y: auto;
+  font-size: var(--fs-small);
+}
+
 #mapWrap #map {
   height: 100%;
   width: 100%;
 }
 
-.dashboardSection{
+.dashboardSection {
   border: 1px solid #dee2e6;
   border-radius: 0.375rem;
   box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
@@ -43,10 +60,13 @@
 }
 
 #artifactList,
-#modelList{
+#modelList,
+#institutionList,
+#personList {
   display: flex;
   flex-direction: column;
 }
+
 .issuesElement {
   display: flex;
   flex-direction: column;
@@ -60,7 +80,7 @@
 
 .table-wrapper table {
   margin-bottom: 0;
-  font-size: .8rem;
+  font-size: var(--fs-small);
 }
 
 .table-wrapper thead {
@@ -74,53 +94,55 @@
   width: 100%;
 }
 
-#artifactDataWrap td:nth-child(1) { width: 10%; word-break: break-word; }  /* name */
-#artifactDataWrap td:nth-child(2) { width: 40%; } /* description */
-#artifactDataWrap td:nth-child(3) { width: 20%; }  /* institution */
-#artifactDataWrap td:nth-child(4) { width: 15%; }  /* author */
-#artifactDataWrap td:nth-child(5) { width: 10%; }  /* last_update */
-#artifactDataWrap td:nth-child(6) { width: 5%; }  /* ID */
-
-#artifactDataWrap .table td {
-  max-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-#artifactDataWrap .table td:hover {
-  overflow: visible;
-  white-space: normal;
-  background: white;
-  position: relative;
-  z-index: 10;
-}
-
-#modelDataWrap{
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+#modelDataWrap, #personDataWrap {
+  display: var(--grid);
   gap: 0.5rem;
   flex: 1;
-  font-size: .8rem;
+  font-size: var(--fs-small);
 }
+#modelDataWrap{
+  grid-template-columns: repeat(2, 1fr);
+}
+#personDataWrap{
+  grid-template-columns: repeat(2, 1fr);
+}
+
 .empty-models-message {
-  grid-column: 1 / -1; 
+  grid-column: 1 / -1;
   margin: 0;
 }
 
 .toolbarDiv {
-  display:flex;
+  display: flex;
   flex-direction: row;
   gap: 0.3rem;
-  justify-content: space-between;   
+  justify-content: start;
+  padding:15px 0;
 }
 
 .toolbarDiv > div {
   flex: 1;
 }
+
+.popover {
+  max-width: 50vw;
+  width: auto;
+  word-wrap: break-word;
+  white-space: normal;
+}
+
+.cardLogo {
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
 /* Responsive: mobile = 1 colonna */
 @media (max-width: 768px) {
-  #dashboardWrap {  grid-template-columns: 1fr; }
-  
+  #dashboardWrap {
+    grid-template-columns: 1fr;
+  }
+
   #issuesSection,
   #artifactList,
   #modelList,

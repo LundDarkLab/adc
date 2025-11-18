@@ -91,3 +91,15 @@ export function bsTooltips(selector = '[data-bs-toggle="tooltip"]') {
     });
   });
 }
+
+export function bsPopovers(selector = '[data-bs-toggle="popover"]') {
+  const popoverTriggerList = [].slice.call(document.querySelectorAll(selector));
+  popoverTriggerList.forEach(function (popoverTriggerEl) {
+    new bootstrap.Popover(popoverTriggerEl, {
+      trigger: 'focus',
+      html: true,
+      container: 'body',
+      zIndex: 9999
+    });
+  });
+}

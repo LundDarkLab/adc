@@ -98,29 +98,6 @@ class Artifact extends Conn{
     }
   }
 
-  // public function getArtifacts(array $search){
-  //   $filter = [];
-  //   array_push($filter, "status_id = ".$search['status']);
-
-  //   if(isset($search['description'])){
-  //     $string = trim($search['description']);
-  //     $arrString = explode(" ",$string);
-  //     $searchArray = [];
-  //     foreach ($arrString as $value) {
-  //       if(strlen($value)>3){
-  //         array_push($searchArray, " (description like '%".$value."%' or name like '%".$value."%') ");
-  //       }
-  //     }
-  //     $searchString = "(".join(" and ", $searchArray).")";
-  //     array_push($filter,$searchString);
-  //   }
-
-  //   if($_SESSION['role'] > 4){array_push($filter, "author = ".$_SESSION['id']);}
-  //   if(count($filter) > 0 ){ $filter = "where ".join(" and ", $filter);}
-  //   $sql = "select id, name, description, cast(last_update as date) as last_update from artifact_view ".$filter. " order by last_update desc";
-  //   return $this->simple($sql);
-  // }
-
   public function artifactList(array $payload):array{
     $whereClauses = [];
     $params = [];
@@ -131,14 +108,14 @@ class Artifact extends Conn{
           $whereClauses[] = "a.".$key." = :filter_".$key;
           $params['filter_'.$key] = $value;
         } else {
-          $whereClauses[] = "a.".$key." LIKE :filter_".$key;
+          $whereClauses[] = "(a.name LIKE :filter_$key OR a.description LIKE :filter_$key)";
           $params['filter_'.$key] = '%'.$value.'%';
         }
       }
     }
     
     $where = count($whereClauses) > 0 ? " WHERE ".implode(" AND ", $whereClauses) : "";
-    $sql = "SELECT a.id, a.name, a.description, i.name AS institution, CONCAT(p.first_name, ' ', p.last_name) AS author, CAST(a.last_update AS DATE) as last_update FROM artifact a JOIN institution i ON a.owner = i.id JOIN user u ON a.author = u.id JOIN person p ON u.person = p.id ".$where." ORDER BY a.last_update DESC";
+    $sql = "SELECT a.id, a.name, a.description, a.status, i.name AS institution, CONCAT(p.first_name, ' ', p.last_name) AS author, u.id as author_id, CAST(a.last_update AS DATE) as last_update FROM artifact a JOIN institution i ON a.owner = i.id JOIN user u ON a.author = u.id JOIN person p ON u.person = p.id ".$where." ORDER BY a.last_update DESC";
     
     $stmt = $this->pdo()->prepare($sql);
     $stmt->execute($params);
@@ -150,7 +127,7 @@ class Artifact extends Conn{
     $artifact = "select * from artifact_view where id = ".$id.";";
     $out['artifact'] = $this->simple($artifact)[0];
     $out['artifact_material_technique'] = $this->getArtifactMaterial($id);
-    $out['storage_place'] = $this->institution->getInstitution($out['artifact']['storage_place']);
+    $out['storage_place'] = $this->institution->getInstitutions(["filters"=>["id"=>$out['artifact']['storage_place']]])[0];
     $out['artifact_measure'] = $this->getArtifactMeasure($id);
     $out['artifact_metadata'] = $this->getArtifactMetadata($id);
     $out['artifact_findplace'] = $this->getArtifactFindplace($id);

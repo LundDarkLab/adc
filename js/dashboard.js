@@ -1,12 +1,13 @@
-import { showLoading } from "./helpers/helper.js";
 import { initDashboard,applyFilters,map } from "./modules/dashboard.js";
 import { calculateMaxBoundsAndZoom} from "./helpers/mapHelper.js";
 document.addEventListener("DOMContentLoaded", async function() {
-  showLoading(true);
   await initDashboard();
-  calculateMaxBoundsAndZoom(map.map);
   initListeners();
-  showLoading(false);
+  const role = document.getElementById('role').value;
+  const addInstitutionBtn = document.getElementById('addInstitutionBtn');
+  if(role == 1 && addInstitutionBtn){
+    addInstitutionBtn.remove();
+  }
 });
 
 function initListeners(){
@@ -40,14 +41,16 @@ function initListeners(){
   };
   setupSelect('artifact');
   setupSelect('model');
+  setupSelect('institution');
+  setupSelect('person');
   setupSearchInput('artifact');
   setupSearchInput('model');
+  setupSearchInput('institution');
+  setupSearchInput('person');
 
   const maxZoomBtn = document.getElementById('maxZoomBtn');
   if (maxZoomBtn) {
     maxZoomBtn.addEventListener('click', (e) => {
-      console.log('map home clicked');
-      
       e.preventDefault();
       calculateMaxBoundsAndZoom(map.map);
     });

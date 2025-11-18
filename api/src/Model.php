@@ -304,21 +304,10 @@ class Model extends Conn{
 
   public function modelList(array $payload): array{
     $whereClauses = [];
-    $params = [];
-    $filterMapping = [
-      'status' => 'status_id',
-      'owner' => 'owner_id', 
-      'author' => 'author_id'
-    ];
-    
+    $params = [];    
     if(!empty($payload)){
       foreach ($payload as $key => $value) {
-        if(array_key_exists($key, $filterMapping)){
-          $column = $filterMapping[$key];
-          $whereClauses[] = "$column = :filter_$key";
-          $params["filter_$key"] = $value;
-        }
-        elseif($key === 'to_connect'){
+        if($key === 'to_connect'){
           $operator = $value == 1 ? "NOT" : "";
           $whereClauses[] = "id $operator IN (SELECT model FROM artifact_model)";
         }
@@ -335,8 +324,7 @@ class Model extends Conn{
     }
     
     $where = count($whereClauses) > 0 ? " WHERE ".implode(" AND ", $whereClauses) : "";
-    $sql = "SELECT id, model, description, thumbnail, author, owner, CAST(updated_at AS DATE) last_update 
-            FROM model_query_view $where ORDER BY 1 ASC";
+    $sql = "SELECT id, model, description, thumbnail, author, author_id, owner, owner_id, CAST(updated_at AS DATE) last_update FROM model_query_view $where ORDER BY 1 ASC";
 
     error_log("Model SQL: " . $sql);
     error_log("Model Params: " . json_encode($params));

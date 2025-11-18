@@ -14,6 +14,52 @@ export const ENDPOINT = () => {
   return `${API}endpoint_private.php`;
 };
 
+// In js/helpers/utils.js (o crea il file se non esiste)
+export function getValidatedValue(id, type = 'string') {
+  const el = document.getElementById(id);
+  if (!el) return undefined;
+
+  const rawValue = el.value.trim();
+
+  switch (type) {
+    case 'int':
+      const intVal = parseInt(rawValue, 10);
+      return isNaN(intVal) ? undefined : intVal;
+
+    case 'string':
+      return rawValue === '' ? undefined : rawValue;
+
+    case 'array':
+      if (rawValue === '') return undefined;
+      // Assume valori separati da virgola, es. "a,b,c" -> ["a", "b", "c"]
+      return rawValue.split(',').map(s => s.trim()).filter(s => s !== '');
+
+    case 'json':
+      if (rawValue === '') return undefined;
+      try {
+        return JSON.parse(rawValue);
+      } catch (e) {
+        console.warn(`Invalid JSON for element ${id}:`, e);
+        return undefined;
+      }
+
+    case 'function':
+      // Pericoloso: eval può introdurre vulnerabilità. Usa solo se necessario e valida l'input.
+      if (rawValue === '') return undefined;
+      try {
+        // Esempio: se rawValue è "x => x * 2", restituisci la funzione
+        return new Function('return ' + rawValue)();
+      } catch (e) {
+        console.warn(`Invalid function for element ${id}:`, e);
+        return undefined;
+      }
+
+    default:
+      console.warn(`Unknown type '${type}' for element ${id}`);
+      return undefined;
+  }
+}
+
 
 export function getDateString() {
   const d = new Date();
@@ -51,7 +97,15 @@ export function generateUUID() {
   });
 }
 
-export function cutString(str, len) { return str.length > len ? str.slice(0, len) + '…' : str; }
+export function cutString(str, len) { 
+  return str.length > len ? str.slice(0, len) + '…' : str; 
+}
+export function cutStringByWords(str, maxWords = 10) {
+  if (!str || typeof str !== 'string') return '';
+  const words = str.trim().split(/\s+/);
+  if (words.length <= maxWords) return str;
+  return words.slice(0, maxWords).join(' ') + '...';
+}
 
 export const groupBy = (keys, separator = '-') => array => {
   if (!Array.isArray(keys) || !Array.isArray(array)) {
