@@ -23,9 +23,7 @@ export function createBoundItem(id, name, start, end, parentElement, isLower, is
   selectBtn.title = `Select ${name} value`;
   selectBtn.dataset.from = start;
   selectBtn.dataset.to = end;
-  selectBtn.addEventListener('click', () => {
-    setTimeRange(start, end, isLower, name);
-  });
+  selectBtn.addEventListener('click', () => { setTimeRange(start, end, isLower, name); });
   item.appendChild(selectBtn);
 
   const toggleBtn = document.createElement('button');

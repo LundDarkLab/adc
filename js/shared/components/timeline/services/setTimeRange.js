@@ -1,3 +1,5 @@
+import { closeBoundsAccordions } from '../utils/toggleAccordion.js';
+
 const startInput = document.getElementById('start');
 const endInput = document.getElementById('end');
 
@@ -39,9 +41,6 @@ export function setTimeRange(from, to, isLower = null, buttonName = null) {
   if (globalTo === null || to > globalTo) {
     globalTo = to;
   }
-  
-  console.log(`from: ${from}, globalFrom: ${globalFrom}, to: ${to}, globalTo: ${globalTo}, isLower: ${isLower}, buttonName: ${buttonName}`);
-
   if(isLower === null && buttonName === null) {
     setValue(from, to);
     return;
@@ -53,13 +52,12 @@ export function setTimeRange(from, to, isLower = null, buttonName = null) {
       const icon = lowerBoundBtn.querySelector('i');
       const iconHTML = icon ? icon.outerHTML : '';
       lowerBoundBtn.innerHTML = `${buttonName} ${iconHTML}`;
-      upperBoundBtn1.innerHTML = `${buttonName} ${iconHTML}`;
+      upperBoundBtn.innerHTML = `${buttonName} ${iconHTML}`;
     }
     setValue(from, to);
     
     // Disabilita i button di upper bound che hanno 'to' minore del 'to' selezionato
     disableUpperBoundsBelow(to);
-    
   } else {
     // Upper bound: verifica che from non sia minore dello start attuale
     const currentStart = parseInt(startInput.value);
@@ -102,6 +100,7 @@ export function setTimeRange(from, to, isLower = null, buttonName = null) {
     endInput.addEventListener('blur', validateRange);
     endInput.dataset.listenerAdded = 'true';
   }
+  closeBoundsAccordions(); // Chiudi dopo aver impostato il valore
 }
 
 function disableUpperBoundsBelow(minValue) {

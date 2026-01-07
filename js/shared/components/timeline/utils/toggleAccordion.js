@@ -54,6 +54,30 @@ export function closeAllAccordions(ev) {
     }
   }
 }
+
+
+export function closeBoundsAccordions() {
+  const lowerWrap = document.getElementById('lowerBoundsWrap');
+  const upperWrap = document.getElementById('upperBoundsWrap');
+  const lowerIcon = document.getElementById('lowerBoundIcon');
+  const upperIcon = document.getElementById('upperBoundIcon');
+
+  if (lowerWrap && !lowerWrap.classList.contains('d-none')) {
+    lowerWrap.classList.add('d-none');
+    if (lowerIcon) {
+      lowerIcon.classList.remove('mdi-menu-up');
+      lowerIcon.classList.add('mdi-menu-down');
+    }
+  }
+
+  if (upperWrap && !upperWrap.classList.contains('d-none')) {
+    upperWrap.classList.add('d-none');
+    if (upperIcon) {
+      upperIcon.classList.remove('mdi-menu-up');
+      upperIcon.classList.add('mdi-menu-down');
+    }
+  }
+}
   
 export function handleCollapse(iconElement, collapseElement, parentElement=null) {
   collapseElement.addEventListener('show.bs.collapse', () => {

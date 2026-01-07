@@ -2,6 +2,7 @@ const getBasePath = () => {
   const path = window.location.pathname;
   if (path.includes('/prototype_dev/')) { return '/prototype_dev/'; }
   if (path.includes('/plus/')) { return '/plus/'; }
+  if (path.includes('/dyncollTest/')) { return '/dyncollTest/'; }
   return '/';
 };
 
