@@ -29,6 +29,7 @@ class Timeline{
       return ['error' => 1, 'message' => $th->getMessage()];
     }
   }
+
   public function updateTimelineState(array $payload):array{
     try {
       $this->pdo->beginTransaction();
@@ -121,19 +122,79 @@ class Timeline{
     }
   }
 
-  public function getTimelineList():array{
+  public function getTimelineList(array $filter):array{
     $payload = [
-      "table"=>'time_series',
-      "columns"=>['time_series.id', 'time_series.definition', 'time_series.state'],
-      "conditions"=>[],
-      "joins"=>[
-        // ['table' => 'user', 'first' => 'user.id', 'operator' => '=', 'second' => 'time_series.author'],
-        // ['table' => 'person', 'first' => 'person.id', 'operator' => '=', 'second' => 'user.person']
-      ],
-      "orderBy"=>["time_series.definition"=>'ASC']
+      "table"=>$filter['table'] ?? 'time_series',
+      "columns"=>$filter['columns'] ?? ['*'],
+      "conditions"=>$filter['conditions'] ?? [],
+      "joins"=>$filter['joins'] ?? [],
+      "orderBy"=>$filter['orderBy'] ?? [],
+      "limit"=>$filter['limit'] ?? null,
+      "offset"=>$filter['offset'] ?? null,
+      "groupBy"=>$filter['groupBy'] ?? [],
+      "having"=>$filter['having'] ?? [],
     ];
-    return $this->pdo->read($payload['table'], $payload['columns'], $payload['conditions'], $payload['joins'], $payload['orderBy']);
+    return $this->pdo->read(
+      $payload['table'], 
+      $payload['columns'], 
+      $payload['conditions'], 
+      $payload['joins'], 
+      $payload['orderBy'], 
+      $payload['limit'], 
+      $payload['offset'], 
+      $payload['groupBy'],
+      $payload['having'],
+    );
   }
+  
+  public function getTimelineBounds(array $data):array{
+    error_log("getTimelineBounds called with data: " . print_r($data, true));
+    if(!isset($data['conditions']['timeline'])) { throw new \Exception("timelineId is required"); }
+    $timeline = $data['conditions']['timeline'];
+    $res = [];
+    try {
+      $macro = $this->getTimelineList([
+        'table'=>'time_series_complete',
+        'columns'=>['macro_id', 'macro', 'MIN(start) as start', 'MAX(end) as end'],
+        'conditions'=>['timeline_id'=>$timeline],
+        'orderBy'=>['MIN(start)'=>'ASC'],
+        'groupBy'=>['macro_id', 'macro'],
+        'having'=>['MIN(start) IS NOT NULL', 'MAX(end) IS NOT NULL']
+      ]);
+      foreach ($macro as $m) {
+        $res[$m['macro_id']] = $m;
+        $generic = $this->getTimelineList([
+          'table'=>'time_series_complete',
+          'columns'=>['generic_id', 'generic', 'MIN(start) as start', 'MAX(end) as end'],
+          'conditions'=>['timeline_id'=>$timeline, 'macro_id'=>$m['macro_id']],
+          'orderBy'=>['MIN(start)'=>'ASC'],
+          'groupBy'=>['generic_id', 'generic'],
+          'having'=>['MIN(start) IS NOT NULL', 'MAX(end) IS NOT NULL']
+        ]);
+        foreach ($generic as $g) {
+          $res[$m['macro_id']][$g['generic_id']] = $g;
+          $specific = $this->getTimelineList([
+            'table'=>'time_series_complete',
+            'columns'=>['specific_id', '`specific`', '`start`', '`end`'],
+            'conditions'=>[
+              'timeline_id'=>$timeline, 
+              'macro_id'=>$m['macro_id'], 
+              'generic_id'=>$g['generic_id'],
+              'start'=>['IS NOT NULL'],
+              'end'=>['IS NOT NULL'],
+            ],
+            'orderBy'=>['start'=>'ASC'],
+          ]);
+          foreach ($specific as $s) {
+            $res[$m['macro_id']][$g['generic_id']][$s['specific_id']] = $s;
+          }
+        }
+      }
+      return $res;
+    } catch (\Throwable $th) {
+      return ['error' => 1, 'message' => $th->getMessage()];
+    }
+  } 
 
   public function getTimelineDetails(array $data):array{
     try {
@@ -206,43 +267,6 @@ class Timeline{
     ];
     return $this->pdo->read($payload['table'], $payload['columns'], $payload['conditions'], [], $payload['orderBy']);
   }
-
-  // public function fetchUserTimeline():array { return $this->fetchTimeline(['author'=> $_SESSION['id']]); }
-
-  // public function fetchTimeline(array $payload = []): array {
-  //   $timeline = [];
-  //   try {
-  //     if (!is_array($payload)) { throw new \Exception("is not an array", 1); }
-  //     $timeline['serie'] = $this->read('time_series', $payload);
-  //     $timeline['serie'] = $this->processSeries($timeline['serie']);
-  //     return $timeline;
-  //   } catch (\Throwable $th) {
-  //     return ['error' => 1, 'message' => $th->getMessage()];
-  //   }
-  // }
-
-  // private function processSeries(array $series): array {
-  //   return array_map(function ($serieItem) {
-  //     $serieItem['macro'] = $this->read("time_series_macro", ['serie' => $serieItem['id']]);
-  //     $serieItem['macro'] = $this->processMacros($serieItem['macro']);
-  //     return $serieItem;
-  //   }, $series);
-  // }
-
-  // private function processMacros(array $macros): array {
-  //   return array_map(function ($macroItem) {
-  //     $macroItem['generic'] = $this->read("time_series_generic", ['macro' => $macroItem['id']]);
-  //     $macroItem['generic'] = $this->processGenerics($macroItem['generic']);
-  //     return $macroItem;
-  //   }, $macros);
-  // }
-
-  // private function processGenerics(array $generics): array {
-  //   return array_map(function ($genericItem) {
-  //     $genericItem['specific'] = $this->read("time_series_specific", ['generic' => $genericItem['id']]);
-  //     return $genericItem;
-  //   }, $generics);
-  // }
 }
 
 ?>

@@ -27,8 +27,6 @@ function initNav(){
       break;
       case 'pc': 
       toggleMenuBtn.style.display = 'none';
-      // backdrop.remove();
-      // userMenu.remove();
       break;
       default: 
       toggleMenuBtn.style.display = 'inline-block'; 

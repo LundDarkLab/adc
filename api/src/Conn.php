@@ -109,16 +109,36 @@ class Conn {
     if (empty($table)) { throw new \Exception('Table name cannot be empty.'); }
     if (empty($columns)) { throw new \Exception('Columns cannot be empty.'); }
     $select = implode(', ', $columns);
-  
+
     $where = '';
+    $params = [];
     if (!empty($conditions)) {
-      $whereClauses = array_map(function($key){
+      $whereClauses = [];
+      foreach ($conditions as $key => $condition) {
         $placeholder = str_replace('.', '_', $key);
-        return "$key = :$placeholder";
-      }, array_keys($conditions));
+        if (is_array($condition)) {
+          if (count($condition) === 1) {
+            // Operatore unario (es. 'IS NOT NULL')
+            $operator = $condition[0];
+            $whereClauses[] = "$key $operator";
+          } else {
+            // Operatore binario con valore
+            list($value, $operator) = $condition;
+            $operator = $operator ?: '=';
+            $whereClauses[] = "$key $operator :$placeholder";
+            $params[$placeholder] = $value;
+          }
+        } else {
+          // Valore semplice con operatore default '='
+          $value = $condition;
+          $operator = '=';
+          $whereClauses[] = "$key $operator :$placeholder";
+          $params[$placeholder] = $value;
+        }
+      }
       $where = 'WHERE ' . implode(' AND ', $whereClauses);
     }
-  
+
     $join = '';
     if (!empty($joins)) {
       $join = implode(' ', array_map(function ($join) {
@@ -143,28 +163,43 @@ class Conn {
     if (!empty($groupBy)) { $group = 'GROUP BY ' . implode(', ', $groupBy); }
   
     $havingClause = '';
+    $paramsHaving = [];
     if (!empty($having)) {
-      $havingClauses = array_map(fn($key) => "$key = :having_$key", array_keys($having));
-      $havingClause = 'HAVING ' . implode(' AND ', $havingClauses);
+      $isAssociativeHaving = array_keys($having) !== range(0, count($having) - 1);
+      if ($isAssociativeHaving) {
+        // Associative array: key => value or [value, operator]
+        $havingClauses = [];
+        foreach ($having as $key => $condition) {
+          $placeholder = "having_" . str_replace('.', '_', $key);
+          if (is_array($condition)) {
+            // Se è array: [value, operator]
+            list($value, $operator) = $condition;
+            $operator = $operator ?: '='; // Default a '=' se non specificato
+          } else {
+            // Se non array: value con operator default '='
+            $value = $condition;
+            $operator = '=';
+          }
+          $havingClauses[] = "$key $operator :$placeholder";
+          $paramsHaving[$placeholder] = $value;
+        }
+        $havingClause = 'HAVING ' . implode(' AND ', $havingClauses);
+      } else {
+        // Indexed array: raw conditions
+        $havingClause = 'HAVING ' . implode(' AND ', array_map(fn($cond) => "($cond)", $having));
+      }
     }
   
     $sql = "SELECT {$select} FROM {$table} {$join} {$where} {$group} {$havingClause} {$order} {$limitSql}";
     $stmt = $this->pdo()->prepare($sql);
-    $params = array_merge(
-      array_combine(
-          array_map(fn($key) => str_replace('.', '_', $key), array_keys($conditions)),
-          array_values($conditions)
-      ),
-      array_combine(
-          array_map(fn($key) => "having_$key", array_keys($having)),
-          array_values($having)
-      )
-    );
-  
+
+    // Unisci params con quelli di having
+    $params = array_merge($params, $paramsHaving);
+
     error_log("SQL Query: $sql");
     error_log("Parameters: " . json_encode($params));
     if (!$stmt->execute($params)) { throw new \Exception('Error Processing Request: ' . implode(', ', $stmt->errorInfo())); }
-  
+
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
   }
 

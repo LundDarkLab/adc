@@ -1,4 +1,4 @@
-import { fetchApi } from "../helpers/helper.js";
+import { fetchApi } from "../shared/utils/fetch.js";
 
 export async function usersList(filters={}){
   try {
@@ -9,7 +9,7 @@ export async function usersList(filters={}){
     if(filters.institution){
       payload.institution = filters.institution;
     }
-    const response = await fetchApi({ url: ENDPOINT, body: payload });
+    const response = await fetchApi({ body: payload });
     if (response.error === 1) throw new Error("Error fetching User list");
     return response.data;
   } catch (error) {

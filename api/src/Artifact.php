@@ -16,6 +16,21 @@ class Artifact extends Conn{
     $this->institution = new Institution();
   }
 
+  public function getList(array $payload):array{
+    $sql = "select * from ".$payload['table'];
+    if(isset($payload['filters']) && count($payload['filters'])>0){
+      $where = " where ";
+      $clauses = [];
+      foreach ($payload['filters'] as $key => $value) {
+        $clauses[] = $key." = '".$value."'";
+      }
+      $where .= implode(" and ", $clauses);
+      $sql .= $where;
+    }
+    $sql .= ";";
+    return $this->simple($sql);
+  }
+
   public function deleteRecord(array $post) :array{
     try {
       //check if the record has related files

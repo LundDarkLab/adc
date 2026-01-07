@@ -1,24 +1,30 @@
 ### 251108
 # TODO
 
-#### utenti
+### generale
+- [x] Lasciare solamente CCBY e CC0 e Public domain
+- [x] associare i Credits alla pagina DARKLab (come pop up)
+- [ ] rivedere/sistemare la time line functions
+- [ ] riivedere la mail function "drafts"
+---
+### artefact
+- [x] togliere le dimensioni e lasciare il peso
+- [x] modificare la funzione  che hai suggerito  sulla pag artefatto (loro mettono solo il vero numero di inventario e il sistema calcola il resto)+ Name  cambiarlo in i"Inventory number of the original artefact"
+- [x] su description  inserire una nota espplicativa, "Provide a description of the original artefact. Do not add external material here; include interactive content such as embedded videos, references, or images in the External Links area."
+---
+### model
+- [ ] esportare  nei medatati il link alla pagina dell'artefatto come sorta di reference e i paradati-Incluso il DOI (se presente)
+- [ ] sullo spazio DOI  levere il riferimento a Zenodo, levare il badge e creare un pulsante custom per DOI
+- [ ] dentro model mettere  RED punti e poligoni e software ed eliminare encumbrance
+- [ ] rivedere menu  dei paradata
+--- 
+### utenti
 - [x] Dentro il profilo degli utenti rimuovere  "personal informations"
 - [x] lasciare solo Administrator, Author e Supervisor
 - [ ] "person.php" rivedere form e togliere sezione su "**personal information**" 
 - [x] in settings Levare  "personal information"
 - [x] pagina log in lasciare solo "your contribution", rimuovere  "research"
 --- 
-- [x] Lasciare solamente CCBY e CC0 e Public domain
-- [x] associare i Credits alla pagina DARKLab (come pop up)
-- [ ] esportare  nei medatati il link alla pagina dell'artefatto come sorta di reference e i paradati-Incluso il DOI (se presente)
-- [ ] sullo spazio DOI  levere il riferimento a Zenodo, levare il badge e creare un pulsante custom per DOI
-- [ ] togliere le dimensioni e lasciare il peso
-- [ ] modificare la funzione  che hai suggerito  sulla pag artefatto (loro mettono solo il vero numero di inventario e il sistema calcola il resto)+ Name  cambiarlo in i"Inventory number of the original artefact"
-- [ ] su description  inserire una nota espplicativa, "Provide a description of the original artefact. Do not add external material here; include interactive content such as embedded videos, references, or images in the External Links area."
-- [ ] dentro artifact mettere  RED punti e poligoni e software ed eliminare encumbrance
-- [ ] rivedere/sistemare la time line funcions
-- [ ] riivedere la mail function "drafts"
-- [ ] rivedere menu  dei paradata
 
 
 

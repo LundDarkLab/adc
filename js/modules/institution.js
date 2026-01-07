@@ -1,4 +1,4 @@
-import { fetchApi } from "../helpers/helper.js";
+import { fetchApi } from "../shared/utils/fetch.js";
 
 export async function institutionsList(){
   try {
@@ -6,7 +6,7 @@ export async function institutionsList(){
       class: 'Institution',
       action: 'institutionsList'
     };
-    const response = await fetchApi({ url: ENDPOINT, body: payload });
+    const response = await fetchApi({ body: payload });
     if (response.error === 1) throw new Error("Error fetching Institution list");
     return response.data;
   } catch (error) {
@@ -21,7 +21,7 @@ export async function institutionCategories(){
       class: 'Institution',
       action: 'categoryList'
     };
-    const response = await fetchApi({ url: ENDPOINT, body: payload });
+    const response = await fetchApi({ body: payload });
     if (response.error === 1) throw new Error("Error fetching Institution categories");
     return response.data;
   } catch (error) {
@@ -36,7 +36,7 @@ export async function institutionLocations(){
       class: 'Institution',
       action: 'locationList'
     };
-    const response = await fetchApi({ url: ENDPOINT, body: payload });
+    const response = await fetchApi({ body: payload });
     if (response.error === 1) throw new Error("Error fetching Institution locations");
     return response.data;
   } catch (error) {
@@ -52,7 +52,7 @@ export async function getInstitutions(filters={}){
       action: 'getInstitutions',
       filters: filters
     };
-    const response = await fetchApi({ url: ENDPOINT, body: payload });
+    const response = await fetchApi({ body: payload });
     if (response.error === 1) throw new Error("Error fetching Institutions with filters");
     return response.data;
   } catch (error) {

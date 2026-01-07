@@ -82,14 +82,18 @@ export function bsConfirm(message/*, onConfirm, onCancel = null*/) {
 
 export function bsTooltips(selector = '[data-bs-toggle="tooltip"]') {
   const tooltipTriggerList = [].slice.call(document.querySelectorAll(selector));
-  tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+  tooltipTriggerList.forEach(function (tooltipTriggerEl, index) {
     const trigger = tooltipTriggerEl.tagName === 'BUTTON' ? 'hover' : 'hover focus';
-    new bootstrap.Tooltip(tooltipTriggerEl, {
-      trigger: trigger,
-      html: true,
-      container: 'body',
-      zIndex: 9999
-    });
+    try{
+      new bootstrap.Tooltip(tooltipTriggerEl, {
+        trigger: trigger,
+        html: true,
+        container: 'body',
+        zIndex: 9999
+      });
+    }catch(err){
+      console.error(`Errore nell'inizializzazione del tooltip per elemento ${index}:`, err);
+    }
   });
 }
 

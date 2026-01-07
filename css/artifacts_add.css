@@ -3,17 +3,68 @@
 
 .hide{display: none;}
 
-/* #cityWrap{ position:relative; width:100%;}
-#citySuggested{ position: absolute; top:60px; left:0; width:100%; height:auto; max-height: 300px; overflow: auto; z-index:2000;} */
-
 #map{position:relative; width:100%; height:550px; border-radius: 0.375rem;z-index:10}
 
-#timeline-map ul{padding-left: 0px;}
-#timeline-map li{list-style-type: none;}
-#timeline-map .firstLevel > li > button{padding-left: 10px; font-size:15px;font-weight: bold;}
-#timeline-map .secondLevel > li > button{padding-left: 20px;font-size:13px;}
-#timeline-map .thirdLevel > li > button{padding-left: 30px;font-size:11px;}
-#timeline-map .dropdown-menu{height:auto;max-height: 400px; overflow-y: auto;}
+/**** TIMELINE SETTINGS - BOUNDS SELECTOR ****/
+#timeline-map .mb-3 { 
+  position: relative;
+}
+.boundsBtn{
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--bs-border-color) !important; 
+}
+.boundsAccordionWrap .btn-group {
+  display: block;
+  width: 100%;  
+  /* border: 1px solid var(--bs-border-color) !important;  */
+  border-radius: 0;
+}
+.boundsAccordionWrap .macroGroup{
+  background: var(--bs-gray-500);
+}
+.boundsAccordionWrap .macroGroup button{
+  color: white;
+}
+.boundsAccordionWrap .genericGroup{
+  background: var(--bs-gray-300);
+}
+.boundsAccordionWrap .btn-group .dropdown-toggle-split{
+  width:50px;
+}
+.boundsAccordionWrap .btn-group .boundsSelectBtn{
+  width: calc(100% - 50px);
+  text-align: left;
+}
+.boundsAccordionWrap button{
+  border:0;
+  border-radius: 0;
+}
+.boundsSelectBtn{
+  text-align: left;
+}
+.boundsGenericBtn{
+  padding-left: 2rem;
+}
+.boundsSpecificBtn{
+  width:100%;
+  border: 1px solid var(--bs-border-color) !important;
+  padding-left: 4rem;
+}
+
+.boundsWrap {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  z-index: 100;
+  background: white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.dropdown-toggle-split::after {
+  display: none !important;
+}
 
 @media (min-width: 992px) {
 }

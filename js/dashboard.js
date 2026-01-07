@@ -10,10 +10,20 @@ document.addEventListener("DOMContentLoaded", async function() {
   }
 });
 
+const toggleRoleSelect = (currentSelect, roleSelect) => {
+  if (!roleSelect) return; // Early return se non esiste
+  const isInactiveStatus = currentSelect.id === 'personByStatus' && currentSelect.value == 3;
+  roleSelect.disabled = isInactiveStatus;
+};
+
 function initListeners(){
   const setupSelect = (element) => {
     document.querySelectorAll(`#${element}Filters select`).forEach(select => {   
-      select.addEventListener('change', async () => { applyFilters(element); });
+      select.addEventListener('change', async (ev) => { 
+        const roleSelect = document.getElementById('personByUserClass');
+        toggleRoleSelect(ev.currentTarget, roleSelect);
+        applyFilters(element);
+      });
     });
   };
 

@@ -1,10 +1,10 @@
 # Stage 1: Build frontend assets
-FROM node:18-alpine AS frontend
-WORKDIR /app
-COPY package.json package-lock.json* ./
-RUN npm ci --only=production
-COPY . .
-RUN npm run build && ls -la dist/
+# FROM node:18-alpine AS frontend
+# WORKDIR /app
+# COPY package.json package-lock.json* ./
+# RUN npm ci --only=production
+# COPY . .
+# RUN npm run build && ls -la dist/
 
 # Stage 2: PHP/Apache
 FROM php:8.2-apache AS production
@@ -31,7 +31,7 @@ RUN cd api && composer install --no-dev --optimize-autoloader
 COPY . .
 
 # Copia gli asset buildati dal frontend stage (se esistono)
-COPY --from=frontend /app/dist ./public/dist
+# COPY --from=frontend /app/dist ./public/dist
 
 # Imposta permessi
 RUN chown -R www-data:www-data /var/www/html \

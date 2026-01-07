@@ -60,12 +60,13 @@ export async function getPersonsList(filters={}) {
         const div = document.createElement('div');
         div.classList.add('d-flex', 'justify-content-start', 'gap-2', 'mb-2');
         const label = document.createElement('strong');
-        label.style.flexBasis = '80px';
+        label.style.flexBasis = '70px';
         label.style.flexShrink = '0';
         label.textContent = `${field.label}:`;
         div.appendChild(label);
         
         const valueElement = document.createElement('span');
+        valueElement.style.width = 'calc(100% - 75px)';
         valueElement.textContent = field.value || `No ${field.label.toLowerCase()}`;
         div.appendChild(valueElement);
         cardBody.appendChild(div);
