@@ -185,7 +185,7 @@ class File extends Conn{
         error_log("Failed to delete file:" . $path . " Error: " . print_r(error_get_last(), true));
         throw new \Exception("Error: file has not been deleted", 1); 
       }
-      return ["error"=> 0, "output"=>'Ok, the image has been successfully removed.'];
+      return ["error"=> 0, "output"=>'Ok, the file has been successfully removed.'];
     } catch (\Throwable $th) {
       return ["error"=>1, "output"=>$th->getMessage()];
     }

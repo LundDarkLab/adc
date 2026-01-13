@@ -14,7 +14,7 @@
     <main>
       <div class="container">
         <input type="hidden" id="usr" value="<?php echo $_SESSION['id']; ?>">
-        <form name="newArtifactForm" enctype="multipart/form-data" method="post">
+        <form name="newArtifactForm" id="newArtifactForm" enctype="multipart/form-data" method="post">
           <fieldset>
             <legend>Main data</legend>
             <div class="row mb-3">
@@ -35,9 +35,12 @@
                 </div>
               </div>
               <div class="col-md-6">
-                <div class="wrapfield">
+                <div class="wrapfield mb-0">
                   <div class="align-top">
-                    <label for="category_class" class="fw-bold text-danger">Category class</label>
+                    <label for="category_class" class="fw-bold text-danger">
+                      <i class="mdi mdi mdi-information-slab-circle-outline" data-bs-toggle="tooltip" title="selecting a category class the category specifications will be filtered accordingly"></i>
+                      Category class
+                    </label>
                     <select class="form-select" id="category_class" data-table="artifact" required>
                       <option value="" selected disabled>-- select value --</option>
                     </select>
@@ -47,7 +50,8 @@
                     <select class="form-select" id="category_specs" data-table="artifact" value="" disabled></select>
                   </div>
                 </div>
-                <div class="wrapfield">
+                <small class="d-block text-form text-danger d-none" id="noSpecsMessage">No specifications options available for the selected category class.</small>
+                <div class="wrapfield mt-3">
                   <label for="type">Typology</label>
                   <input type="text" class="form-control" id="type" data-table="artifact" value="">
                 </div>
@@ -153,8 +157,6 @@
                   <input class="form-check-input" type="checkbox" role="switch" id="is_museum_copy" data-table="artifact">
                   <label class="form-check-label" for="is_museum_copy">No</label>
                 </div>
-                <!-- <input type="checkbox" class="btn-check" id="is_museum_copy" autocomplete="off">
-                <label class="btn btn-outline-success d-block" for="is_museum_copy">No</label> -->
               </div>
             </div>
           </fieldset>
@@ -164,7 +166,9 @@
               <div class="col-md-3">
                 <div id="gid_0_container" class="mb-3">
                   <label for="gid_0" class="text-danger fw-bold">Country boundaries</label>
-                  <select id="gid_0" data-table="artifact_findplace" class="form-select gadm" required></select>
+                  <select id="gid_0" data-table="artifact_findplace" class="form-select gadm" required>
+                    <option value="" selected disabled>-- select a value --</option>
+                  </select>
                 </div>
                 <div id="gid_1_container" class="mb-3 hide">
                   <label for="gid_1">Provinces and equivalent</label>
@@ -214,9 +218,10 @@
               <div class="col-md-9">
                 <div id="map">
                   <div class="alert alert-warning" id="mapAlert">To put a marker on map you have to zoom in</div>
-                  <div id="resetMapDiv">
-                    <button type="button" class="btn btn-sm btn-light" data-bs-toggle="tooltip" title="remove all elements from map, reset field value and restore the initial zoom extent" name="resetMap">reset map value</button>
-                  </div>
+                  <div id="baseLayerControl" class="leaflet-bar"></div>
+                </div>
+                <div class="mt-2" id="resetMapValueWrap">
+                  <button type="button" id="resetMapValueBtn" class="btn btn-outline-secondary"> <i class="mdi mdi-map-marker-remove-variant"></i> Reset Map Value</button>
                 </div>
               </div>
             </div>

@@ -1,6 +1,9 @@
 import { artifactList } from "../artifactComponents.js";
 import { cutStringByWords } from '../../helpers/utils.js';
 import { bsPopovers } from '../bsComponents.js';
+import { confirmAction } from "../../helpers/helper.js";
+import { deleteArtifact } from "../../features/artifact/api/deleteArtifact.js";
+import { bsAlert } from "../../components/bsComponents.js";
 
 const user = document.getElementById('user').value;
 const role = document.getElementById('role').value;
@@ -95,14 +98,34 @@ export async function getArtifacts(filters={}){
       const deleteBtn = document.createElement('button');
       deleteBtn.classList.add('btn', 'btn-sm', 'btn-danger', 'ms-2');
       deleteBtn.textContent = 'Delete';
-      deleteBtn.addEventListener('click', () => {
-        if (confirm(`Are you sure you want to delete the artifact "${artifact.name}"? This action cannot be undone.`)) {
-          deleteArtifact(artifact.id).then(() => {
-            getArtifacts(filters);
-          }).catch(err => {
-            alert('Error deleting artifact: ' + err.message);
-          });
-        }
+      deleteBtn.addEventListener('click', async () => {
+        await confirmAction(
+          `Are you sure you want to delete the artifact "${artifact.name}"? This action cannot be undone.`, 
+          async () => {
+            try {
+              const response = await deleteArtifact(artifact.id);
+              if (response.error === 1) {
+                bsAlert(response.message, 'danger');
+              } else {
+                bsAlert(
+                  response.data.message, 
+                  'success', 
+                  3000, 
+                  () => { getArtifacts(filters); }
+                );
+              }
+            } catch (err) {
+              bsAlert('Error deleting artifact: ' + err.message, 'danger');
+            }
+          }
+        );
+        // if (confirm(`Are you sure you want to delete the artifact "${artifact.name}"? This action cannot be undone.`)) {
+        //   deleteArtifact(artifact.id).then(() => {
+        //     getArtifacts(filters);
+        //   }).catch(err => {
+        //     alert('Error deleting artifact: ' + err.message);
+        //   });
+        // }
       });
       cardFooter.appendChild(deleteBtn);
     }

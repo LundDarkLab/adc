@@ -1,5 +1,11 @@
+/**
+ * Displays a Bootstrap toast alert with a message, type, delay, and optional callback.
+ * @param {string} message - The message to display in the toast.
+ * @param {string} type - The Bootstrap alert type (e.g., 'success', 'danger', 'warning').
+ * @param {number} [delay=2000] - The delay in milliseconds before the toast auto-hides.
+ * @param {function} [callback=null] - Optional callback function to execute after the toast is hidden.
+ */
 export function bsAlert(message, type, delay = 2000, callback = null) {
-  // Crea il container se non esiste
   let toastContainer = document.getElementById("toast-container");
   if (!toastContainer) {
     toastContainer = document.createElement("div");
@@ -32,9 +38,14 @@ export function bsAlert(message, type, delay = 2000, callback = null) {
   });
 }
 
+/**
+ * Displays a Bootstrap confirmation modal with a message and returns a Promise that resolves to true (confirm) or false (cancel/close).
+ * @param {string} message - The message to display in the modal body.
+ * @returns {Promise<boolean>} A Promise that resolves to true if confirmed, false if canceled or closed.
+ */
 export function bsConfirm(message/*, onConfirm, onCancel = null*/) {
-  return new Promise((resolve) => {
-    let modalContainer = document.getElementById("modal-container");
+    return new Promise((resolve) => {
+        let modalContainer = document.getElementById("modal-container");
     if (!modalContainer) {
       modalContainer = document.createElement("div");
       modalContainer.id = "modal-container";
@@ -80,6 +91,10 @@ export function bsConfirm(message/*, onConfirm, onCancel = null*/) {
   });
 }
 
+/**
+ * Initializes Bootstrap tooltips on elements matching the selector.
+ * @param {string} [selector='[data-bs-toggle="tooltip"]'] - The CSS selector for tooltip elements.
+ */
 export function bsTooltips(selector = '[data-bs-toggle="tooltip"]') {
   const tooltipTriggerList = [].slice.call(document.querySelectorAll(selector));
   tooltipTriggerList.forEach(function (tooltipTriggerEl) {
@@ -94,6 +109,10 @@ export function bsTooltips(selector = '[data-bs-toggle="tooltip"]') {
 }
 
 
+/**
+ * Initializes Bootstrap popovers on elements matching the selector.
+ * @param {string} [selector='[data-bs-toggle="popover"]'] - The CSS selector for popover elements.
+ */
 export function bsPopovers(selector = '[data-bs-toggle="popover"]') {
   const popoverTriggerList = [].slice.call(document.querySelectorAll(selector));
   popoverTriggerList.forEach(function (popoverTriggerEl) {
@@ -102,6 +121,87 @@ export function bsPopovers(selector = '[data-bs-toggle="popover"]') {
       html: true,
       container: 'body',
       zIndex: 9999
+    });
+  });
+}
+
+
+
+/**
+ * Creates a customizable Bootstrap modal with title, body, buttons, and options.
+ * @param {object} options - The options for the modal.
+ * @param {string} [options.title='Modal Title'] - The title of the modal.
+ * @param {string} [options.body='Modal body text.'] - The body content of the modal.
+ * @param {array} [options.buttons=[{ text: 'Close', class: 'btn-secondary', action: 'close' }]] - Array of button objects with text, class, and action.
+ * @param {string} [options.size=''] - The size class for the modal (e.g., 'modal-lg').
+ * @param {boolean|string} [options.backdrop=true] - Backdrop option ('static' for static, false for none, true for default).
+ * @param {boolean} [options.keyboard=true] - Whether the modal can be closed with the keyboard.
+ * @returns {Promise<string>} A Promise that resolves with the action of the clicked button or 'closed' if dismissed.
+ */
+export function bsModal(options = {}) {
+  const {
+    title = 'Modal Title',
+    body = 'Modal body text.',
+    buttons = [
+      { text: 'Close', class: 'btn-secondary', action: 'close' }
+    ],
+    size = '', // e.g., 'modal-lg', 'modal-sm'
+    backdrop = true,
+    keyboard = true
+  } = options;
+
+  return new Promise((resolve) => {
+    let modalContainer = document.getElementById("modal-container");
+    if (!modalContainer) {
+      modalContainer = document.createElement("div");
+      modalContainer.id = "modal-container";
+      document.body.appendChild(modalContainer);
+    }
+
+    const modalId = `modal-${Date.now()}`;
+    const sizeClass = size ? ` ${size}` : '';
+    const backdropAttr = backdrop === 'static' ? 'data-bs-backdrop="static"' : backdrop ? '' : 'data-bs-backdrop="false"';
+    const keyboardAttr = keyboard ? '' : 'data-bs-keyboard="false"';
+
+    const buttonsHTML = buttons.map((btn, index) => {
+      const btnId = `${modalId}-btn-${index}`;
+      return `<button type="button" class="btn ${btn.class}" id="${btnId}">${btn.text}</button>`;
+    }).join('');
+
+    const modalHTML = `
+      <div class="modal fade" id="${modalId}" ${backdropAttr} ${keyboardAttr} tabindex="-1" aria-labelledby="${modalId}-label" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered${sizeClass}">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="${modalId}-label">${title}</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">${body}</div>
+            <div class="modal-footer">
+              ${buttonsHTML}
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    modalContainer.innerHTML = modalHTML;
+
+    const modalElement = document.getElementById(modalId);
+    const modalInstance = new bootstrap.Modal(modalElement);
+    modalInstance.show();
+
+    modalElement.addEventListener("hidden.bs.modal", () => {
+      modalElement.remove();
+      resolve('closed');
+    });
+
+    buttons.forEach((btn, index) => {
+      const btnElement = document.getElementById(`${modalId}-btn-${index}`);
+      btnElement.addEventListener("click", () => {
+        modalInstance.hide();
+        resolve(btn.action || btn.text);
+      });
     });
   });
 }

@@ -68,8 +68,37 @@ class Geom extends Conn{
       $nextLevel = $payload['gid'] == 5 ? $payload['gid'] : ($payload['gid'] + 1);
       $sql = "select gid_".$nextLevel." gid, name_".$nextLevel." as name from gadm".$nextLevel." where gid_".$payload['gid']." = '".$payload['filter']."' order by 2 asc;";
     }
-    return ["query"=>$sql,"items"=>$this->simple($sql)];
+    // return ["query"=>$sql, "gid" => $payload['gid'], "items"=>$this->simple($sql)];
+    return $this->simple($sql);
   }
+
+  public function getSimpleBoundary(array $payload): array {
+  try {
+    $level = $payload['level'] ?? 0;
+    $gid = $payload['gid'] ?? null;
+    
+    if ($gid === null) {
+      return ['success' => false, 'message' => 'gid parameter is required'];
+    }
+    
+    $tolerances = [0 => 3000, 1 => 100, 2 => 80, 3 => 60, 4 => 40, 5 => 20];
+    $tolerance = $tolerances[$level] ?? 20;
+    
+    $fields = "gid_$level as gid";
+    $fields .= $level == 0 ? ", country as name" : ", name_$level as name";
+    $geom = "ST_AsGeoJSON(ST_Transform(ST_Simplify(ST_Transform(SHAPE, 3857), $tolerance), 4326)) as geom";
+    
+    $sql = "SELECT $fields, $geom FROM gadm$level WHERE gid_$level = '$gid';";
+    
+    error_log("getSimpleBoundary SQL: $sql");
+    
+    $result = $this->simple($sql);
+    
+    return ['success' => true, 'items' => $result];
+  } catch (\Throwable $th) {
+    return ['success' => false, 'error' => $th->getMessage()];
+  }
+}
 
   public function getBoundaries(array $payload): array {
     $start = microtime(true);
@@ -103,7 +132,7 @@ class Geom extends Conn{
       $end = microtime(true);
       error_log("level: $level, tolerance: $tolerance");
       error_log("getBoundaries query time: " . ($end - $start) . " seconds for level " . $level);
-      return ["query"=>$sql,"items"=>$result];
+      return ["items"=>$result];
     } catch (\Throwable $th) {
       return ["error" => "API Error: " . $th->getMessage(), "sql" => $sql];
     }
@@ -177,30 +206,60 @@ class Geom extends Conn{
     return ["query"=>$sql,"items"=>$items];
   }
 
-  public function reverseGeoLocation(array $ll){
-    $out = [];
-    $condition = "where st_contains(`SHAPE`, ST_SRID(ST_GeomFromText('POINT(".$ll[0]." ".$ll[1].")'), 4326))";
-    $levels = [
-      5 => "gid_0, gid_1, gid_2, gid_3, gid_4, gid_5, country, name_1, name_2, name_3, name_4, name_5",
-      4 => "gid_0, gid_1, gid_2, gid_3, gid_4, country, name_1, name_2, name_3, name_4",
-      3 => "gid_0, gid_1, gid_2, gid_3, country, name_1, name_2, name_3",
-      2 => "gid_0, gid_1, gid_2, country, name_1, name_2",
-      1 => "gid_0, gid_1, country, name_1"
-    ];
-
-    foreach ($levels as $level => $fields) {
-      $sql = "select $fields from gadm$level $condition order by country, name_1 asc;";
-      $data = $this->simple($sql);
-      if (!empty($data)) {
-        $geo = "select gid_$level, name_$level, st_asgeojson(`SHAPE`) as geom from gadm$level $condition;";
-        $out['data'] = $data[0];
-        $out["geoJson"] = $this->simple($geo)[0];
-        $out['query'] = $sql;
-        $out['geoQuery'] = $geo;
-        return $out;
+  public function reverseGeoLocation(array $payload): array {
+    try {
+      // Validazione input
+      if (!isset($payload['ll']) || !is_array($payload['ll']) || count($payload['ll']) < 2) {
+        return ['success' => false, 'error' => 'Invalid coordinates format'];
       }
+      
+      $ll = $payload['ll'];
+      $lat = (float)$ll[0];
+      $lng = (float)$ll[1];
+      
+      // Validazione range coordinate
+      if ($lat < -90 || $lat > 90 || $lng < -180 || $lng > 180) {
+        return ['success' => false, 'error' => 'Coordinates out of range'];
+      }
+      
+      error_log("Reverse GeoLocation: lat=$lat, lng=$lng");
+      
+      // Usa prepared statement per sicurezza
+      $point = "ST_SRID(ST_GeomFromText('POINT($lng $lat)'), 4326)";
+      $condition = "WHERE ST_Contains(`SHAPE`, $point)";
+      
+      $levels = [
+        5 => "gid_0, gid_1, gid_2, gid_3, gid_4, gid_5, country, name_1, name_2, name_3, name_4, name_5",
+        4 => "gid_0, gid_1, gid_2, gid_3, gid_4, country, name_1, name_2, name_3, name_4",
+        3 => "gid_0, gid_1, gid_2, gid_3, country, name_1, name_2, name_3",
+        2 => "gid_0, gid_1, gid_2, country, name_1, name_2",
+        1 => "gid_0, gid_1, country, name_1"
+      ];
+
+      foreach ($levels as $level => $fields) {
+        $sql = "SELECT $fields FROM gadm$level $condition LIMIT 1;";
+        $data = $this->simple($sql);
+        
+        if (!empty($data)) {
+          $geo = "SELECT gid_$level, name_$level, ST_AsGeoJSON(`SHAPE`) AS geom FROM gadm$level $condition LIMIT 1;";
+          $geoData = $this->simple($geo);
+          
+          return [
+            'success' => true,
+            'level' => $level,
+            'data' => $data[0],
+            'geoJson' => $geoData[0] ?? null,
+            'coordinates' => ['lat' => $lat, 'lng' => $lng]
+          ];
+        }
+      }
+      
+      return ['success' => true, 'found' => false, 'message' => 'No administrative area found for these coordinates'];
+      
+    } catch (\Throwable $th) {
+      error_log("Reverse GeoLocation error: " . $th->getMessage());
+      return ['success' => false, 'error' => $th->getMessage()];
     }
-    return ["res"=>0];
   }
 }
 ?>

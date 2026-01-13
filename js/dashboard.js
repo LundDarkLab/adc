@@ -1,5 +1,6 @@
 import { initDashboard,applyFilters,map } from "./modules/dashboard.js";
 import { calculateMaxBoundsAndZoom} from "./helpers/mapHelper.js";
+
 document.addEventListener("DOMContentLoaded", async function() {
   await initDashboard();
   initListeners();

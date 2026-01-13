@@ -16,6 +16,124 @@ class Artifact extends Conn{
     $this->institution = new Institution();
   }
 
+  // CRUD Operations ///////////////////////////////////////////////////////
+  public function addArtifact(array $dati){
+    try {
+      $this->pdo()->beginTransaction();
+      $institutionId = $dati['artifact']['storage_place'];
+      $institution = $this->simple("SELECT abbreviation FROM institution WHERE id = $institutionId")[0];
+
+      $sql = $this->buildInsert("artifact", $dati['artifact']);
+      $this->prepared($sql, $dati['artifact']);
+      $lastId = $this->pdo()->lastInsertId();
+
+      $name = "dc{$lastId}_{$institution['abbreviation']}_{$dati['artifact']['inventory']}";
+      $updateNameSql = "UPDATE artifact SET name = :name WHERE id = :id";
+      $stmt = $this->pdo()->prepare($updateNameSql);
+      $stmt->execute(['name' => $name, 'id' => $lastId]);
+
+      foreach ($dati['artifact_material_technique'] as $key => $value) {
+        $data = array("artifact"=>$lastId, "material"=>$value['m'], "technique" =>$value['t']);
+        $sql = $this->buildInsert("artifact_material_technique", $data);
+        $this->prepared($sql, $data);
+      }
+
+      $dati['artifact_findplace']['artifact'] = $lastId;
+      $sql = $this->buildInsert("artifact_findplace", $dati['artifact_findplace']);
+      $this->prepared($sql, $dati['artifact_findplace']);
+
+      $this->pdo()->commit();
+      return ["error"=> 0, "message"=>'Ok, the artifact has been successfully created.', "id"=>$lastId];
+    } catch (\Exception $e) {
+      $this->pdo()->rollBack();
+      return ["error"=>1, "message"=>$e->getMessage()];
+    }
+  }
+
+  public function editArtifact(array $dati){
+    $filter = $dati['artifact']['artifact'];
+    unset($dati['artifact']['artifact']);
+    try {
+      $this->pdo()->beginTransaction();
+      $artifactUpdateSql = $this->buildUpdate('artifact',['id'=>$filter],$dati['artifact']);
+      $this->prepared($artifactUpdateSql, $dati['artifact']);
+      
+      $findPlaceUpdateSql = $this->buildUpdate('artifact_findplace',['artifact'=>$filter],$dati['artifact_findplace']);
+      $this->prepared($findPlaceUpdateSql, $dati['artifact_findplace']);
+      
+      $deleteMaterialSql = $this->buildDelete('artifact_material_technique',array("artifact"=>$filter));
+      $this->simple($deleteMaterialSql);
+
+      foreach ($dati['artifact_material_technique'] as $value) {
+        $data = array("artifact"=>$filter, "material"=>$value['m'], "technique" =>$value['t']);
+        $sql = $this->buildInsert("artifact_material_technique", $data);
+        $this->prepared($sql, $data);
+      }
+      $this->pdo()->commit();
+      return ["res"=> 1, "output"=>'Ok, the artifact has been successfully updated.'];
+    } catch (\Exception $e) {
+      $this->pdo()->rollBack();
+      return ["res"=>0, "output"=>$e->getMessage()];
+    }
+  }
+
+  public function getArtifact(array $payload){
+    $id = $payload['id'];
+    $artifact = "select * from artifact_view where id = ".$id.";";
+    $out['artifact'] = $this->simple($artifact)[0];
+    $out['artifact_material_technique'] = $this->getArtifactMaterial($id);
+    $out['storage_place'] = $this->institution->getInstitutions(["filters"=>["id"=>$out['artifact']['storage_place']]])[0];
+    $out['artifact_measure'] = $this->getArtifactMeasure($id);
+    $out['artifact_metadata'] = $this->getArtifactMetadata($id);
+    $out['artifact_findplace'] = $this->getArtifactFindplace($id);
+    $modelId = $this->getModelId($id);
+    if(count($modelId) > 0){$out['model'] = $this->model->getModel($modelId[0]['model']);}
+    $media = $this->files->getMedia($id);
+    if(count($media)>0){$out['media'] = $media;}
+
+    if($out['artifact']['timeline'] && $out['artifact']['timeline'] !== null){
+      $timeline = $this->simple("select definition from time_series where id = ".$out['artifact']['timeline'].";")[0];
+      $out['crono']['timeline'] = $timeline['definition'];
+      if (isset($out['artifact']['start']) && $out['artifact']['start'] !== null){
+        $out['crono']['start'] = $this->getChrono($out['artifact']['timeline'],$out['artifact']['start']);
+      }
+      if (isset($out['artifact']['end']) && $out['artifact']['end'] !== null){
+        $out['crono']['end'] = $this->getChrono($out['artifact']['timeline'],$out['artifact']['end']);
+      }
+    }
+    return $out;
+  }
+
+  public function deleteArtifact(array $payload){
+    try {
+      $this->pdo()->beginTransaction();
+      $id = $payload['id'];
+
+      //check files related to the artifact
+      $sql = "select id, type, path from files where artifact = ".$id." and path is not null;";
+      $files = $this->simple($sql);
+      //delete all related files
+      if(count($files) > 0){
+        foreach ($files as $file) {
+          $folder = $file['type'] == 'image' ? $this->files->imageDir : $this->files->documentDir;
+          $path = $folder.$file['path'];
+          $this->files->deleteFile($path);
+        }
+        //delete file records from db
+        $this->delete("files",["artifact"=>$id]);
+      }
+      // delete artifact record
+      $this->delete("artifact",["id"=>$id]);
+      
+      $this->pdo()->commit();
+      return ["error"=> 0, "message"=>'Ok, the artifact has been successfully deleted.'];
+    } catch (\Exception $e) {
+      $this->pdo()->rollBack();
+      return ["error"=>1, "message"=>$e->getMessage()];
+    }
+  }
+  /////////////////////////////////////////////////////////
+
   public function getList(array $payload):array{
     $sql = "select * from ".$payload['table'];
     if(isset($payload['filters']) && count($payload['filters'])>0){
@@ -61,57 +179,8 @@ class Artifact extends Conn{
     return ["query"=>$sql,"items"=>$this->simple($sql), "data"=>$dati];
   }
 
-  public function addArtifact(array $dati){
-    try {
-      $this->pdo()->beginTransaction();
-      $sql = $this->buildInsert("artifact", $dati['artifact']);
-      $this->prepared($sql, $dati['artifact']);
-      $lastId = $this->pdo()->lastInsertId();
 
-      foreach ($dati['artifact_material_technique'] as $key => $value) {
-        $data = array("artifact"=>$lastId, "material"=>$value['m'], "technique" =>$value['t']);
-        $sql = $this->buildInsert("artifact_material_technique", $data);
-        $this->prepared($sql, $data);
-      }
-
-      $dati['artifact_findplace']['artifact'] = $lastId;
-      $sql = $this->buildInsert("artifact_findplace", $dati['artifact_findplace']);
-      $this->prepared($sql, $dati['artifact_findplace']);
-
-      $this->pdo()->commit();
-      return ["res"=> 1, "output"=>'Ok, the artifact has been successfully created.', "id"=>$lastId];
-    } catch (\Exception $e) {
-      $this->pdo()->rollBack();
-      return ["res"=>0, "output"=>$e->getMessage()];
-    }
-  }
-
-  public function editArtifact(array $dati){
-    $filter = $dati['artifact']['artifact'];
-    unset($dati['artifact']['artifact']);
-    try {
-      $this->pdo()->beginTransaction();
-      $artifactUpdateSql = $this->buildUpdate('artifact',['id'=>$filter],$dati['artifact']);
-      $this->prepared($artifactUpdateSql, $dati['artifact']);
-      
-      $findPlaceUpdateSql = $this->buildUpdate('artifact_findplace',['artifact'=>$filter],$dati['artifact_findplace']);
-      $this->prepared($findPlaceUpdateSql, $dati['artifact_findplace']);
-      
-      $deleteMaterialSql = $this->buildDelete('artifact_material_technique',array("artifact"=>$filter));
-      $this->simple($deleteMaterialSql);
-
-      foreach ($dati['artifact_material_technique'] as $value) {
-        $data = array("artifact"=>$filter, "material"=>$value['m'], "technique" =>$value['t']);
-        $sql = $this->buildInsert("artifact_material_technique", $data);
-        $this->prepared($sql, $data);
-      }
-      $this->pdo()->commit();
-      return ["res"=> 1, "output"=>'Ok, the artifact has been successfully updated.'];
-    } catch (\Exception $e) {
-      $this->pdo()->rollBack();
-      return ["res"=>0, "output"=>$e->getMessage()];
-    }
-  }
+  
 
   public function artifactList(array $payload):array{
     $whereClauses = [];
@@ -137,32 +206,7 @@ class Artifact extends Conn{
     return $stmt->fetchAll();
   }
 
-  public function getArtifact(array $payload){
-    $id = $payload['id'];
-    $artifact = "select * from artifact_view where id = ".$id.";";
-    $out['artifact'] = $this->simple($artifact)[0];
-    $out['artifact_material_technique'] = $this->getArtifactMaterial($id);
-    $out['storage_place'] = $this->institution->getInstitutions(["filters"=>["id"=>$out['artifact']['storage_place']]])[0];
-    $out['artifact_measure'] = $this->getArtifactMeasure($id);
-    $out['artifact_metadata'] = $this->getArtifactMetadata($id);
-    $out['artifact_findplace'] = $this->getArtifactFindplace($id);
-    $modelId = $this->getModelId($id);
-    if(count($modelId) > 0){$out['model'] = $this->model->getModel($modelId[0]['model']);}
-    $media = $this->files->getMedia($id);
-    if(count($media)>0){$out['media'] = $media;}
-
-    if($out['artifact']['timeline'] && $out['artifact']['timeline'] !== null){
-      $timeline = $this->simple("select definition from time_series where id = ".$out['artifact']['timeline'].";")[0];
-      $out['crono']['timeline'] = $timeline['definition'];
-      if (isset($out['artifact']['start']) && $out['artifact']['start'] !== null){
-        $out['crono']['start'] = $this->getChrono($out['artifact']['timeline'],$out['artifact']['start']);
-      }
-      if (isset($out['artifact']['end']) && $out['artifact']['end'] !== null){
-        $out['crono']['end'] = $this->getChrono($out['artifact']['timeline'],$out['artifact']['end']);
-      }
-    }
-    return $out;
-  }
+  
 
   private function getChrono(int $timeline, int $year){
     return $this->simple("select m.definition as macro, g.definition as generic, s.definition as spec from time_series_macro m inner join time_series_generic g on g.macro = m.id inner join time_series_specific s on s.generic = g.id where m.serie = ".$timeline." and (".$year." between s.start and s.end)")[0];

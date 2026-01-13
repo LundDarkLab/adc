@@ -12,7 +12,6 @@ export const bootstrap = {
   cssCrossOrigin: 'anonymous'
 }
 export const mdi = {
-  // cssHref: 'https://cdn.jsdelivr.net/npm/@mdi/font@7.2.96/css/materialdesignicons.min.css',
   cssHref: 'https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css',
   cssIntegrity: '',
   cssCrossOrigin: ''
@@ -24,4 +23,20 @@ export const leaflet = {
   cssHref: 'https://unpkg.com/leaflet@1.9.3/dist/leaflet.css',
   cssIntegrity: 'sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI=',
   cssCrossOrigin: 'anonymous'
+}
+export const leafletMapScale = {
+  jsSrc: '/js/maps/mapScale/mapScale.js',
+  jsIntegrity: '',
+  jsCrossOrigin: '',
+  cssHref: '/js/maps/mapScale/mapScale.css',
+  cssIntegrity: '',
+  cssCrossOrigin: ''
+}
+export const leafletMousePosition = {
+  jsSrc: '/js/maps/mousePosition/mousePosition.js',
+  jsIntegrity: '',
+  jsCrossOrigin: '',
+  cssHref: '/js/maps/mousePosition/mousePosition.css',
+  cssIntegrity: '',
+  cssCrossOrigin: ''
 }

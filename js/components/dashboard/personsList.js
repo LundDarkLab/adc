@@ -4,7 +4,6 @@ export async function getPersonsList(filters={}) {
   const personDataWrap = document.getElementById('personDataWrap');
   const personStatusCount = document.getElementById('personStatusCount');
   const list = await getPersons(filters);
-  console.log(list);
   personDataWrap.innerHTML='';
   personStatusCount.textContent = list.length;
 

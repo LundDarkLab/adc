@@ -19,8 +19,6 @@ export async function getModels(filters={}){
     modelDataWrap.appendChild(emptyMessage);
     return;
   }
-  console.log(models[0]);
-  
   models.forEach(model => {
     const card = document.createElement('div');
     card.classList.add('card');

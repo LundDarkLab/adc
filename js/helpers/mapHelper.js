@@ -1,3 +1,4 @@
+import { fetchApi } from "../shared/utils/fetch.js";
 import { bsAlert } from "../components/bsComponents.js";
 import { collectionState } from "../modules/collectionStorage.js";
 import mapsConfig from "./mapsConfig.js";
@@ -201,6 +202,22 @@ export function addInstitutionMarkers(mapElement, data, onClickCallback) {
       mapElement.institutionsGroup.addLayer(marker);
     }
   });
+}
+
+export async function getSimpleBoundary(level, gid){
+  try {
+    const payload = { 
+      class: 'Geom', 
+      action: 'getSimpleBoundary', 
+      level: level, 
+      gid: gid 
+    };
+    const result = await fetchApi({ body: payload });
+    return result;
+  } catch (error) {
+    bsAlert(`Error loading simple boundary for level ${level} gid ${gid}: ` + error.message, 'danger', 5000);
+    console.error(`Error loading simple boundary for level ${level} gid ${gid}:`, error);
+  }
 }
 
 export async function getAvailableLevels(levels) {

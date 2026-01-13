@@ -35,11 +35,13 @@ export async function artifactSelect(){
   
   const author = await usersList();
   const storage_place = await institutionsList();
+  const adminLevels = await adminLevelOptions(0, {}, null);
   
   // output.push({timeline:timeline});
   output.push({author:author});
   output.push({storage_place:storage_place});
   output.push({owner:storage_place});
+  output.push({gid_0:adminLevels});
   return output;
 
 }
@@ -53,10 +55,27 @@ export async function handleCategorySpecOptions(cat){
       filters: {category_class: cat}
     };
     const response = await fetchApi({ body: payload });
-    if (response.error === 1) throw new Error(`Error fetching Artifact select list: ${item.list}`);
+    if (response.error === 1) throw new Error(`Error fetching category list`);
       return response.data;
     } catch (error) {
-      bsAlert(`artifactSelect error for list ${item.list}: ${error}`, 'danger', 3000);
+      bsAlert(error, 'danger', 3000);
       return false;
     }
+}
+
+export async function adminLevelOptions(gid, filter, selected){
+  try {
+    const payload = {
+      class:'Geom',
+      action:'getAdminList',
+      gid: gid,
+      filter: filter || {}
+    }
+    const response = await fetchApi({ body: payload });
+    if (response.error === 1) throw new Error(`Error fetching admin level ${gid} options`);
+    return response.data || [];
+  } catch (error) {
+    bsAlert(error, 'danger', 3000);
+    return false;
+  }
 }

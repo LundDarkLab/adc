@@ -32,7 +32,7 @@
                 <li id="editModelBtn"><a href="" class="dropdown-item">model metadata</a></li>
               </ul>
             </div>
-            <button type="button" name="delete" id="delete" class="btn btn-light rounded-0" data-bs-toggle="modal" data-bs-target="#deleteModal"><i class="mdi mdi-delete-forever"></i> delete</button>
+            <button type="button" name="delete" id="delete" class="btn btn-light rounded-0"><i class="mdi mdi-delete-forever"></i> delete</button>
       <?php } ?>
       </div>  
     </div>

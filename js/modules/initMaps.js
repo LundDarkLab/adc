@@ -5,6 +5,7 @@ import { fetchFindPlace, addFindPlaceMarkers, fetchInstitution, addInstitutionMa
 
 const mapElementTemplate = {
   map: null,
+  toolbar:null,
   btnHome: null,
   boundaries: null,
   marker: null,
@@ -36,7 +37,7 @@ export async function initMap(id) {
 
   L.control.betterscale({metric:true, imperial:false}).addTo(mapElement.map);
   L.control.mousePosition({emptystring:'',prefix:'WGS84'}).addTo(mapElement.map);
-  L.control.myToolBar().addTo(mapElement.map);
+  mapElement.toolbar = L.control.myToolBar().addTo(mapElement.map);
 
   mapElement.osm = L.tileLayer(mapsConfig.osmMap.tile, {attribution: mapsConfig.osmMap.attrib, maxZoom: mapsConfig.maxZoom}).addTo(mapElement.map);
   mapElement.gStreets = L.tileLayer(mapsConfig.googleMap.streetTile, {subdomains: mapsConfig.googleMap.gSubDomains, maxZoom: mapsConfig.maxZoom});

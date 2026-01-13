@@ -2,8 +2,6 @@ import { createBoundItem } from '../services/createBoundItem.js';
 import { setTimeRange, resetTimeRange } from '../services/setTimeRange.js';
 
 export async function setBounds(bounds) {
-  console.log(bounds);
-  
   // Resetta i pulsanti e gli input quando cambia la timeline
   resetTimeRange();
   
