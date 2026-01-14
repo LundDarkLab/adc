@@ -21,18 +21,15 @@ export function toggleMapAlert(map) {
 
 export async function addMArkerOnClick(mapInit){
   mapInit.map.on('click', async (e) => {
-    if (mapInit.map.getZoom() < 14) {
-      return;
-    }
-    if (e.originalEvent.target.closest('.leaflet-control-container') || e.originalEvent.target.closest('.leaflet-bar')) {
-      return;
-    }
+    if (mapInit.map.getZoom() < 14) { return; }
+    if (e.originalEvent.target.closest('.leaflet-control-container') || e.originalEvent.target.closest('.leaflet-bar')) { return; }
     
     const { lat, lng } = e.latlng;
     if (mapInit.marker) { mapInit.map.removeLayer(mapInit.marker); }
     mapInit.marker = L.marker([lat, lng]).addTo(mapInit.map);
     document.getElementById('latitude').value = lat.toFixed(4);
     document.getElementById('longitude').value = lng.toFixed(4);
+    document.getElementById('resetMapValueBtn').classList.remove('hide');
     
     const gid = await reverseGeoLocation(lat, lng);
     
@@ -64,6 +61,7 @@ export function resetMapValue(mapInit){
   }
   document.getElementById('latitude').value = '';
   document.getElementById('longitude').value = '';
+  document.getElementById('resetMapValueBtn').classList.add('hide');
 }
 
 async function reverseGeoLocation(lat, lng){

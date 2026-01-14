@@ -4,7 +4,28 @@ import { usersList } from "../../../modules/user.js";
 import { institutionsList } from "../../../modules/institution.js";
 import { bsAlert } from "../../../components/bsComponents.js";
 
-export async function artifactSelect(){
+export async function buildSelectOptions() {
+  const usr = document.getElementById('userId').value || null;
+  const lists = await artifactSelect();
+  lists.forEach(item=>{
+    const key = Object.keys(item)[0];
+    const selectEl = document.getElementById(key);
+    if(selectEl){
+      item[key].forEach(optionData=>{
+        const option = document.createElement("option");
+        option.value = optionData.id || optionData.gid;
+        option.textContent = optionData.value || optionData.name || optionData.definition || `${optionData.acronym} - ${optionData.license}`;
+        if(key==='author' && usr){
+          if(optionData.id == Number(usr)){ option.selected = true; } 
+        }
+        selectEl.appendChild(option);
+      });
+    }
+  });
+  return true;
+}
+
+async function artifactSelect(){
   const output = [];
   const selectList = [
     {id:'category_class', list:'list_category_class' },
@@ -63,7 +84,7 @@ export async function handleCategorySpecOptions(cat){
     }
 }
 
-export async function adminLevelOptions(gid, filter, selected){
+export async function adminLevelOptions(gid, filter, selected=false){
   try {
     const payload = {
       class:'Geom',

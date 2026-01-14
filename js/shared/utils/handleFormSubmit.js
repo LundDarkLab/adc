@@ -36,7 +36,8 @@ export function handleFormSubmit(form, options = {}) {
     beforeSubmit,
     formOptions = {},
     resetOnSuccess = true,
-    useFormData = false
+    useFormData = false,
+    convertEmptyStringsToNull = true
   } = options;
 
   const formEl = typeof form === 'string' ? document.querySelector(form) : form;
@@ -77,17 +78,31 @@ export function handleFormSubmit(form, options = {}) {
     try {
       // 4. Prepara dati
       let data = buildFormData(formEl, formOptions);
+
+       // 5. Converti '' a null se abilitato
+      if (convertEmptyStringsToNull) {
+        const convertEmptyToNull = (obj) => {
+          for (let key in obj) {
+            if (obj[key] === '') {
+              obj[key] = null;
+            } else if (typeof obj[key] === 'object' && obj[key] !== null) {
+              convertEmptyToNull(obj[key]);
+            }
+          }
+        };
+        convertEmptyToNull(data);
+      }
       
-      // 5. Modifica dati se necessario (es: aggiungere array)
+      // 6. Modifica dati se necessario (es: aggiungere array)
       if (beforeSubmit) {
         data = beforeSubmit(data);
       }
 
-      // 6. Aggiungi class e action per l'endpoint
+      // 7. Aggiungi class e action per l'endpoint
       data.class = className;
       data.action = action;
 
-      // 7. Invia dati
+      // 8. Invia dati
       let result;
 
       // Per upload file - usa FormData con fetch nativo
@@ -133,14 +148,14 @@ export function handleFormSubmit(form, options = {}) {
         result = await fetchApi(fetchOptions);
       }
 
-      // 8. Success
+      // 9. Success
       if (resetOnSuccess) { formEl.reset(); }
       if (onSuccess) { onSuccess(result); }
     } catch (error) {
-      // 9. Error
+      // 10. Error
       if (onError) { onError(error); }
     } finally {
-      // 10. Riabilita submit button
+      // 11. Riabilita submit button
       if (submitBtn) {
         submitBtn.disabled = false;
         submitBtn.textContent = originalText;

@@ -1,3 +1,4 @@
+import { fetchApi } from "../../../../shared/utils/fetch.js";
 import { createBoundItem } from '../services/createBoundItem.js';
 import { setTimeRange, resetTimeRange } from '../services/setTimeRange.js';
 
@@ -68,4 +69,31 @@ function setSpecific(specificId, specificName, start, end, parentElement, isLowe
     setTimeRange(start, end, isLower, specificName); 
   });
   parentElement.appendChild(specificBtn);
+}
+
+// Funzione per fetchare il bound più specifico per un valore dato
+export async function fetchBoundForValue(timelineId, value) {
+  try {
+    const payload = {
+      class: 'Timeline',
+      action: 'getTimelineList',
+      table: 'time_series_complete',
+      conditions: {
+        timeline_id: timelineId,
+        start: [value, '<='],
+        end: [value, '>='],
+      },
+      columns: ['`specific`', '`generic`', '`macro`', '`start`', '`end`'],
+      orderBy: { '`end` - `start`': 'ASC' },
+      limit: 1
+    };
+    const response = await fetchApi({ body: payload });
+    if (response.error === 1 || !response.data || response.data.length === 0) {
+      return null;
+    }
+    return response.data[0];
+  } catch (error) {
+    console.error('Error fetching bound for value:', error);
+    return null;
+  }
 }

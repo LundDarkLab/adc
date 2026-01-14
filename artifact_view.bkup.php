@@ -4,11 +4,15 @@
 <html lang="en" dir="ltr">
   <head>
     <?php require("assets/meta.php"); ?>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI=" crossorigin=""/>
+    <link rel="stylesheet" href="js/maps/mousePosition/mousePosition.css">
+    <link rel="stylesheet" href="js/maps/mapScale/mapScale.css">
+    <link rel="stylesheet" href="css/artifact_view.css">
+    <link rel="stylesheet" href="css/my3dhop.css">
+    <link rel="stylesheet" href="css/map.css">
   </head>
   <body>
-    <?php require("assets/configuration/logged.php"); ?>
-    <header id="header"></header>
-    <div id="sideMenu"></div>
+    <?php require("assets/header.php"); ?>
     <div id="itemTool" class="animated mainSection">
       <div class="btn-group" role="group">
       <?php if (isset($_SESSION['id'])) { ?>
@@ -33,7 +37,11 @@
       </div>  
     </div>
 
-    <main>
+    <main class="animated mainSection">
+      <input type="hidden" id="artifactId" value="<?php echo $_GET['item']; ?>">
+      <input type="hidden" id="activeUsr" value="<?php echo $_SESSION['id'] ?? 'unregistered'; ?>">
+      <input type="hidden" id="role" value="<?php echo $_SESSION['role'] ?? 'unregistered'; ?>">
+
       <div id="mainContent">
         <div id="artifact">
           <div class="artifact-left">
@@ -98,8 +106,47 @@
         </div>
       </div>
     </main>
-    <footer id="footer"></footer>
-    <script>window.pageType = "artifact_view";</script>
-    <script src="js/main.js" type="module" charset="utf-8"></script>
+
+    <div id="fullScreenImg">
+      <div id="fullScreenContent">
+        <div id="fullScreenHeader" class="bg-light">
+          <h5 class="modal-title" id="fullScreenTitle"></h5>
+          <button type="button" id="closeFullScreenImage" class="btn-close" aria-label="Close"></button>
+        </div>
+        <div id="fullScreenBody">
+          <div id="fullImageContainer">
+            <img src="" alt="" id="modalImg">
+          </div>
+          <div id="fullImageDescription" class="bg-light border-start">
+            <div>
+              <h4>Image description</h4>
+              <p id="imageDescriptionText"></p>
+            </div>
+            <div id="fullScreenFooter" class="border-top">
+              <div class="d-block mb-3">
+                <p class="fw-bold m-0">Image licensed under:</p>
+                <a href="" id="licenseLink" title="view license properties [new tab]" target="_blank"></a>
+              </div>
+              <button type="button" class="btn btn-sm btn-adc-blue form-control" id="downloadImg"><span class="mdi mdi-download"></span> download</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <?php 
+      require("assets/menu.php");
+      require("assets/js.html"); 
+    ?>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js" integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM=" crossorigin=""></script>
+    <script src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript" src="assets/3dhop/spidergl.js"></script>
+    <script type="text/javascript" src="assets/3dhop/presenter.js"></script>
+    <script type="text/javascript" src="assets/3dhop/nexus.js"></script>
+    <script type="text/javascript" src="assets/3dhop/ply.js"></script>
+    <script type="text/javascript" src="assets/3dhop/trackball_turntable.js"></script>
+    <script type="text/javascript" src="assets/3dhop/trackball_turntable_pan.js"></script>
+    <script type="text/javascript" src="assets/3dhop/trackball_sphere.js"></script>
+    <script src="js/artifact.js" type="module" charset="utf-8"></script>
   </body>
 </html>

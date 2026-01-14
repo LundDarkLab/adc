@@ -5,71 +5,52 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
   <head>
-    <?php require("assets/meta.php"); ?>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI=" crossorigin=""/>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@5.0.4/css/bootstrap5-toggle.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/artifacts_add.css">
+    <?php require("assets/meta.html"); ?>
   </head>
   <body>
-    <?php 
-      require("assets/header.php");
-      require("assets/loadingDiv.html");  
-    ?>
-    <main class="animated mainSection">
+    <?php require("assets/configuration/logged.php"); ?>
+    <header id="header"></header>
+    <div id="sideMenu"></div>
+    <main>
       <div class="container">
-        <input type="hidden" name="usr" value="<?php echo $_SESSION['id']; ?>">
-        <div class="text-center border rounded bg-light mb-3 p-3">
-          <h5 class="text-muted text-center">you are modifying the metadata of the artifact:</h5>
-          <h1 id="pageTitle" class="text-center txt-adc-dark"></h1>
-        </div>
-        <form name="newArtifactForm" enctype="multipart/form-data" method="post">
-          <input type="hidden" name="artifact" id="artifact" data-table="artifact" value="<?php echo $_GET['item']; ?>">
+        <form name="editArtifactForm" id="editArtifactForm">
           <fieldset>
             <legend>Main data</legend>
             <div class="row mb-3">
               <div class="col-md-6">
-                <label for="name" class="text-danger fw-bold">Name</label>
-                <div class="input-group mb-3">
-                  <input type="text" class="form-control" placeholder="name" data-table="artifact" id="name" required>
-                  <button class="btn btn-warning" type="button" name="checkNameBtn">check name</button>
-                  <span class="input-group-text bg-info" style="cursor:pointer" data-bs-toggle="tooltip" title="Fill in the 'name'field with a value that help you to easily identify the artifact. Remember that you cannot use the same value for different artifacts. To verify if the name already exists, you can insert the value and click the button 'check name', a messagge will appears. If you don't check the value now, the system will do it for you when you save the record'"><i class="mdi mdi-help-circle-outline"></i></span>
+                <div class="mb-3">
+                  <label for="inventory" class="text-danger fw-bold">Inventory number</label>
+                  <input type="text" class="form-control" placeholder="name" data-table="artifact" id="inventory" value="no_inv" required>
+                  <div class="form-text">Enter the inventory number of the original artifact; if not available, leave the default value. The system will create the name using the ID assigned at the time of saving and the institution's code.</div>
                 </div>
-                <div id="checkNameResult"></div>
-              </div>
-              <div class="col-md-3">
-                <label for="status" class="fw-bold text-danger">Status item</label>
-                <select name="status" id="status" class="form-select" data-table="artifact" required>
-                  <option value="1">under processing</option>
-                  <option value="2">complete data</option>
-                </select>
-              </div>
-            </div>
-            <div class="row mb-3">
-              <div class="col-md-6">
                 <div class="mb-3">
                   <label for="description" class="fw-bold text-danger">Description</label>
                   <textarea data-table="artifact" id="description" rows="8" class="form-control" required></textarea>
+                  <div class="form-text">Provide a description of the original artefact. Do not add external material here. You may include interactive content such as embedded videos, references, or images later on the Artifact's specific page.</div>
                 </div>
                 <div class="mb-3">
                   <label for="notes">Main data notes</label>
                   <textarea data-table="artifact" id="notes" rows="5" class="form-control"></textarea>
                 </div>
               </div>
-
               <div class="col-md-6">
-                <div class="wrapfield">
+                <div class="wrapfield mb-0">
                   <div class="align-top">
-                    <label for="category_class" class="fw-bold text-danger">Category class</label>
+                    <label for="category_class" class="fw-bold text-danger">
+                      <i class="mdi mdi mdi-information-slab-circle-outline" data-bs-toggle="tooltip" title="selecting a category class the category specifications will be filtered accordingly"></i>
+                      Category class
+                    </label>
                     <select class="form-select" id="category_class" data-table="artifact" required>
+                      <option value="" selected disabled>-- select value --</option>
                     </select>
                   </div>
                   <div class="align-top">
                     <label for="category_specs">Category specification</label>
-                    <select class="form-select" id="category_specs" data-table="artifact" value=""></select>
-                    <div id="catSpecsMsg" class="form-text text-danger">No specifications available</div>
+                    <select class="form-select" id="category_specs" data-table="artifact" value="" disabled></select>
                   </div>
                 </div>
-                <div class="wrapfield">
+                <small class="d-block text-form text-danger d-none" id="noSpecsMessage">No specifications options available for the selected category class.</small>
+                <div class="wrapfield mt-3">
                   <label for="type">Typology</label>
                   <input type="text" class="form-control" id="type" data-table="artifact" value="">
                 </div>
@@ -89,7 +70,7 @@
                     </label>
                     <div class="input-group">
                       <input type="text" id="technique" class="form-control" value="">
-                      <button type="button" name="confirmMaterial" class="btn btn-success" data-bs-toggle="tooltip" title="click button to add a new material/technique definition">add</button>
+                      <button type="button" id="confirmMaterial" class="btn btn-success" data-bs-toggle="tooltip" title="click button to add a new material/technique definition">add</button>
                     </div>
                   </div>
                 </div>
@@ -104,32 +85,43 @@
                 <label for="timeline" class="fw-bold text-danger">select a timeline map</label>
                 <select name="timeline" id="timeline" class="form-select" data-table="artifact" required>
                   <option value="" disabled selected>-select a timeline-</option>
-                  <option value="1">generic</option>
-                  <option value="2">sweden</option>
                 </select>
                 <div class="mt-3 text-secondary">Please select a timeline map from those available. Each time map will update the chronological filters of the lower and upper bounds by setting them to the specific local time span. </div>
               </div>
               <div class="col-md-5">
                 <div class="mb-3">
-                  <label for="dropdownMenuButtonLower">Lower bound</label>
-                  <div class="dropdown mb-3">
-                    <button id="dropdownMenuButtonLower" class="btn btn-light dropdown-toggle form-control text-start" type="button" data-bs-toggle="dropdown" aria-expanded="false" disabled>select a period</button>
-                    <ul class="dropdown-menu firstLevel w-100" aria-labelledby="dropdownMenuButton" id="dropdown-menu-lower"></ul>
+                  <label for="lowerBoundBtn" class="d-block">Lower bound</label>
+                  <button id="lowerBoundBtn" class="btn btn-outline-secondary border w-100 d-flex justify-content-between align-items-center boundsBtn" type="button" data-accordion-wrap="lowerBoundsWrap" disabled>
+                    select a lower value
+                    <i id="lowerBoundIcon" class="mdi mdi-menu-down"></i>
+                  </button>
+                  <div id="lowerBoundsWrap" class="boundsWrap d-none">
+                    <div id="lowerBoundsAccordion" class="accordion accordion-flush boundsAccordionWrap"></div>
                   </div>
                 </div>
                 <div class="mb-3">
-                  <label for="dropdownMenuButtonUpper">Upper bound</label>
-                  <div class="dropdown">
-                    <button id="dropdownMenuButtonUpper" class="btn btn-light dropdown-toggle form-control text-start" type="button" data-bs-toggle="dropdown" aria-expanded="false" disabled>select a period</button>
-                    <ul class="dropdown-menu firstLevel w-100" aria-labelledby="dropdownMenuButton" id="dropdown-menu-upper"></ul>
+                  <label for="upperBoundBtn">Upper bound</label>
+                  <button id="upperBoundBtn" class="btn btn-outline-secondary border w-100 d-flex justify-content-between align-items-center boundsBtn" type="button" data-accordion-wrap="upperBoundsWrap" disabled>
+                    select an upper value
+                    <i id="upperBoundIcon" class="mdi mdi-menu-down"></i>
+                  </button>
+                  <div id="upperBoundsWrap" class="boundsWrap d-none">
+                    <div id="upperBoundsAccordion" class="accordion accordion-flush boundsAccordionWrap"></div>
                   </div>
                 </div>
               </div>
-              <div class="col-md-3">
-                <label for="start" class="fw-bold text-danger">From</label>
-                <input type="number" class="form-control w-auto mb-3" id="start" step="1" data-table="artifact" value="" min="" max="" required>
-                <label for="end" class="fw-bold text-danger">To</label>
-                <input type="number" class="form-control w-auto" id="end" step="1" data-table="artifact" value="" min="" max="" required>
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="start" class="fw-bold text-danger">From</label>
+                  <input type="number" class="form-control" id="start" step="1" data-table="artifact" value="" min="" max="" disabled required>
+                  <small id="validateStart" class="text-danger d-block"></small>
+                </div>
+
+                <div class="mb-3">
+                  <label for="end" class="fw-bold text-danger">To</label>
+                  <input type="number" class="form-control" id="end" step="1" data-table="artifact" value="" min="" max="" disabled required>
+                  <small id="validateEnd" class="text-danger d-block"></small>
+                </div>
               </div>
             </div>
           </fieldset>
@@ -138,15 +130,15 @@
             <div class="row mb-3">
               <div class="col-md-3">
                 <label for="storage_place" class="fw-bold text-danger">Storage place</label>
-                <select class="form-select" id="storage_place" data-table="artifact" required></select>
-              </div>
-              <div class="col-md-3">
-                <label for="inventory">Inventory</label>
-                <input type="text" id="inventory" class="form-control" data-table="artifact" value="">
+                <select class="form-select" id="storage_place" data-table="artifact" required>
+                  <option value="" selected disabled>-- select a value --</option>
+                </select>
               </div>
               <div class="col-md-2">
                 <label for="conservation_state" class="fw-bold text-danger">Conservation state</label>
-                <select class="form-select" id="conservation_state" data-table="artifact" required></select>
+                <select class="form-select" id="conservation_state" data-table="artifact" required>
+                  <option value="" selected disabled>-- select a value --</option>
+                </select>
               </div>
               <div class="col-md-2">
                 <label for="object_condition">Object condition</label>
@@ -155,20 +147,27 @@
                 </select>
               </div>
               <div class="col-md-2">
+                <label for="weight">Weight</label>
+                <input type="text" class="form-control" id="weight" data-table="artifact" >
+              </div>
+              <div class="col-md-2">
                 <label class="me-3 d-block">is museum copy</label>
-                <input type="checkbox" class="btn-check" id="is_museum_copy" autocomplete="off">
-                <label class="btn btn-outline-success d-block" for="is_museum_copy">No</label>
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" role="switch" id="is_museum_copy" data-table="artifact">
+                  <label class="form-check-label" for="is_museum_copy">No</label>
+                </div>
               </div>
             </div>
           </fieldset>
           <fieldset>
             <legend>Find site</legend>
-            <div class="alert alert-warning text-center">Attention! Changing any of the spatial data will also reset the coordinates of the marker, if present</div>
             <div class="row mb-3">
               <div class="col-md-3">
                 <div id="gid_0_container" class="mb-3">
                   <label for="gid_0" class="text-danger fw-bold">Country boundaries</label>
-                  <select id="gid_0" data-table="artifact_findplace" class="form-select gadm" required></select>
+                  <select id="gid_0" data-table="artifact_findplace" class="form-select gadm" required>
+                    <option value="" selected disabled>-- select a value --</option>
+                  </select>
                 </div>
                 <div id="gid_1_container" class="mb-3 hide">
                   <label for="gid_1">Provinces and equivalent</label>
@@ -218,9 +217,10 @@
               <div class="col-md-9">
                 <div id="map">
                   <div class="alert alert-warning" id="mapAlert">To put a marker on map you have to zoom in</div>
-                  <div id="resetMapDiv">
-                    <button type="button" class="btn btn-sm btn-light" data-bs-toggle="tooltip" title="remove all elements from map, reset field value and restore the initial zoom extent" name="resetMap">reset map value</button>
-                  </div>
+                  <div id="baseLayerControl" class="leaflet-bar"></div>
+                </div>
+                <div class="mt-2" id="resetMapValueWrap">
+                  <button type="button" id="resetMapValueBtn" class="btn btn-outline-secondary hide"> <i class="mdi mdi-map-marker-remove-variant"></i> Remove marker</button>
                 </div>
               </div>
             </div>
@@ -245,23 +245,13 @@
                 </select>
               </div>
             </div>
-            <button type="submit" name="editArtifact" class="btn btn-warning">save item</button>
-            <a href="artifact_view.php?item=<?php echo $_GET['item']; ?>" class="btn btn-primary">cancel</a>
+            <button type="submit" name="newArtifact" class="btn btn-warning">save item</button>
           </fieldset>
         </form>
       </div>
     </main>
-    <?php
-      require("assets/toastDiv.html");
-      require("assets/menu.php");
-      require("assets/js.html");
-    ?>
-    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js" integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM=" crossorigin=""></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@5.0.4/js/bootstrap5-toggle.ecmas.min.js"></script>
-    <script src="js/maps/geo_config.js" charset="utf-8"></script>
-    <script src="js/maps/geo_function.js" charset="utf-8"></script>
-    <script src="js/chronologyFunc.js" charset="utf-8"></script>
-    <script src="js/artifact_add.js" charset="utf-8"></script>
-    <script src="js/artifact_edit.js" charset="utf-8"></script>
+    <footer id="footer"></footer>
+    <script>window.pageType = "artifact_edit";</script>
+    <script src="js/main.js" type="module" charset="utf-8"></script>
   </body>
 </html>

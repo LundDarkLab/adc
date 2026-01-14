@@ -5,7 +5,8 @@
   --border-radius: 0.375rem;
   --height-row: calc(100vh - 115px - 100px); /* Altezza riga principale */
   --height-geographic: 35%;
-  --font-size-small: 0.75rem;
+  --font-size-regular: 1rem;
+  --font-size-small: 0.85rem;
 }
 
 /* ===== RESET E GLOBALI ===== */

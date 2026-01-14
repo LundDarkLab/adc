@@ -27,7 +27,7 @@ class Artifact extends Conn{
       $this->prepared($sql, $dati['artifact']);
       $lastId = $this->pdo()->lastInsertId();
 
-      $name = "dc{$lastId}_{$institution['abbreviation']}_{$dati['artifact']['inventory']}";
+      $name = "DC{$lastId}_{$institution['abbreviation']}_{$dati['artifact']['inventory']}";
       $updateNameSql = "UPDATE artifact SET name = :name WHERE id = :id";
       $stmt = $this->pdo()->prepare($updateNameSql);
       $stmt->execute(['name' => $name, 'id' => $lastId]);
@@ -51,29 +51,48 @@ class Artifact extends Conn{
   }
 
   public function editArtifact(array $dati){
+    error_log(print_r($dati, true));
+    if (!isset($dati['artifact']['artifact'])) {
+      return ["error" => 1, "message" => "Artifact ID is missing"];
+    }
+    
     $filter = $dati['artifact']['artifact'];
     unset($dati['artifact']['artifact']);
     try {
       $this->pdo()->beginTransaction();
+      
+      // Ottieni l'abbreviazione dell'istituzione (come in addArtifact)
+      $institutionId = $dati['artifact']['storage_place'];
+      $institution = $this->simple("SELECT abbreviation FROM institution WHERE id = $institutionId")[0];
+      
+      // Aggiorna l'artifact
       $artifactUpdateSql = $this->buildUpdate('artifact',['id'=>$filter],$dati['artifact']);
       $this->prepared($artifactUpdateSql, $dati['artifact']);
       
+      // Rigenera il nome se necessario (basato su storage_place o inventory cambiati)
+      $name = "DC{$filter}_{$institution['abbreviation']}_{$dati['artifact']['inventory']}";
+      $updateNameSql = "UPDATE artifact SET name = :name WHERE id = :id";
+      $stmt = $this->pdo()->prepare($updateNameSql);
+      $stmt->execute(['name' => $name, 'id' => $filter]);
+      
+      // Aggiorna findplace
       $findPlaceUpdateSql = $this->buildUpdate('artifact_findplace',['artifact'=>$filter],$dati['artifact_findplace']);
       $this->prepared($findPlaceUpdateSql, $dati['artifact_findplace']);
       
+      // Gestisci materiali (come prima)
       $deleteMaterialSql = $this->buildDelete('artifact_material_technique',array("artifact"=>$filter));
       $this->simple($deleteMaterialSql);
-
       foreach ($dati['artifact_material_technique'] as $value) {
         $data = array("artifact"=>$filter, "material"=>$value['m'], "technique" =>$value['t']);
         $sql = $this->buildInsert("artifact_material_technique", $data);
         $this->prepared($sql, $data);
       }
+      
       $this->pdo()->commit();
-      return ["res"=> 1, "output"=>'Ok, the artifact has been successfully updated.'];
+      return ["error"=> 0, "message"=>'Ok, the artifact has been successfully updated.', "id"=>$filter];
     } catch (\Exception $e) {
       $this->pdo()->rollBack();
-      return ["res"=>0, "output"=>$e->getMessage()];
+      return ["error"=>1, "message"=>$e->getMessage()];
     }
   }
 
@@ -83,7 +102,6 @@ class Artifact extends Conn{
     $out['artifact'] = $this->simple($artifact)[0];
     $out['artifact_material_technique'] = $this->getArtifactMaterial($id);
     $out['storage_place'] = $this->institution->getInstitutions(["filters"=>["id"=>$out['artifact']['storage_place']]])[0];
-    $out['artifact_measure'] = $this->getArtifactMeasure($id);
     $out['artifact_metadata'] = $this->getArtifactMetadata($id);
     $out['artifact_findplace'] = $this->getArtifactFindplace($id);
     $modelId = $this->getModelId($id);

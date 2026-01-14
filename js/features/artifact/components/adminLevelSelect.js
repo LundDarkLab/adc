@@ -9,6 +9,8 @@ export async function handleBoundariesChange(map, idx){
   const parentID = parseInt(idx) - 1;
   const parent = document.getElementById('gid_'+parentID).value
   const boundary = await getSimpleBoundary(parentID, parent);
+  console.log(boundary,parentID,parent);
+  
   // Validate and extract geometry
   if (!boundary || !boundary.data?.success || !boundary.data?.items?.length) {
     console.error('Invalid boundary data');

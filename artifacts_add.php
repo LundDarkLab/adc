@@ -221,7 +221,7 @@
                   <div id="baseLayerControl" class="leaflet-bar"></div>
                 </div>
                 <div class="mt-2" id="resetMapValueWrap">
-                  <button type="button" id="resetMapValueBtn" class="btn btn-outline-secondary"> <i class="mdi mdi-map-marker-remove-variant"></i> Reset Map Value</button>
+                  <button type="button" id="resetMapValueBtn" class="btn btn-outline-secondary hide"> <i class="mdi mdi-map-marker-remove-variant"></i> Remove marker</button>
                 </div>
               </div>
             </div>

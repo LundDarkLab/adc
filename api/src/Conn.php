@@ -120,19 +120,19 @@ class Conn {
           if (count($condition) === 1) {
             // Operatore unario (es. 'IS NOT NULL')
             $operator = $condition[0];
-            $whereClauses[] = "$key $operator";
+            $whereClauses[] = "`$key` $operator";
           } else {
             // Operatore binario con valore
             list($value, $operator) = $condition;
             $operator = $operator ?: '=';
-            $whereClauses[] = "$key $operator :$placeholder";
+            $whereClauses[] = "`$key` $operator :$placeholder";
             $params[$placeholder] = $value;
           }
         } else {
           // Valore semplice con operatore default '='
           $value = $condition;
           $operator = '=';
-          $whereClauses[] = "$key $operator :$placeholder";
+          $whereClauses[] = "`$key` $operator :$placeholder";
           $params[$placeholder] = $value;
         }
       }

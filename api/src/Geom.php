@@ -68,6 +68,7 @@ class Geom extends Conn{
       $nextLevel = $payload['gid'] == 5 ? $payload['gid'] : ($payload['gid'] + 1);
       $sql = "select gid_".$nextLevel." gid, name_".$nextLevel." as name from gadm".$nextLevel." where gid_".$payload['gid']." = '".$payload['filter']."' order by 2 asc;";
     }
+    error_log("getAdminList SQL: $sql");
     // return ["query"=>$sql, "gid" => $payload['gid'], "items"=>$this->simple($sql)];
     return $this->simple($sql);
   }
@@ -81,7 +82,7 @@ class Geom extends Conn{
       return ['success' => false, 'message' => 'gid parameter is required'];
     }
     
-    $tolerances = [0 => 3000, 1 => 100, 2 => 80, 3 => 60, 4 => 40, 5 => 20];
+    $tolerances = [0 => 300, 1 => 100, 2 => 80, 3 => 60, 4 => 40, 5 => 20];
     $tolerance = $tolerances[$level] ?? 20;
     
     $fields = "gid_$level as gid";

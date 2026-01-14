@@ -6,28 +6,43 @@ import { toggleTimeAccordion, closeAllAccordions } from '../../../shared/compone
 import { handleMaterialTechnique, getMaterialTechniqueArray, clearMaterialTechniqueArray } from "../components/materialTechniqueComponent.js";
 import { handleFormSubmit } from '../../../shared/utils/handleFormSubmit.js';
 
-export async function initEventListeners(mapElement) {
+const opt ={
+  'artifact_add': {
+    form: '#newArtifactForm',
+    action: 'addArtifact',
+    onSuccessTitle: 'Artifact Created with ID ',
+    buttons: [
+      { text: 'go to artifact', class: 'btn-primary', action: 'go' },
+      { text: 'create another', class: 'btn-secondary', action: 'reload' },
+      { text: 'close', class: 'btn-secondary', action: 'back' }
+    ]
+  },
+  'artifact_edit': {
+    form: '#editArtifactForm',
+    action: 'editArtifact',
+    onSuccessTitle: 'Artifact updated ',
+    buttons: [
+      { text: 'continue to edit', class: 'btn-secondary', action: 'close' },
+      { text: 'back to dashboard', class: 'btn-secondary', action: 'back' }
+    ]
+  }
+}
+
+export async function initEventListeners(page, mapElement) {
+  console.log(opt[page].action);
+  
   document.getElementById('category_class').addEventListener('change', setCategorySpecs);
   document.getElementById('confirmMaterial').addEventListener('click', handleMaterialTechnique);
-
-  document.querySelectorAll(".boundsBtn").forEach(btn => {
-    btn.addEventListener('click', handleBoundsClick);
-  })
-
+  document.querySelectorAll(".boundsBtn").forEach(btn => { btn.addEventListener('click', handleBoundsClick); })
   document.addEventListener('click', closeAllAccordions);
+  document.querySelectorAll('.gadm').forEach(item => { item.addEventListener('change', (e) => handleGadmChange(e, mapElement)); });
+  document.getElementById('resetMapValueBtn').addEventListener('click', (e) => { resetMapValue(mapElement); });
 
-  document.querySelectorAll('.gadm').forEach(item => {
-    item.addEventListener('change', (e) => handleGadmChange(e, mapElement));
-  });
-
-  document.getElementById('resetMapValueBtn').addEventListener('click', (e) => {
-    resetMapValue(mapElement);
-  });
-
-  handleFormSubmit('#newArtifactForm', {
+  handleFormSubmit(opt[page].form, {
     class: 'Artifact',
-    action: 'addArtifact',
+    action: opt[page].action,
     resetOnSuccess: false,
+    formOptions: { includeEmpty: page === 'artifact_edit' },
     customValidation: (_form) => {
       const materials = getMaterialTechniqueArray();
       if (materials.length === 0) {
@@ -38,27 +53,31 @@ export async function initEventListeners(mapElement) {
     },
     beforeSubmit: (data) => {
       data.artifact_material_technique = getMaterialTechniqueArray();
+      if (window.pageType === 'artifact_edit') {
+        const urlParams = new URLSearchParams(window.location.search);
+        data.artifact.artifact = urlParams.get('item');
+      }
+      console.log(data);
+      
       return data;
     },
     onSuccess: (result) => {
       console.log('Artifact created:', result);
       if (result.error === 0) {
         bsModal({
-          title: 'Artifact Created with ID ' + result.data.id ,
+          title: opt[page].onSuccessTitle + result.data.id ,
           body: result.data.message,
-          buttons: [
-            { text: 'go to artifact', class: 'btn-primary', action: 'go' },
-            { text: 'create another', class: 'btn-secondary', action: 'create' },
-            { text: 'close', class: 'btn-secondary', action: 'close' }
-          ],
+          buttons: opt[page].buttons,
           size: 'modal-md'
         }).then(action => {
           if (action === 'go') {
             window.location.href = `artifact_view.php?item=${result.data.id}`;
-          } else if (action === 'create') {
+          } else if (action === 'reload') {
             location.reload();
-          } else if (action === 'close') {
+          } else if (action === 'back') {
             window.location.href = 'dashboard.php';
+          } else if (action === 'close') {
+            // do nothing
           }
         });
         clearMaterialTechniqueArray();
@@ -71,7 +90,7 @@ export async function initEventListeners(mapElement) {
   });
 }
 
-function handleGadmChange(ev, mapElement){
+export function handleGadmChange(ev, mapElement, reset = true){
   const gid = parseInt(ev.currentTarget.id.split('_')[1]);
   const value = ev.currentTarget.value;
   
@@ -81,8 +100,9 @@ function handleGadmChange(ev, mapElement){
     handleBoundariesChange(mapElement.map, gid + 1);
     levelOptions(gid, value);
   }
-  
-  resetMapValue(mapElement);
+  if (reset) {
+    resetMapValue(mapElement);
+  }
 }
 
 function handleBoundsClick(ev){
