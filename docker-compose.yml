@@ -1,0 +1,57 @@
+services:
+  db:
+    container_name: db
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+    ports:
+      - ${MYSQL_PORT}:3306
+    # Per gestire le transazioni pesanti di GADM
+    command: --max_allowed_packet=1G --innodb-log-file-size=512M 
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./db-init:/docker-entrypoint-initdb.d
+  app:
+    container_name: app
+    build:
+      context: ./app
+      dockerfile: app.Dockerfile
+    restart: unless-stopped
+    ports:
+      - ${APP_PORT_HTTP}:80
+      - ${APP_PORT_HTTPS}:443
+    volumes:
+      - archive:/var/www/html/archive
+    depends_on:
+      - db
+    environment:
+      - APP_BASE_URL=${APP_BASE_URL}
+      - DB_HOST=db
+      - DB_USER=${MYSQL_USER}
+      - DB_PASSWORD=${MYSQL_PASSWORD}
+      - DB_NAME=${MYSQL_DATABASE}
+      - MAILHOST=${MAILHOST}
+      - MAILPORT=${MAILPORT}
+      - MAILUSER=${MAILUSER}
+      - MAILPASSWORD=${MAILPASSWORD}
+      - MAILSETFROM=${MAILSETFROM}
+      - MAILSETFROMNAME=${MAILSETFROMNAME}
+  webhook:
+    container_name: webhook
+    build:
+      context: .
+      dockerfile: webhook/webhook.Dockerfile
+    restart: unless-stopped
+    ports:
+      - ${WEBHOOK_PORT}:3000
+    volumes:
+      - ./webhook:/app
+      - /app/node_modules
+      - /var/run/docker.sock:/var/run/docker.sock
+volumes:
+  db_data:
+  archive:

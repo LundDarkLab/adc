@@ -1,0 +1,251 @@
+<?php
+namespace Adc;
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+use \Adc\Model;
+use \Adc\File;
+use \Adc\Institution;
+
+class Artifact extends Conn{
+  public $model;
+  public $files;
+  public $institution;
+  function __construct(){
+    $this->model = new Model();
+    $this->files = new File();
+    $this->institution = new Institution();
+  }
+
+  public function deleteRecord(array $post) :array{
+    try {
+      //check if the record has related files
+      $sql = "select id, type, path from files where artifact = ".$post['conditions']['id']." and path is not null;";
+      $files = $this->simple($sql);
+      //delete all related files
+      if(count($files) > 0){
+        foreach ($files as $file) {
+          $folder = $file['type'] == 'image' ? $this->files->imageDir : $this->files->documentDir;
+          $path = $folder.$file['path'];
+          $this->files->deleteFile($path);
+        }
+      }
+      $this->delete($post['table'],$post['conditions']);
+      return ["error" => 0, "message" => 'Record and all related files were successfully deleted'];
+    } catch (\Throwable $th) {
+      return ["error"=>1, "message"=>$th->getMessage(), "dati"=>$post];
+    }
+  }
+
+  public function gadm(array $dati){
+    $level = (int)$dati["gid"] == 0 ? $dati["gid"] : (int)$dati["gid"] - 1;
+    $fields = (int)$dati["gid"] == 0 ? "gid_0 gid, country as name" : "gid_".$dati["gid"]." gid, name_".$dati["gid"]." as name, st_asgeojson(`SHAPE`) as geom";
+    $table = "gadm".$dati["gid"];
+    $sql = "select ".$fields." from ".$table;
+    if(isset($dati['value'])){ $sql.= " where gid_".$level. " = '".$dati['value']."'";}
+    $sql .= " order by 2 asc;";
+    return ["query"=>$sql,"items"=>$this->simple($sql), "data"=>$dati];
+  }
+
+  public function addArtifact(array $dati){
+    $lastId = null;
+    try {
+      error_log("add artifact payload: " . json_encode($dati));
+      $pdo = $this->pdo();
+      $pdo->beginTransaction();
+      $sql = $this->buildInsert("artifact", $dati['artifact']);
+      error_log("add artifact sql: " . $sql);
+      // $this->prepared($sql, $dati['artifact']);
+      $stmtArtifact = $pdo->prepare($sql);
+      $stmtArtifact->execute($dati['artifact']);
+      $lastId = $pdo->lastInsertId();
+
+      foreach ($dati['artifact_material_technique'] as $key => $value) {
+        $data = array("artifact"=>$lastId, "material"=>$value['m'], "technique" =>$value['t']);
+        $sql = $this->buildInsert("artifact_material_technique", $data);
+        $stmtMaterialTechnique = $pdo->prepare($sql);
+        $stmtMaterialTechnique->execute($data);
+      }
+
+      $dati['artifact_findplace']['artifact'] = $lastId;
+      $sql = $this->buildInsert("artifact_findplace", $dati['artifact_findplace']);
+      $stmtFindPlace = $pdo->prepare($sql);
+      $stmtFindPlace->execute($dati['artifact_findplace']);
+
+      $pdo->commit();
+      return ["res"=> 1, "output"=>'Ok, the artifact has been successfully created.', "id"=>$lastId];
+    } catch (\Exception $e) {
+      $pdo->rollBack();
+      // return ["res"=>0, "output"=>$e->getMessage()];
+      return [
+        "res" => 0, 
+        "output" => $e->getMessage(),
+        "debug_last_id" => $lastId,
+        "debug_data" => $dati // Così vedi cosa è arrivato dal fetch
+      ];
+    }
+  }
+
+  public function editArtifact(array $dati){
+    $filter = $dati['artifact']['artifact'];
+    unset($dati['artifact']['artifact']);
+    try {
+      $pdo = $this->pdo();
+      $pdo->beginTransaction();
+      $artifactUpdateSql = $this->buildUpdate('artifact',['id'=>$filter],$dati['artifact']);
+      // $this->prepared($artifactUpdateSql, $dati['artifact']);
+      $stmtArtifact = $pdo->prepare($artifactUpdateSql);
+      $stmtArtifact->execute($dati['artifact']);
+      
+      $findPlaceUpdateSql = $this->buildUpdate('artifact_findplace',['artifact'=>$filter],$dati['artifact_findplace']);
+      // $this->prepared($findPlaceUpdateSql, $dati['artifact_findplace']);
+      $stmtFindPlace = $pdo->prepare($findPlaceUpdateSql);
+      $stmtFindPlace->execute($dati['artifact_findplace']);
+      
+      // $deleteMaterialSql = $this->buildDelete('artifact_material_technique',array("artifact"=>$filter));
+      // $this->simple($deleteMaterialSql);
+      $stmtDeleteMaterial = $pdo->prepare("delete from artifact_material_technique where artifact = :artifact");
+      $stmtDeleteMaterial->execute(["artifact" => $filter]);
+
+      foreach ($dati['artifact_material_technique'] as $value) {
+        $data = array("artifact"=>$filter, "material"=>$value['m'], "technique" =>$value['t']);
+        $sql = $this->buildInsert("artifact_material_technique", $data);
+        $stmtMaterialTechnique = $pdo->prepare($sql);
+        $stmtMaterialTechnique->execute($data);
+      }
+      $pdo->commit();
+      return ["res"=> 1, "output"=>'Ok, the artifact has been successfully updated.'];
+    } catch (\Exception $e) {
+      $pdo->rollBack();
+      return ["res"=>0, "output"=>$e->getMessage()];
+    }
+  }
+
+  public function getArtifacts(array $search){
+    $filter = [];
+    array_push($filter, "status_id = ".$search['status']);
+
+    if(isset($search['description'])){
+      $string = trim($search['description']);
+      $arrString = explode(" ",$string);
+      $searchArray = [];
+      foreach ($arrString as $value) {
+        if(strlen($value)>3){
+          array_push($searchArray, " (description like '%".$value."%' or name like '%".$value."%') ");
+        }
+      }
+      $searchString = "(".join(" and ", $searchArray).")";
+      array_push($filter,$searchString);
+    }
+
+    if($_SESSION['role'] > 4){array_push($filter, "author = ".$_SESSION['id']);}
+    if(count($filter) > 0 ){ $filter = "where ".join(" and ", $filter);}
+    $sql = "select id, name, description, cast(last_update as date) as last_update from artifact_view ".$filter. " order by last_update desc";
+    return $this->simple($sql);
+  }
+
+  public function getArtifact(int $id){
+    $artifact = "select * from artifact_view where id = ".$id.";";
+    $out['artifact'] = $this->simple($artifact)[0];
+    $out['artifact_material_technique'] = $this->getArtifactMaterial($id);
+    $out['storage_place'] = $this->institution->getInstitution($out['artifact']['storage_place']);
+    if(count($this->getArtifactMeasure($id))>0){$out['artifact_measure'] = $this->getArtifactMeasure($id);}
+    $out['artifact_metadata'] = $this->getArtifactMetadata($id);
+    $out['artifact_findplace'] = $this->getArtifactFindplace($id);
+    $modelId = $this->getModelId($id);
+    if(count($modelId) > 0){$out['model'] = $this->model->getModel($modelId[0]['model']);}
+    $media = $this->files->getMedia($id);
+    if(count($media)>0){$out['media'] = $media;}
+
+    if($out['artifact']['timeline'] && $out['artifact']['timeline'] !== null){
+      $timeline = $this->simple("select definition from time_series where id = ".$out['artifact']['timeline'].";")[0];
+      $out['crono']['timeline'] = $timeline['definition'];
+      if (isset($out['artifact']['start']) && $out['artifact']['start'] !== null){
+        $out['crono']['start'] = $this->getChrono($out['artifact']['timeline'],$out['artifact']['start']);
+      }
+      if (isset($out['artifact']['end']) && $out['artifact']['end'] !== null){
+        $out['crono']['end'] = $this->getChrono($out['artifact']['timeline'],$out['artifact']['end']);
+      }
+    }
+    return $out;
+  }
+
+  private function getChrono(int $timeline, int $year){
+    return $this->simple("select m.definition as macro, g.definition as generic, s.definition as spec from time_series_macro m inner join time_series_generic g on g.macro = m.id inner join time_series_specific s on s.generic = g.id where m.serie = ".$timeline." and (".$year." between s.start and s.end)")[0];
+  }
+
+  private function getModelId($artifact){
+    $sql = "select model from artifact_model where artifact = ".$artifact;
+    return $this->simple($sql);
+  }
+
+  private function getArtifactMaterial(int $id){ return $this->simple("select item.material material_id, material.value material, item.technique from artifact_material_technique item inner join list_material_specs material on item.material = material.id where item.artifact = ".$id.";");}
+
+  private function getArtifactMeasure(int $id){ return $this->simple("select * from artifact_measure where artifact = ".$id.";"); }
+
+  private function getArtifactMetadata(int $id){
+    $out = [];
+    $authorSql = "select u.id, p.first_name, p.last_name from person p inner join user u on u.person = p.id inner join artifact a on a.author = u.id where a.id = ".$id.";";
+    $ownerSql = "select i.id, i.name from institution i inner join artifact a on a.owner = i.id where a.id = ".$id.";";
+    $licenseSql = "select l.id, l.license, l.acronym, l.link from license l inner join artifact a on a.license = l.id where a.id = ".$id.";";
+    $out['author'] = $this->simple($authorSql)[0];
+    $out['owner'] = $this->simple($ownerSql)[0];
+    $out['license'] = $this->simple($licenseSql)[0];
+    return $out;
+  }
+
+  private function getArtifactFindplace(int $id){
+    // $sql = "select nation.name nation, county.id county_id, county.name county,city.id city_id, city.name city, f.parish, f.toponym, f.latitude, f.longitude, f.findplace_notes notes from artifact_findplace f inner join county on f.county = county.id inner join nation on county.nation = nation.id left join city on f.city = city.id where f.artifact = ".$id.";";
+    $sql = "SELECT gadm0.country gid0, gadm0.gid_0 bounds_0, gadm1.name_1 gid1, gadm1.gid_1 bounds_1, gadm2.name_2 gid2, gadm2.gid_2 bounds_2, gadm3.name_3 gid3, gadm3.gid_3 bounds_3, gadm4.name_4 gid4, gadm4.gid_4 bounds_4, gadm5.name_5 gid5, gadm5.gid_5 bounds_5, a.parish, a.toponym, a.latitude, a.longitude, a.findplace_notes notes
+    FROM artifact_findplace a
+    INNER JOIN gadm0 ON a.gid_0 = gadm0.gid_0
+    LEFT JOIN gadm1 ON a.gid_1 = gadm1.gid_1
+    LEFT JOIN gadm2 ON a.gid_2 = gadm2.gid_2
+    LEFT JOIN gadm3 ON a.gid_3 = gadm3.gid_3
+    LEFT JOIN gadm4 ON a.gid_4 = gadm4.gid_4
+    LEFT JOIN gadm5 ON a.gid_5 = gadm5.gid_5
+    WHERE a.artifact = $id;";
+    return $this->simple($sql)[0];
+  }
+
+  public function getArtifactName(int $id){
+    return $this->simple("select name from artifact where id = ".$id.";")[0];
+  }
+
+  public function artifactIssues(){
+    $chronoNotInRange = "SELECT a.id, a.name, a.start, coalesce(a.end, '-') end FROM artifact a LEFT JOIN time_series_specific time ON a.start BETWEEN time.start AND time.end OR a.end BETWEEN time.start AND time.end OR (a.start <= time.start AND a.end >= time.end) WHERE time.start IS NULL and a.start is not null order by a.id asc;";
+    $chronoNullValue = "SELECT a.id, a.name, coalesce(a.start, '-') start, coalesce(a.end, '-') end FROM artifact a where a.start is null and a.end is null order by a.id asc";
+    $sqlNoDescription = "SELECT a.id, a.name FROM artifact a where a.description is null order by a.id asc";
+    $out['chronoNotInRange'] = $this->simple($chronoNotInRange);
+    $out['chronoNullValue'] = $this->simple($chronoNullValue);
+    $out['noDescription'] = $this->simple($sqlNoDescription);
+
+    $db_files = [];
+    $files = $this->simple("select object from model_object;");
+    foreach ($files as $file) {$db_files[]=$file['object'];}
+    $rootFolder = $_SERVER['DOCUMENT_ROOT'] . '/archive/models/';
+
+    // Aggiungiamo un controllo per la directory per evitare errori fatali.
+    if (!is_dir($rootFolder)) {
+        // Se la directory non esiste, non possiamo fare confronti.
+        // Impostiamo un array vuoto per i file mancanti.
+        $out['missingModel'] = [];
+    } else {
+        $folder_files = array_diff(scandir($rootFolder), array('..', '.'));
+        $missingModel = array_diff($db_files, $folder_files);
+
+        if (!empty($missingModel)) {
+            $missingModelList = implode("','", array_map('addslashes', $missingModel));
+            $missingModelList = "'".$missingModelList."'";
+            $sqlMissingModel = "select a.id artifact, m.model, a.name, m.object from artifact a inner join artifact_model am on am.artifact = a.id inner join model_object m on am.model = m.model where m.object in (".$missingModelList.") order by a.id asc;";
+            $out['missingModel'] = $this->simple($sqlMissingModel);
+        } else {
+            $out['missingModel'] = [];
+        }
+    }
+
+    return $out;
+  }
+}
+?>

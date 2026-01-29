@@ -1,0 +1,302 @@
+<div id="3dhop" class="tdhop animated">
+  <canvas id="draw-canvas"></canvas>
+  <div id="wrapAnnotations" class="modelTools rounded invisible">
+    
+      <!------EXPORT - IMPORT------>
+    <div class="p-1">
+      <button id="btExportAnnotations" type="button" class="btn btn-sm btn-secondary" data-bs-toggle="tooltip" title="Export annotations as JSON">
+        <span class="mdi mdi-download"></span> Export
+      </button>
+      <button id="btImportAnnotations" type="button" class="btn btn-sm btn-secondary" data-bs-toggle="tooltip" title="Import annotations from JSON">
+        <span class="mdi mdi-upload"></span> Import
+      </button>
+      <input type="file" id="ifileJSON" accept=".json,.JSON,.Json" style="display:none">
+    </div>
+
+    <div class="accordion" id="accordionAnnotations">
+      <!------NOTES------>
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="accNotes">
+          <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#accNotesDiv" aria-expanded="true" aria-controls="accNotesDiv"><span class="mdi mdi-clipboard-text"></span>&emsp;Notes</button>
+        </h2>
+        <div id="accNotesDiv" class="accordion-collapse collapse show" aria-labelledby="accNotes" data-bs-parent="#accordionAnnotations">
+          <div class="accordion-body p-1">
+            <textarea id="annNotes" name="notes" rows="8" placehawolder="..." style="width:100%; height:100%;"></textarea>
+          </div>
+        </div>
+      </div>
+      <!------VIEWS------>
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="accViews">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accViewsDiv" aria-expanded="false" aria-controls="accViewsDiv"><span class="mdi mdi-cctv"></span>&emsp;Views</button>
+        </h2>
+        <div id="accViewsDiv" class="accordion-collapse collapse" aria-labelledby="accViews" data-bs-parent="#accordionAnnotations">
+          <div class="accordion-body p-1">
+            <div id="viewsListDiv" style="max-height:45vh; overflow-y:auto;">
+            </div>
+            <div class="p-1">
+              <button id="btAddView" type="button" class="btn btn-sm btn-secondary w-100" data-bs-toggle="tooltip" title="Add current view">
+                <span class="mdi mdi-plus"></span> Add View
+              </button>
+            </div>
+          </div>          
+        </div>
+      </div>
+      <!------SPOTS------>      
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="accSpots">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accSpotsDiv" aria-expanded="false" aria-controls="accSpotsDiv"><span class="mdi  mdi-map-marker-outline"></span>&emsp;Spots</button>
+        </h2>
+        <div id="accSpotsDiv" class="accordion-collapse collapse" aria-labelledby="accSpots" data-bs-parent="#accordionAnnotations">
+          <div class="accordion-body p-1">
+            <div id="spotsListDiv" style="max-height:45vh; overflow-y:auto;">
+            </div>
+            <div class="p-1">
+              <button id="btAddSpot" type="button" class="btn btn-sm btn-secondary w-100" data-bs-toggle="tooltip" title="Add new spot">
+                <span class="mdi mdi-plus"></span> Add Spot
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    <!------------->
+    </div>
+
+  </div>
+  
+  <!-----HORIZONTAL TOOLBAR ON TOP-------->  
+  <div id="modelToolsH" class="modelTools rounded">
+    <div class="btn-group" role="group">
+      <button type="button" id="btHome" class="btn btn-secondary" data-bs-toggle="tooltip" title="restore initial view">
+        <span class="mdi mdi-home"></span>
+      </button>
+      <button type="button" id="btWidescreen" class="btn btn-secondary" data-bs-toggle="tooltip" title="toggle wide mode">
+        <span class="mdi mdi-monitor-screenshot"></span>
+      </button>
+      <button type="button" id="btScreenshot" class="btn btn-secondary" data-bs-toggle="tooltip" title="save a screenshot of the current view">
+        <span class="mdi mdi-camera"></span>
+      </button>
+      <button type="button" id="btParadata" class="btn btn-secondary" data-bs-toggle="tooltip" title="view model and objects paradata">
+        <span class="mdi mdi-newspaper"></span>
+      </button>
+      <button type="button" id="btHelp" class="btn btn-secondary" data-bs-toggle="tooltip" title="viewer help">
+        <span class="mdi mdi-help"></span>
+      </button>
+      <button type="button" class="btn btn-success" name="saveModelParam" data-bs-toggle="tooltip" title="Save parameters and active tools in the database, they will be used the next time the model is loaded">
+        <span class="mdi mdi-content-save"></span>
+      </button>
+    </div>
+  </div>
+
+  <!-----VERTICAL COMMAND PANEL-------->    
+  <div id="modelToolsV" class="rounded modelTools">
+
+    <div class="m-1" style="position:relative; display:grid; grid-template-columns:repeat(4, 1fr); grid-template-rows:repeat(3, 1fr); grid-column-gap:0px; grid-row-gap:0px;">
+      <div class="border btView" style="grid-area: 1 / 2 / 2 / 3; text-align:center;" data-direction="top" data-bs-toggle="tooltip" title="From Above">
+        <span class="mdi mdi-arrow-down-bold"></span>
+      </div>
+      <div class="border btView" style="grid-area: 2 / 1 / 3 / 2; text-align:center;" data-direction="left" data-bs-toggle="tooltip" title="From Left">
+       <span class="mdi mdi-arrow-right-bold"></span>
+      </div>
+      <div class="border btView" style="grid-area: 2 / 2 / 3 / 3; text-align:center;" data-direction="front" data-bs-toggle="tooltip" title="From Front">
+        <span class="mdi mdi-arrange-bring-forward"></span>
+      </div>
+      <div class="border btView" style="grid-area: 2 / 3 / 3 / 4; text-align:center;" data-direction="right" data-bs-toggle="tooltip" title="From Right">
+        <span class="mdi mdi-arrow-left-bold"></span>
+      </div>
+      <div class="border btView" style="grid-area: 2 / 4 / 3 / 5; text-align:center;" data-direction="back" data-bs-toggle="tooltip" title="From Back">
+        <span class="mdi mdi-arrange-send-backward"></span>
+      </div>
+      <div class="border btView" style="grid-area: 3 / 2 / 4 / 3; text-align:center;" data-direction="bottom" data-bs-toggle="tooltip" title="From Below">
+        <span class="mdi mdi-arrow-up-bold"></span>
+      </div>
+      <div class="" style="position:absolute; right:-6px; bottom:-6px;">
+        <button type="button" id="btOrtho" class="btn btn-sm btn-secondary" style="scale:80%;" data-bs-toggle="tooltip" title="Orthographic view"><span class="mdi mdi-cube-outline"></span></button>
+      </div>
+    </div> 
+
+    <div class="m-1">
+      <canvas id="lightcontroller" width="150" height="150" style="display:none;"></canvas>
+      <div class="btn-group" role="group">
+      <button type="button" id="btLight" class="btn btn-secondary" data-bs-toggle="tooltip" title="Lighting Direction</br>(click and drag)">
+        <span class="mdi mdi-spotlight-beam"></span>
+      </button>
+      <button type="button" id="btLighting" class="btn btn-adc-blue" data-bs-toggle="tooltip" title="Lighting on/off">
+        <span class="mdi mdi-lightbulb"></span>
+      </button>      
+    </div>
+    </div>
+
+    <div class="m-1">
+      <div class="btn-group" role="group">
+      <button type="button" id="btTexture" class="btn btn-adc-blue" data-bs-toggle="tooltip" title="Texture / Solid Color">
+        <span class="mdi mdi-palette"></span>
+      </button>
+      <button type="button" id="btTransparency" class="btn btn-secondary" data-bs-toggle="tooltip" title="Transparency on/off">
+        <span class="mdi mdi-contrast-circle"></span>
+      </button>
+      <button type="button" id="btSpecular" class="btn btn-secondary" data-bs-toggle="tooltip" title="Specularity on/off">
+        <span class="mdi mdi-bowling"></span>
+      </button>
+    </div>
+    </div>
+
+    <div class="m-1">
+      <div class="btn-group" role="group">
+      <button type="button" id="btGrid" class="btn btn-adc-blue" data-bs-toggle="tooltip" title="Reference grid">
+        <span class="mdi mdi-border-all"></span>
+      </button>
+      <button type="button" id="btAxes" class="btn btn-secondary" data-bs-toggle="tooltip" title="XYZ axis">
+        <span class="mdi mdi-cursor-move"></span>
+      </button>
+      </div>
+    </div>
+
+    <hr/>
+
+    <div class="m-1">
+      <div class="btn-group" role="group" id="measureTools">
+        <input type="checkbox" class="btn-check measureTools" id="distanceTool" autocomplete="off">
+        <label class="toolBtn btn btn-outline-secondary" title="point-to-point measure" for="distanceTool"><span class="mdi mdi-ruler"></span></label>
+        <input type="checkbox" class="btn-check measureTools" id="pickTool" autocomplete="off">
+        <label class="toolBtn btn btn-outline-secondary" title="XYZ point picking" for="pickTool"><span class="mdi mdi-map-marker"></span></label>
+        <input type="checkbox" class="btn-check measureTools" id="angleTool" autocomplete="off">
+        <label class="toolBtn btn btn-outline-secondary" title="angle measure" for="angleTool"><span class="mdi mdi-math-compass"></span></label>
+      </div>
+      <div class="my-1" role="group">
+        <input type="checkbox" class="btn-check sectionTool" id="btSection" autocomplete="off">
+        <label class="toolBtn btn btn-sm btn-outline-secondary w-100" title="enable section tool" for="btSection">sections</label> 
+      </div>      
+    </div>
+    
+  </div>
+
+  <!-----VERTICAL COMMAND PANEL-------->
+
+
+  <!-----OBJECT CONTROL-------->
+  <div id="object-control" class="rounded invisible"></div>
+  
+  <!-----MEASUREMENT OUTPUT PANEL-------->  
+  <div id="measure-box" class="rounded invisible text-center">
+    <div id="panel_instructions" class="mb-2 fw-bold"></div>
+    <p id="measure-box-title" class="m-0 border-bottom border-secondary"></p>
+    <h6 id="measure-output" class="m-0"></h6>
+  </div>
+
+  <!-----SECTIONS PANEL-------->  
+  <div id="sections-box" class="container-fluid text-bg-dark rounded invisible">
+    <div class="row">
+      <div class="col-4">
+        <small data-bs-toggle="tooltip" title="Enable or disable X, Y or Z Axis Section">
+          <i class="mdi mdi-information-variant-circle"></i> Plane
+        </small>
+      </div>
+      <div class="col-5">
+        <small data-bs-toggle="tooltip" title="Move Axis Section Position">
+          <i class="mdi mdi-information-variant-circle"></i> Position
+        </small>
+      </div>
+      <div class="col-3 text-end">
+        <small data-bs-toggle="tooltip" title="Flip Axis Section Direction">
+          <i class="mdi mdi-information-variant-circle"></i> Flip
+        </small>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-2">
+        <img id="xPlaneToggle" class="img-fluid planeToggle" src="img/ico/sectionX_off.png">
+      </div>
+      <div class="col-8 p-0">
+        <input type="range" id="xPlaneRange" class="w-100 planeRange" min="0" max="1" step="0.01" value="0.5">
+      </div>
+      <div class="col-2">
+        <div class="form-check form-check-reverse form-control-sm m-0">
+          <input type="checkbox" id="xPlaneFlip" class="form-check-input planeFlip">
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-2">
+        <img id="yPlaneToggle" class="img-fluid planeToggle" src="img/ico/sectionY_off.png">
+      </div>
+      <div class="col-8 p-0">
+        <input type="range" id="yPlaneRange" class="w-100 planeRange" min="0" max="1" step="0.01" value="0.5">
+      </div>
+      <div class="col-2">
+        <div class="form-check form-check-reverse form-control-sm m-0">
+          <input type="checkbox" id="yPlaneFlip" class="form-check-input planeFlip">
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-2">
+        <img id="zPlaneToggle" class="img-fluid planeToggle" src="img/ico/sectionZ_off.png">
+      </div>
+      <div class="col-8 p-0">
+        <input type="range" id="zPlaneRange" class="w-100 planeRange" min="0" max="1" step="0.01" value="0.5">
+      </div>
+      <div class="col-2">
+        <div class="form-check form-check-reverse form-control-sm m-0">
+          <input type="checkbox" id="zPlaneFlip" class="form-check-input planeFlip">
+        </div>
+      </div>
+    </div>
+    <div class="row invisible" id="planesEdgesDiv">
+      <div class="col-4 p-1">
+        <div class="form-check form-check-reverse form-control-sm m-0" title="Toggle model section planes view" data-bs-toggle="tooltip">
+          <input class="form-check-input" type="checkbox" id="showPlane" checked>
+          <label class="form-check-label" for="reverseCheck1">Show planes</label>
+        </div>
+      </div>
+      <div class="col-4 p-1">
+        <div class="form-check form-check-reverse form-control-sm m-0" title="Toggle model section edges view" data-bs-toggle="tooltip">
+          <input class="form-check-input" type="checkbox" id="showBorder" checked>
+          <label class="form-check-label" for="reverseCheck1">Show edges</label>
+        </div>
+      </div>
+      <div class="col-4">
+        <div class="d-grid gap-2">
+          <button class="btn btn-dark btn-sm" type="button" id="sectionReset"><span class="mdi mdi-reload"></span> reset</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="paradata-modal">
+    <div class="paradata-header border-bottom text-end">
+      <button type="button" class="btn-close" aria-label="Close" name="dismiss-paradata-modal"></button>
+    </div>
+    <div class="paradata-body">
+      <div id="model-metadata" class="mb-3">
+        <h5>Model paradata</h5>
+        <div class="alert alert-light p-1 d-flex justify-content-between align-items-center" id="alertArtifactModelConnection">
+          <p id="modelConnectedText" class="w-auto m-0"></p>
+          <a href="#" class="btn btn-sm btn-adc-dark w-auto" id="modelConnectedBtn"></a>
+        </div>
+        <div class="alert p-1 text-center" id="model-status"></div>
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item"><span>Name</span><span id="model-name"></span></li>
+          <li class="list-group-item"><span>Description</span><span id="model-description"></span></li>
+          <li class="list-group-item"><span>Note</span><span id="model-note"></span></li>
+          <li class="list-group-item"><span>UUID</span><span id="model-uuid" data-bs-toggle="tooltip" data-bs-title="copy to clipboard"></span></li>
+          <li class="list-group-item" id="doiItem"><span>DOI</span><span><a href="" target="_blank" id="model-doi"></a></span></li>
+          <li class="list-group-item"><span>Citation</span><span id="model-citation"></span></li>
+        </ul>
+        <nav id="toolBarModel" class="my-3 pb-2 border-bottom">
+          <a href="#" class="btn btn-sm btn-adc-dark" name="editModelBtn">edit</a>
+          <button type="button" class="btn btn-sm btn-adc-dark" name="addObject">add object</button>
+          <button type="button" class="btn btn-sm" name="modelVisibility">change status</button>
+          <button type="button" class="btn btn-sm btn-danger float-end" name="deleteModel">delete</button>
+        </nav>
+      </div>
+      <div id="objects-metadata">
+        <h5>Objects metadata</h5>
+        <div id="listWrap"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- experimental -->
+<canvas id="dynamicLight" width="150" height="150" style="display:none;"></canvas>

@@ -1,0 +1,12 @@
+app/api/vendor/
+
+.env
+.vscode/
+.DS_Store
+webhook/node_modules/
+node_modules/
+restClient/
+
+docker-compose.override.yml
+
+workfile/
