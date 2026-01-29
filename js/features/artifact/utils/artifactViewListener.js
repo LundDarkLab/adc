@@ -3,7 +3,17 @@ import { bsAlert } from '../../../components/bsComponents.js';
 import { confirmAction } from '../../../helpers/helper.js';
 
 export function initListener() {
-  document.getElementById('delete').addEventListener('click', async () => {
+  window.addEventListener('keydown', (e) => {
+    const modal = document.getElementById("fullScreenImg");
+    if (e.key === "Escape" && modal && modal.classList.contains('is-active')) {
+      modal.classList.remove('is-active');
+      document.body.classList.remove('no-scroll');
+    }
+  });
+
+  const deleteBtn = document.getElementById('delete');
+  if (deleteBtn) {
+    deleteBtn.addEventListener('click', async () => {
       await confirmAction(
         'Are you sure you want to delete this artifact? This action cannot be undone.',
         async () => { 
@@ -18,4 +28,5 @@ export function initListener() {
         }
       )
     });
+  }
 }

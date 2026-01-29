@@ -28,7 +28,7 @@ html, body{
   padding:0; 
   margin:0;
 }
-body.no-scroll {
+.no-scroll {
   overflow: hidden;
   height: 100vh;
 }

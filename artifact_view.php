@@ -42,17 +42,7 @@
               <?php require('assets/artifact_accordion.html'); ?>
             </div>
           </div>
-          <div id="geographic" class="rounded">
-            <div id="layerSwitcher" class="card">
-              <div id="layerSwitcherToggle" class="">
-                <button class="btn btn-sm btn-white m-0 w-100" data-bs-toggle="collapse" data-bs-target="#layerSwitcherContent" aria-expanded="false" aria-controls="layerSwitcherContent"><span class="float-start">Layers</span> <span class="mdi mdi-chevron-double-down float-end"></span></button>
-              </div>
-              <div id="layerSwitcherContent" class="collapse">
-                <p class="card-title">Base Layer</p>
-                <div id="baseLayerControl" class="mb-3"></div>
-              </div>        
-            </div>
-          </div>
+          <div id="geographic" class="rounded"></div>
         </div>
 
         <div id="model">
@@ -63,13 +53,13 @@
           <div id="media">
             <nav>
               <div class="nav nav-tabs" id="nav-tab" role="tablist">
-                <button class="nav-link active" id="nav-image-tab" data-bs-toggle="tab" data-bs-target="#nav-image" type="button" role="tab" aria-controls="nav-image" aria-selected="true">Image</button>
+                <button class="nav-link active" id="nav-image-tab" data-bs-toggle="tab" data-bs-target="#nav-image" type="button" role="tab" aria-controls="nav-image" aria-selected="true">Image <span class="ml-3 badge text-bg-light">0</span></button>
 
-                <button class="nav-link" id="nav-document-tab" data-bs-toggle="tab" data-bs-target="#nav-document" type="button" role="tab" aria-controls="nav-document" aria-selected="false">Document</button>
+                <button class="nav-link" id="nav-document-tab" data-bs-toggle="tab" data-bs-target="#nav-document" type="button" role="tab" aria-controls="nav-document" aria-selected="false">Document <span class="ml-3 badge text-bg-light">0</span></button>
 
-                <button class="nav-link" id="nav-references-tab" data-bs-toggle="tab" data-bs-target="#nav-references" type="button" role="tab" aria-controls="nav-references" aria-selected="false">References</button>
+                <button class="nav-link" id="nav-references-tab" data-bs-toggle="tab" data-bs-target="#nav-references" type="button" role="tab" aria-controls="nav-references" aria-selected="false">References <span class="ml-3 badge text-bg-light">0</span></button>
 
-                <button class="nav-link" id="nav-video-tab" data-bs-toggle="tab" data-bs-target="#nav-video" type="button" role="tab" aria-controls="nav-video" aria-selected="false">Video</button>
+                <button class="nav-link" id="nav-video-tab" data-bs-toggle="tab" data-bs-target="#nav-video" type="button" role="tab" aria-controls="nav-video" aria-selected="false">Video <span class="ml-3 badge text-bg-light">0</span></button>
               </div>
             </nav>
 
@@ -98,6 +88,46 @@
         </div>
       </div>
     </main>
+
+    <div id="fullScreenImg">
+      <div id="fullScreenContent">
+        <div id="fullScreenBody">
+          <div id="fullImageContainer">
+            <img src="" alt="" id="modalImg">
+          </div>
+          <div id="fullImageDescription" class="bg-light border-start">
+            <div id="fullImageMetadata">
+              <div id="fullScreenHeader" class="bg-light">
+                <button type="button" id="closeFullScreenImage" class="btn-close" aria-label="Close"></button>
+              </div>
+              <h4 class="px-3 py-2">Image metadata</h4>
+              <div class="mb-3 list-group list-group-flush">
+                <div class="list-group-item">
+                  <p class="fw-bold mb-0">File name:</p> 
+                  <p id="imageFileName"></p>
+                </div>
+                <div class="list-group-item">
+                  <p class="fw-bold mb-0">Description:</p>
+                  <p id="imageDescriptionText"></p>
+                </div>
+                <div class="list-group-item">
+                  <p class="fw-bold m-0">Image licensed under:</p>
+                  <a href="" id="licenseLink" title="view license properties [new tab]" target="_blank"></a>
+                  <button type="button" class="btn btn-sm btn-adc-blue form-control mt-3 d-none" id="downloadImg"><span class="mdi mdi-download"></span> download</button>
+                </div>
+              </div>
+            </div>
+            <div id="fullScreenFooter" class="border-top">
+              <div class="p-3">
+                 <h4 class="px-3 py-2">Artifact gallery</h4>
+                <div id="otherArtifactImages"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <footer id="footer"></footer>
     <script>window.pageType = "artifact_view";</script>
     <script src="js/main.js" type="module" charset="utf-8"></script>

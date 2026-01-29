@@ -1,6 +1,6 @@
 import { mainLinks, toggleMenuBtn} from "../../../config/navigationConfig.js";
 import { checkLogged } from "../../../utils/checkLoggedUtils.js";
-import { checkDevice } from "../../../utils/isMobileUtils.js";
+import { checkDevice,isMobile } from "../../../utils/isMobileUtils.js";
 
 export async function buildMenu() {
   const menuContainer = document.getElementById('headerLink');

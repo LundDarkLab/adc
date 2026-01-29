@@ -114,6 +114,7 @@ export async function addLayers(mapElement, options={}) {
 }
 
 const refreshQueues = new WeakMap();
+
 export function refreshClusters(mapElement, options = {}) {
   if (!mapElement) return Promise.resolve();
 

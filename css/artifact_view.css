@@ -170,14 +170,14 @@ body > main {
   flex: 1;
 }
 
-#imgDiv, #videoDiv {
+#imgDiv, #otherArtifactImages, #videoDiv {
   display: grid;
   gap: var(--gap-main);
   align-items: stretch;
   padding: 10px 0;
 }
 
-#imgDiv{
+#imgDiv, #otherArtifactImages {
   grid-template-columns: repeat(3, 1fr);
 }
 
@@ -193,7 +193,10 @@ body > main {
   box-shadow: rgba(0,0,0,0.3) 0px 4px 8px 0px;
   transition: box-shadow 0.3s ease;
 }
-.imgCard, .videoCard {
+.imgCard{
+  aspect-ratio: 1 / 1;
+}
+.videoCard {
   height:300px;
 }
 
@@ -227,19 +230,30 @@ body > main {
   padding-right: 20px;
 }
 
-#fullScreenImg{
-  display:none;
+#fullScreenImg {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: rgba(0,0,0,.3);
-  z-index: 2000;
-
+  width: 100%;
+  height: 100%;
+  display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  
+  transition: opacity 0.3s ease, visibility 0.3s;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+}
+
+#fullScreenImg.is-active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto; 
 }
 
 #fullScreenContent {
@@ -259,22 +273,18 @@ body > main {
 #fullScreenHeader { 
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   padding: 5px 20px;
 	border-bottom: var(--bs-border-width) var(--bs-border-style) var(--bs-border-color) !important;
 }
 
-#fullScreenHeader{ flex-grow: 0.5; }
-
 #fullScreenBody{
   display: flex;
   flex-direction: row;
-  justify-content: space-between;
-  align-items: start;
+  justify-content: center;
+  align-items: center;
   height: 100%;
   max-height: 100%;
-  flex-grow: 9; 
-  gap:1rem;
 }
 
 #fullImageContainer {
@@ -287,12 +297,22 @@ body > main {
 #fullImageDescription {
   flex: 3;
   height:100%;
-  padding:20px;
+  /* padding:20px; */
 
   display: flex;
   flex-direction: column;
   justify-content: space-between;
 }
+#fullImageDescription > div{
+  height: auto;
+  max-height: 50%;
+  overflow: auto;
+}
+
+#fullImageMetadata .list-group-item{
+  background-color: transparent;
+}
+
 #modalImg {
   height: 100%;
   max-width: 100%;

@@ -1,6 +1,8 @@
 import { getArtifactById } from "../api/artifactApi.js";
 import { artifactViewAccordion } from "../components/artifactViewAccordion.js";
 import { initListener } from "../utils/artifactViewListener.js";
+import { initViewPageMap } from "../components/artifactViewMap.js";
+import { initMedia } from "../components/artifactViewMedia.js";
 
 export async function initViewPage() {
   const artifactId = new URLSearchParams(window.location.search).get('item');
@@ -9,16 +11,26 @@ export async function initViewPage() {
     return;
   }
 
+  let artifactData;
   try {
-    const artifactData = await getArtifactById(artifactId);
+    artifactData = await getArtifactById(artifactId);
     console.log('Artifact Data:', artifactData);
-    setAlertStatus(artifactData.data.artifact.status, artifactData.data.artifact.status_id);
-    artifactViewAccordion(artifactData.data);
   } catch (error) {
     console.error('Error fetching artifact data:', error);
+    return;
   }
-  initListener();
+
+  await Promise.all([
+    setAlertStatus(artifactData.data.artifact.status, artifactData.data.artifact.status_id),
+    artifactViewAccordion(artifactData.data),
+    initViewPageMap(artifactData.data.artifact_findplace),
+    initMedia(artifactData.data.media || {}),
+    initListener()
+  ]);
 }
+
+
+
 
 function setAlertStatus(statusText, statusId) {
   const alert = document.getElementById('status')
