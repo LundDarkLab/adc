@@ -26,11 +26,7 @@ COPY . .
 RUN cd api && composer install --no-interaction --optimize-autoloader
 
 # Impostiamo i permessi globali
-RUN mkdir -p /var/www/html/archive/image \
-    && mkdir -p /var/www/html/archive/document \
-    && mkdir -p /var/www/html/archive/tmp \
-    && chown -R www-data:www-data /var/www/html/archive \
-    && chmod -R 0777 /var/www/html/archive
+RUN chown -R www-data:www-data /var/www/html/archive && chmod -R 0777 /var/www/html/archive
 
 # Configurazione Apache (AllowOverride)
 RUN sed -i '/<Directory \/var\/www\/>/,/<\/Directory>/ s/AllowOverride None/AllowOverride All/' /etc/apache2/apache2.conf

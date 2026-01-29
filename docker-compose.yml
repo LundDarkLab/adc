@@ -49,8 +49,8 @@ services:
     ports:
       - ${WEBHOOK_PORT}:3000
     volumes:
-      - ./webhook:/app
-      - /app/node_modules
+      - .:/app/project_root
+      - /app/project_root/webhook/node_modules
       - /var/run/docker.sock:/var/run/docker.sock
 volumes:
   db_data:
