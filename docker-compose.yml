@@ -11,7 +11,7 @@ services:
     ports:
       - ${MYSQL_PORT}:3306
     # Per gestire le transazioni pesanti di GADM
-    command: --max_allowed_packet=1G --innodb-log-file-size=512M 
+    command: --max_allowed_packet=1G 
     volumes:
       - db_data:/var/lib/mysql
       - ./db-init:/docker-entrypoint-initdb.d
@@ -23,7 +23,7 @@ services:
     restart: unless-stopped
     ports:
       - ${APP_PORT_HTTP}:80
-      - ${APP_PORT_HTTPS}:443
+        #- ${APP_PORT_HTTPS}:443
     volumes:
       - archive:/var/www/html/archive
     depends_on:
