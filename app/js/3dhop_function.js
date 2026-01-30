@@ -2,6 +2,9 @@ const artifactId = $("[name=artifactId]").val()
 const activeUser = $("[name=activeUsr]").val()
 const role = $("[name=role]").val()
 
+let currentModelId = null;
+let currentModelAuthorId = null;
+
 // presenter object
 var presenter = null;
 
@@ -43,12 +46,11 @@ var VIEWER_STATE = {};
 var VIEWER_ANNOTATIONS = {
   type: "DC_SO_ANN",
   version: "2.0",
-  object: artifactId,
+  object: null,
   user: activeUser,
   time: new Date().toISOString(),
   notes: {text:""},
-  views: {},
-  spots: {}
+  views: {}
 };
 
 // MEASUREMENT STATE-----------------------------------------------
@@ -76,10 +78,7 @@ var tooltipBtnList = toolBtnList.map(function (tooltipBtn) { return new bootstra
 
 //--HORIZONTAL TOOLBAR ON TOP---------------------------------------------
 // home (reset all state), widescreen, screenshot, model info
-
-$("#btHome").on('click', function(){
-  setViewerState(null);
-});
+$("#btHome").on('click', function(){ setViewerState(null); });
 
 $("#btWidescreen").on('click', function(){
   resizeCanvas();
@@ -104,38 +103,26 @@ $("[name=dismiss-paradata-modal]").on('click',function(){
   $("#paradata-modal").fadeOut('fast');
   $("#btParadata").removeClass("btn-adc-blue").addClass("btn-secondary");
 })
-
+function initViewerListeners(){
+  if (currentModelId && ((role && role < 5) || (activeUser && currentModelAuthorId === activeUser))) {
+    $("[name=saveModelParam]").on('click', function(){
+      let dati = buildModelParamArray();
+      dati.model = currentModelId;
+      dati.trigger = 'updateModelParam';
+      saveModelParam(dati);
+    });
+  }
+}
 //--RIGHT COMMAND PANEL---------------------------------------------
 
-$("#btLighting").on('click', function(){
-  setLighting();
-});
-
-$("#btTexture").on('click', function(){
-  setTexture();
-});
-$("#btTransparency").on('click', function(){
-  setTransparency();
-});
-$("#btSpecular").on('click', function(){
-  setSpecular();
-});
-
-$("#btGrid").on('click', function(){
-  setGrid();
-});
-$("#btAxes").on('click', function(){
-  setAxes();
-});
-
-// cardinal views buttons
-$(".btView").on('click', function(){
-  viewFrom($(this).data('direction'))
-})
-
-$("#btOrtho").on('click', function(){
-  setOrtho();
-});
+$("#btLighting").on('click', function(){ setLighting();});
+$("#btTexture").on('click', function(){ setTexture();});
+$("#btTransparency").on('click', function(){ setTransparency();});
+$("#btSpecular").on('click', function(){ setSpecular();});
+$("#btGrid").on('click', function(){ setGrid();});
+$("#btAxes").on('click', function(){ setAxes();});
+$(".btView").on('click', function(){ viewFrom($(this).data('direction'))});
+$("#btOrtho").on('click', function(){ setOrtho();});
 
 //--TOOLS---------------------------------------------
 // measurement tools (3 buttons)
@@ -147,43 +134,19 @@ $(".measureTools").on('click', function(){
 })
 
 // section tool
-$(".sectionTool").on('click', function(){
-    sectionToolShow($(this).is(':checked'));
-})
+$(".sectionTool").on('click', function(){ sectionToolShow($(this).is(':checked'));})
 
 //--LEFT ANNOTATION PANEL---------------------------------------------
 
 //--ANNOTATIONS
 
 //export / import annotations
-$("#btExportAnnotations").on('click', function(){
-  exportAnnotations();
-});
-$("#btImportAnnotations").on('click', function(){
-  importAnnotations();
-});
-$("#ifileJSON").on('change', function(){
-  getJSON(this.files);
-});
-
-//update notes
-$("#annNotes").on('change', function(){
-  updateNotes();
-});
-
-// store current view+state into views
-$("#btAddView").on('click', function(){
-  storeView();
-});
-
-// add new spot
-$("#btAddSpot").on('click', function(){
-  addSpot();
-});
-
-
-
-
+$("#btExportAnnotations").on('click', function(){ exportAnnotations();});
+$("#btImportAnnotations").on('click', function(){ importAnnotations();});
+$("#ifileJSON").on('change', function(){ getJSON(this.files);});
+$("#annNotes").on('change', function(){ updateNotes();});
+$("#btAddView").on('click', function(){ storeView();});
+$("#btAddSpot").on('click', function(){ addSpot();});
 
 //------------------------------------------------------------------
 
@@ -286,12 +249,33 @@ function changeModelStatus(model){
 }
 
 function initModel(model){
-  let mainData = model.model;
-  const modelId = mainData.id;
-  let object = model.model_object;
-  let model_view = model.model_view;
-  paradata = model.model_object[0]
-  measure_unit = object[0].measure_unit;
+  if (!model) {
+    console.log('No model data provided to initModel');
+    return;
+  }
+
+  let mainData, object, thumbnail;
+
+  if (model.model && model.model_object) {
+    // Normal case (e.g., from model_view or other pages with artifact)
+    mainData = model.model;
+    object = model.model_object;
+    paradata = model.model_object[0];
+    measure_unit = object[0].measure_unit;
+    currentModelAuthorId = object[0].author_id;
+    thumbnail = model.thumbnail;
+  } else {
+    // Object edit case: model is the object data from getObject
+    mainData = {
+      id: model.model, // assuming model.model is the model ID
+      status_id: model.status == 1 ? 2 : 1 // map status
+    };
+    object = [model]; // wrap in array
+    paradata = model;
+    measure_unit = model.measure_unit;
+    currentModelAuthorId = model.author_id;
+    thumbnail = model.thumbnail;
+  }
 
   //fill modal metadata
   let statusAlert, statusTooltip, statusBtnClass, statusBtnValue, statusBtnTooltip;
@@ -315,7 +299,7 @@ function initModel(model){
       .addClass(statusBtnClass)
       .val(statusBtnValue)
       .tooltip({title:statusBtnTooltip, placement:'top', trigger:'hover'})
-      .on('click',function(){changeModelStatus(modelId)})
+      .on('click',function(){changeModelStatus(currentModelId)})
   }else{
     $("#toolBarModel").remove()
   } 
@@ -377,16 +361,26 @@ function initModel(model){
   });
 
   // retrieve collectiond ata from LocalStorage
-  COLLECTIONDATA = JSON.parse(localStorage.getItem('DYNCOLLECTION')) || {};
-  COLLECTIONITEM = COLLECTIONDATA.items.find((item) => item.id == artifactId);
+  VIEWER_ANNOTATIONS.object = currentModelId;
+  COLLECTIONDATA = JSON.parse(localStorage.getItem('BITFROSTMODEL')) || {items: []};
+  COLLECTIONITEM = COLLECTIONDATA.items.find((item) => item.id == currentModelId);
   if(COLLECTIONITEM){
     //retrieve annotations, if present
     if(COLLECTIONITEM.annotations){
       VIEWER_ANNOTATIONS = COLLECTIONITEM.annotations;
       // but I cannot display them now, because the viewewr is not yet initialized. I'll schedule it at the end of the startupViewer function
     }
+  } else {
+    // Crea l'item se non esiste
+    COLLECTIONITEM = {
+      id: currentModelId,
+      annotations: VIEWER_ANNOTATIONS  // Inizializza con il template
+    };
+    COLLECTIONDATA.items.push(COLLECTIONITEM);
+    storeCollectionData();  // Salva nel localStorage
   }
   startupViewer(object);
+  initViewerListeners();
 }
 
 function startupViewer(object){
@@ -400,16 +394,12 @@ function startupViewer(object){
 
   // initial scene setup
 	var myScene = {
-		meshes: { // default models used for utilities
-			"sphere" : { url: "archive/models/sphere.ply" },  
-			"cube"   : { url: "archive/models/cube.ply" },
-		},
-		modelInstances: { //still empty
-		},
-		spots: { //still empty
-		},
-		trackball: { // default trackball settings, will be overwritten by the state
-		},
+		meshes: {
+      "sphere": { url: "archive/models/sphere.ply" },  
+    },
+		modelInstances: {},
+		spots: {},
+		trackball: {},
 		space: {
 			centerMode: "scene",
 			radiusMode: "scene",
@@ -738,6 +728,7 @@ function storeView(){
   displayViews(); // update views list
   storeAnnotations();
 }
+
 function displayViews(){
   let listDiv = $("#viewsListDiv");
 
@@ -842,6 +833,9 @@ function displaySpots(){
 		};
 		presenter._scene.spots[spot] = presenter._parseSpot(newSpot);	
 		presenter._scene.spots[spot].rendermode = "FILL";  //maybe this is not necessary
+
+    console.log('Spot mesh exists:', presenter._scene.meshes["sphere"]);
+    console.log('Spot parsed:', presenter._scene.spots[spot]);
   }  
 	presenter.repaint();
   /*
@@ -872,7 +866,7 @@ function storeAnnotations(){
 }
 
 function storeCollectionData(){
-  localStorage.setItem('DYNCOLLECTION', JSON.stringify(COLLECTIONDATA));
+  localStorage.setItem('BITFROSTMODEL', JSON.stringify(COLLECTIONDATA));
 }
 
 
@@ -1617,18 +1611,13 @@ function view2track(view){
 	return trackState;
 }
 //---------------------------------------------------------------------------------------
-
-
-//EXPERIMENT
-$("#btLight").on('mousedown', openLightControl);
-$(document).on('mouseup', closeLightControl);
-$('#draw-canvas').on('mouseup', closeLightControl);
+///////////////////
+// LIGHT CONTROL //
+///////////////////
+document.getElementById('btLight').addEventListener('mousedown', openLightControl);
+document.getElementById('lightcontroller').addEventListener('mouseup', closeLightControl);
 
 function openLightControl(event){
-  //console.log("openLightControl");
-  //console.log(event);
-  //console.log(event.clientX);
-  //console.log(event.clientY);
   var lightControllerCanvas = document.getElementById("lightcontroller");
   lightControllerCanvas.width = 200;
 	lightControllerCanvas.height = 200;	
@@ -1638,18 +1627,13 @@ function openLightControl(event){
   lightControllerCanvas.style.zIndex = 1000;
   updateLightController(VIEWER_STATE.lightDir[0],VIEWER_STATE.lightDir[1]);
   (event.touches) ? lightControllerCanvas.addEventListener("touchmove", clickLightController, false) : lightControllerCanvas.addEventListener("mousemove", clickLightController, false);
-  //clickLightController(event);
 }
 function closeLightControl(event){
-  var lightControllerCanvas = document.getElementById("lightcontroller");
-  lightControllerCanvas.style.display = "none";
+  const lightControllerCanvas = document.getElementById("lightcontroller");
+  if(lightControllerCanvas){
+    lightControllerCanvas.style.display = "none";
+  }
 }
-//END EXPERIMENT
-
-
-///////////////////
-// LIGHT CONTROL //
-///////////////////
 function resizeLightController(){
 	var lightControllerCanvas = document.getElementById("lightcontroller");
 	var dim = Math.min(150, Math.min(lightControllerCanvas.parentElement.clientWidth,lightControllerCanvas.parentElement.clientHeight));
@@ -1746,6 +1730,8 @@ function buildModelParamArray(){
   return dati;
 }
 function saveModelParam(dati){
+  console.log(`saveModelParam: ${dati}`);
+  
   ajaxSettings.url=API+"model.php";
   ajaxSettings.data = dati
   $.ajax(ajaxSettings)

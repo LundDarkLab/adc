@@ -152,6 +152,7 @@ function setupLightController() {
     lightControllerCanvas.removeEventListener("touchmove", clickLightController, false);
   }, false);
 }
+window.setupLightController = setupLightController;
 ////////////////////////////
 function computeEncumbrance() {
   computeSceneBB();

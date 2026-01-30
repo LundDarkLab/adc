@@ -33,11 +33,7 @@ div.listDashBoard span{display:inline-block; vertical-align: top; padding:2px;}
 #institutionList{width:59%; margin-right:1%}
 
 #institutionDasboardList a, #institutionDasboardList p{font-size:16px;}
-#institutionDasboardList .cardLogo{
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: cover;
-}
+#institutionDasboardList .cardLogo{background-position: center;background-repeat: no-repeat;background-size: contain;}
 
 #userList a.disabled{margin-right:2%;}
 #userList a span{ width: 18%; }

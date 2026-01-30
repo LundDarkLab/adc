@@ -80,7 +80,7 @@ function save(btn){
     btn.preventDefault();
     checkFiles()
     let dati = new FormData();
-    dati.append('trigger','saveModel');
+    dati.append('trigger','saveNewModel');
     $("[data-table]").each(function(){
       if($(this).is('input[type="number"]') && !$(this).val()){$(this).val(0)}
       if($(this).val()){dati.append($(this).attr('id'),$(this).val())}
@@ -88,7 +88,10 @@ function save(btn){
     $.each(buildModelParamArray(), function(key, value){dati.append(key, value);})
     dati.append("nxz", nxz.files[0], nxz.files[0].name);
     dati.append("thumb", thumb.files[0], thumb.files[0].name);
-    
+
+    console.log("API: " + API);
+    console.log("dati:", Object.fromEntries(dati.entries()));
+    // return;
     ajaxSettings.url=API+'model.php';
     ajaxSettings.data = dati;
     ajaxSettings.enctype = 'multipart/form-data';

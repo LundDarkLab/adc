@@ -10,13 +10,16 @@
     <link rel="stylesheet" href="css/artifacts_add.css">
   </head>
   <body>
-    <?php require("assets/header.php"); ?>
+    <?php 
+      require("assets/header.php"); 
+      require("assets/loadingDiv.html");  
+    ?>
     <main class="<?php echo $mainClass; ?>">
       <div class="container">
         <input type="hidden" name="usr" value="<?php echo $_SESSION['id']; ?>">
         <form name="newArtifactForm" enctype="multipart/form-data" method="post">
           <fieldset>
-            <legend>Main data</legend>
+            <legend>Main data test</legend>
             <div class="row mb-3">
               <div class="col-md-6">
                 <label for="name" class="text-danger fw-bold">Name</label>
@@ -91,8 +94,6 @@
                 <label for="timeline" class="fw-bold text-danger">select a timeline map</label>
                 <select name="timeline" id="timeline" class="form-select" data-table="artifact" required>
                   <option value="" disabled selected>-select a timeline-</option>
-                  <option value="1">generic</option>
-                  <option value="2">sweden</option>
                 </select>
                 <div class="mt-3 text-secondary">Please select a timeline map from those available. Each time map will update the chronological filters of the lower and upper bounds by setting them to the specific local time span. </div>
               </div>
@@ -155,18 +156,32 @@
           <fieldset>
             <legend>Find site</legend>
             <div class="row mb-3">
-              <div class="col-md-4">
-                <div class="mb-3">
-                  <label for="county" class="fw-bold text-danger">County</label>
-                  <select data-table="artifact_findplace" class="form-select" id="county" required>
-                    <option value="" selected disabled>-- select county --</option>
-                  </select>
+              <div class="col-md-3">
+                <div id="gid_0_container" class="mb-3">
+                  <label for="gid_0" class="text-danger fw-bold">Country boundaries</label>
+                  <select id="gid_0" data-table="artifact_findplace" class="form-select gadm" required></select>
                 </div>
-                <div id="cityWrap" class="mb-3">
-                  <label for="city">City</label>
-                  <input id="city" type="text" name="city" class="form-control" value="" placeholder="digit city name" data-cityid=''>
-                  <div id="cityMsg" class="form-text text-danger">No city selected</div>
-                  <div class="list-group" id="citySuggested"></div>
+                <div id="gid_1_container" class="mb-3 hide">
+                  <label for="gid_1">Provinces and equivalent</label>
+                  <select id="gid_1" data-table="artifact_findplace" class="form-select gadm"></select>
+                </div>
+                <div id="gid_2_container" class="mb-3 hide">
+                  <label for="gid_2">Districts and equivalent.</label>
+                  <select id="gid_2" data-table="artifact_findplace" class="form-select gadm"></select>
+                </div>
+                <div id="gid_3_container" class="mb-3 hide">
+                  <label for="gid_3">Communes, Municipalities and equivalent</label>
+                  <select id="gid_3" data-table="artifact_findplace" class="form-select gadm"></select>
+                </div>
+                <div id="gid_4_container" class="mb-3 hide">
+                  <label for="gid_4">Sub-national administrative boundaries</label>
+                  <select id="gid_4" data-table="artifact_findplace" class="form-select gadm"></select>
+                  <small class="text-form">smaller than Communes and Municipalities</small>
+                </div>
+                <div id="gid_5_container" class="mb-3 hide">
+                  <label for="gid_5">Sub-national administrative boundaries</label>
+                  <select id="gid_5" data-table="artifact_findplace" class="form-select gadm"></select>
+                  <small class="text-form">smaller than Communes and Municipalities, available for France</small>
                 </div>
                 <div class="mb-3">
                   <label for="parish">Parish</label>
@@ -191,7 +206,7 @@
                   <textarea data-table="artifact_findplace" id="findplace_notes" rows="5" class="form-control"></textarea>
                 </div>
               </div>
-              <div class="col-md-8">
+              <div class="col-md-9">
                 <div id="map">
                   <div class="alert alert-warning" id="mapAlert">To put a marker on map you have to zoom in</div>
                   <div id="resetMapDiv">
@@ -226,6 +241,21 @@
         </form>
       </div>
     </main>
+
+    <div aria-live="polite" aria-atomic="true" class="position-relative">
+      <div id="toast-container" class="toast-container position-fixed top-0 start-50 translate-middle-x p-3">
+        <div id="errorToast" class="toast text-bg-light" role="alert" aria-live="assertive" aria-atomic="true">
+          <div class="d-flex">
+            <div class="toast-body">
+            geographic area cannot be determined, please manually select the correct values using the lists
+            </div>
+            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
     <?php
       require("assets/toastDiv.html");
       require("assets/menu.php");

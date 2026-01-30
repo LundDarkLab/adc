@@ -25,6 +25,9 @@
 
   <div id="filterWrap" class="d-none filterSmall">
     <div class="d-block mb-1 me-xl-2">
+      <input type="hidden" class="form-control w-auto" id="byCounty" value="" placeholder="county">
+    </div>
+    <div class="d-block mb-1 me-xl-2">
       <select class="form-select form-select-sm buildGallery" id="byCategory">
         <option selected value="" disabled>category</option>
       </select>
@@ -35,9 +38,6 @@
       </select>
     </div>
     <div class="d-block mb-1 me-xl-2">
-      <!-- <select class="form-select form-select-sm buildGallery" id="byChronology">
-        <option selected value="" disabled>chronology</option>
-      </select> -->
       <div class="dropdown" id="chronoDropDownList">
         <button class="btn btn-sm btn-light dropdown-toggle w-100 text-start" type="button" id="chronoDropDownBtn" data-bs-toggle="dropdown" aria-expanded="false">chronology</button>
         <ul id="macroList" class="dropdown-menu"></ul>

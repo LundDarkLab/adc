@@ -1,6 +1,8 @@
 <?php
 namespace Adc;
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 use \PHPMailer\PHPMailer\PHPMailer;
 use \PHPMailer\PHPMailer\SMTP;
 use \PHPMailer\PHPMailer\Exception;
@@ -13,39 +15,49 @@ class Person extends Conn{
 
   public function addPerson(array $dati){
     try {
-      $this->pdo()->beginTransaction();
+      $pdo = $this->pdo();
+      $pdo->beginTransaction();
       $sql = $this->buildInsert("person", $dati['person']);
-      $this->prepared($sql, $dati['person']);
-      $lastId = $this->pdo()->lastInsertId();
+      $sttmt = $pdo->prepare($sql);
+      $sttmt->execute($dati['person']);
+      $lastId = $pdo->lastInsertId();
       if(isset($dati['user'])){
         $dati['user']['person'] = $lastId;
         $this->createUser($dati);
       }
-      $this->pdo()->commit();
+      $pdo->commit();
       return ["res"=> 0, "output"=>'Ok, the item has been successfully created'];
     } catch (\Throwable $e) {
-      $this->pdo()->rollBack();
+      $pdo->rollBack();
       return ["res"=>1, "output"=>$e->getMessage()];
     }
   }
 
   public function createUser(array $dati){
-    $sql = $this->buildInsert("user", $dati['user']);
-    $this->prepared($sql, $dati['user']);
+    $pdo = $this->pdo();
+    try {
+        $sql = $this->buildInsert("user", $dati['user']);
+        $sttmt = $pdo->prepare($sql);
+        $sttmt->execute($dati['user']);
 
-    $token = md5($dati['person']['email']).rand(10,9999);
-    $tokenData = array("email"=>$dati['person']['email'], "token"=>$token);
-    $tokenSql = $this->buildInsert("reset_password", $tokenData);
-    $this->prepared($tokenSql, $tokenData);
+        $token = md5($dati['person']['email']).rand(10,9999);
+        $tokenData = array("email"=>$dati['person']['email'], "token"=>$token);
+        $tokenSql = $this->buildInsert("reset_password", $tokenData);
+        $sttmtToken = $pdo->prepare($tokenSql);
+        $sttmtToken->execute($tokenData);
 
-    $datiMail = array(
-      "email"=>$dati['person']['email'], 
-      "name"=>$dati['person']['first_name']." ".$dati['person']['first_name'], 
-      "link"=>"https://dyncolldev.ht.lu.se/plus/reset_password.php?key=".$token,
-      "mailBody"=>1
-    );
-    $this->sendMail($datiMail);
-  }
+        $datiMail = array(
+            "email"=>$dati['person']['email'], 
+            "name"=>$dati['person']['first_name']." ".$dati['person']['last_name'], 
+            "link"=>getenv('APP_BASE_URL')."/reset_password.php?key=".$token,
+            "mailBody"=>1
+        );
+        $this->sendMail($datiMail); // se qui c'è errore, catch lo intercetta sopra
+        return true;
+    } catch (\Throwable $e) {
+        throw $e; // Propaga l'errore a addPerson
+    }
+}
 
   public function sendMail(array $dati){
     switch ($dati['mailBody']) {
@@ -62,22 +74,31 @@ class Person extends Conn{
         $body = str_replace('%link%', $dati['link'], $body);
       break;
     }
-    $mailParams = parse_ini_file('config/mail.ini');
-    if ($mailParams === false) {
-      throw new \Exception("Error reading mail configuration file",0);
+
+    $mailParams = array(
+      'MAILHOST' => getenv('MAILHOST'),
+      'MAILPORT' => getenv('MAILPORT'),
+      'MAILUSER' => getenv('MAILUSER'),
+      'MAILPASSWORD' => getenv('MAILPASSWORD'),
+      'MAILSETFROM' => getenv('MAILSETFROM'),
+      'MAILSETFROMNAME' => getenv('MAILSETFROMNAME')
+    );
+    foreach ($mailParams as $key => $value) {
+      if($value === false || $value === null){
+        throw new \Exception('Mail parameter '.$key.' is not set',0);
+      }
     }
     $this->mail->isSMTP();
-    
     // only for testing, print messages only in the console, do not use in production!!!!
     // $this->mail->SMTPDebug = SMTP::DEBUG_SERVER; 
-    
-    $this->mail->Host = $mailParams['host'];
-    $this->mail->Port = $mailParams['port'];
+    $this->mail->Debugoutput = function($str, $level) { error_log("PHPMailer: $str"); };
     $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
     $this->mail->SMTPAuth = true;
-    $this->mail->Username = $mailParams['usr'];
-    $this->mail->Password = $mailParams['pwd'];
-    $this->mail->setFrom('omeka-ADC@ark.lu.se', 'Dynamic Collection Crew');
+    $this->mail->Host = $mailParams['MAILHOST'];
+    $this->mail->Port = $mailParams['MAILPORT'];
+    $this->mail->Username = $mailParams['MAILUSER'];
+    $this->mail->Password = $mailParams['MAILPASSWORD'];
+    $this->mail->setFrom($mailParams['MAILSETFROM'], $mailParams['MAILSETFROMNAME']);
     $this->mail->addAddress($dati['email'], $dati['name']);
     $this->mail->Subject = $titolo;
     $this->mail->msgHTML($body, __DIR__);
@@ -99,10 +120,17 @@ class Person extends Conn{
   }
 
   public function getPerson(int $id){
-    $sql = "select p.id, p.first_name, p.last_name, p.email, p.city, p.address, p.phone, p.institution institution_id, i.name institution, p.position position_id, l.value position from person p left join institution i on p.institution = i.id left join list_person_position l on p.position = l.id where p.id = ".$id.";";
     $out=[];
-    $out['person'] = $this->simple($sql)[0];
-    $out['user'] = $this->getUsrFromPerson($out['person']['id'])[0];
+    $sql = "select p.first_name, p.last_name, p.email, i.id institution_id, i.name institution, position.id position_id, position.value position from person p inner join institution i on p.institution = i.id inner join list_person_position position ON p.position = position.id where p.id = :id";
+    $res = $this->pdo()->prepare($sql);
+    $res->execute([':id' => $id]);
+    $out['person'] = $res->fetch(\PDO::FETCH_ASSOC);
+
+    $sql = "select u.id, u.created_at, u.is_active, l.id role_id, l.value role from user u inner join list_user_role l on u.role = l.id where u.person = :person"; 
+    $res = $this->pdo()->prepare($sql);
+    $res->execute([':person' => $id]);
+    $out['user'] = $res->fetch(\PDO::FETCH_ASSOC);
+
     return $out;
   }
 
@@ -144,21 +172,22 @@ class Person extends Conn{
   }
 
   public function updatePerson(array $data){
-    // return $data;
     try {
       $this->pdo()->beginTransaction();
       $personId = $data['person']['id'];
       unset($data['person']['id']);
       $filter = array("id"=>$personId);
       $sql = $this->buildUpdate("person",$filter, $data['person']);
-      $this->prepared($sql, $data['person']);
+      $res = $this->pdo()->prepare($sql);
+      $res->execute($data['person']);
 
       if(isset($data['user'])){
         if(isset($data['user']['id'])){
           $filterUser = array("id"=>$data['user']['id']);
           unset($data['user']['id']);
           $sql = $this->buildUpdate("user",$filterUser, $data['user']);
-          $this->prepared($sql, $data['user']);
+          $res = $this->pdo()->prepare($sql);
+          $res->execute($data['user']);
         }else{
           $data['user']['person'] = $personId;
           $this->createUser($data);
@@ -174,18 +203,21 @@ class Person extends Conn{
   }
 
   public function getUsrFromPerson(int $person){
-    $sql = "select u.id, u.created, u.is_active, l.id role_id, l.value role from user u inner join list_user_role l on u.role = l.id where u.person = ".$person.";";
+    $sql = "select u.id, u.created_at, u.is_active, l.id role_id, l.value role from user u inner join list_user_role l on u.role = l.id where u.person = ".$person.";";
     return $this->simple($sql);
   }
 
   public function getUsrObjects(int $usr){
     $out=[];
-    // $artifactStatSql = "select count(*) tot from artifact inner join user on artifact.author = user.id where artifact.author = ".$usr.";";
-    $artifactStatSql = "select id, name, status, description from artifact where author = ".$usr.";";
-    // $modelStatSql = "select count(*) tot from model_object inner join user on model_object.author = user.id where model_object.author = ".$usr.";";
-    $modelStatSql = "SELECT m.id, m.name, m.description, m.status, o.thumbnail, o.create_at FROM model m LEFT JOIN (SELECT o1.* FROM model_object o1 INNER JOIN ( SELECT model, MIN(id) AS obj_id FROM model_object GROUP BY model ) o2 ON o1.id = o2.obj_id ) o ON m.id = o.model where o.author = ".$usr.";";
-    $out['artifacts'] = $this->simple($artifactStatSql);
-    $out['models'] = $this->simple($modelStatSql);
+    $artifactStatSql = "select id, name, status, description from artifact where author = :id;";
+    $res = $this->pdo()->prepare($artifactStatSql);
+    $res->execute([':id' => $usr]);
+    $out['artifacts'] = $res->fetchAll(\PDO::FETCH_ASSOC);
+
+    $modelStatSql = "SELECT id, name, description, status, thumbnail, create_at FROM model where created_by = :id;";
+    $res = $this->pdo()->prepare($modelStatSql);
+    $res->execute([':id' => $usr]);
+    $out['models'] = $res->fetchAll(\PDO::FETCH_ASSOC);
     return $out;
   }
 

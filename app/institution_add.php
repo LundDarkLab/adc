@@ -55,23 +55,23 @@
             </div>
           </div>
           <div class="row">
+            <div class="col-md-5 mb-3">
+              <label for="address" data-bs-toggle="tooltip" title="You can fill this field manually or by clicking a point on the map"><span class="mdi mdi-information-slab-circle-outline"></span> * Address</label>
+              <input type="text" id="address" name="address" class="form-control" placeholder="enter street and number" autocomplete="off" required>
+            </div>
             <div class="col-md-3 mb-3">
-              <label for="city">* City</label>
-              <input id="city" type="search" name="city" class="form-control" value="" placeholder="digit city name" required>
+              <label for="city" data-bs-toggle="tooltip" title="Please click a point on the map to fill city, longitude and latitude fields"><span class="mdi mdi-information-slab-circle-outline"></span> *City</label>
+              <input id="city" type="search" name="city" class="form-control" value="" placeholder="digit city name" data-cityid="" readonly>
               <div id="osmAttribution" class="form-text"><a href="https://www.openstreetmap.org/copyright" target="_blank">© OpenStreetMap, ODbL 1.0</a></div>
               <div class="list-group" id="citySuggested"></div>
             </div>
-            <div class="col-md-5 mb-3">
-              <label for="address">* Address</label>
-              <input type="text" id="address" name="address" class="form-control" placeholder="enter street and number" autocomplete="off" required>
-            </div>
             <div class="col-md-2 mb-3">
               <label for="longitude">* Longitude</label>
-              <input type="number" id="longitude" step="0.0001" class="form-control" value="" min="-180.0000" max="180.0000" required>
+              <input type="number" id="longitude" step="0.0001" class="form-control" value="" min="-180.0000" max="180.0000" readonly>
             </div>
             <div class="col-md-2 mb-3">
               <label for="latitude">* Latitude</label>
-              <input type="number" id="latitude" step="0.0001" class="form-control" value="" min="-90.0000" max="90.0000" required>
+              <input type="number" id="latitude" step="0.0001" class="form-control" value="" min="-90.0000" max="90.0000" readonly>
             </div>
           </div>
           <div class="row mb-3">
@@ -104,6 +104,7 @@
       </div>
     </main>
     <?php 
+      require("assets/loadingDiv.html");
       require("assets/menu.php");
       require("assets/toastDiv.html");
       require("assets/js.html"); 

@@ -1,6 +1,12 @@
-api/config/
-api/vendor/
-archive/
+app/api/vendor/
+
 .env
-*.crt
-*.key
+.vscode/
+.DS_Store
+webhook/node_modules/
+node_modules/
+restClient/
+
+docker-compose.override.yml
+
+workfile/

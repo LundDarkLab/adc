@@ -1,10 +1,16 @@
 <?php
 namespace Adc;
 use Ramsey\Uuid\Uuid;
+
+$tmpDir = $_SERVER['DOCUMENT_ROOT'].'/archive/tmp/';
+if (!is_dir($tmpDir)) { mkdir($tmpDir, 0777, true); }
+ini_set('upload_tmp_dir', $tmpDir);
+
 class File extends Conn{
   public $uuid;
   public $imageDir;
   public $documentDir;
+  public $logoDir;
   public $name;
 
   public $imageAllowed = array(
@@ -28,20 +34,28 @@ class File extends Conn{
 
   public function __construct() {
     $this->uuid = Uuid::uuid4();
-    $currentDir = __DIR__;
-    if (strpos($currentDir, 'prototype_dev') !== false) {
-      $rootFolder = 'prototype_dev';
-    } else {
-      $rootFolder = 'plus';
-    }
-    $this->imageDir = $_SERVER['DOCUMENT_ROOT']."/".$rootFolder."/archive/image/";
-    $this->documentDir = $_SERVER['DOCUMENT_ROOT']."/".$rootFolder."/archive/document/";
+    $baseDir = $_SERVER['DOCUMENT_ROOT'] . "/archive/";
+    
+    $this->imageDir = $baseDir . "image/";
+    $this->documentDir = $baseDir . "document/";
+    $this->logoDir = $baseDir . "logo/";
+    // Crea le sottocartelle se non esistono
+    if (!is_dir($this->imageDir)) { mkdir($this->imageDir, 0777, true); }
+    if (!is_dir($this->documentDir)) { mkdir($this->documentDir, 0777, true); }
+    if (!is_dir($this->logoDir)) { mkdir($this->logoDir, 0777, true); }  // Crea logo in archive
+    if (!is_dir($baseDir . "tmp/")) { mkdir($baseDir . "tmp/", 0777, true); }
   }
 
   public function addMedia($data, $file=null){
     try {
       if($file && $file !== null){
-        $folder = $data['type'] == 'image' ? $this->imageDir : $this->documentDir;
+        if ($data['type'] == 'logo') {
+          $folder = $this->logoDir;
+        } elseif ($data['type'] == 'image') {
+          $folder = $this->imageDir;
+        } else {
+          $folder = $this->documentDir;
+        }
         $ext = strtolower(pathinfo($file["name"], PATHINFO_EXTENSION));
         $name = $this->uuid.".".$ext;
         $data['path'] = $name;
@@ -106,30 +120,62 @@ class File extends Conn{
   }
 
   protected function moveFile($file, $folder, $name){
+    // Ensure the target directory exists
+    if (!is_dir($folder)) { 
+      mkdir($folder, 0777, true); 
+    }
+    // Check if directory is writable (without trying to chmod, to avoid permission errors on mounted volumes)
+    if (!is_writable($folder)) {
+      throw new \Exception("Destination directory is not writable: " . $folder, 1);
+    }
     $fileLoc = $folder.$name;
+    if (!file_exists($file["tmp_name"])) {
+      throw new \Exception("Temporary file does not exist: " . $file["tmp_name"], 1);
+    }
     if(!move_uploaded_file($file["tmp_name"], $fileLoc)){ 
+      error_log("Failed to move uploaded file. Source: " . $file["tmp_name"] . " Destination: " . $fileLoc . " Error: " . print_r(error_get_last(), true));
+      error_log("File permissions: " . substr(sprintf('%o', fileperms($file["tmp_name"])), -4));
+      error_log("Destination directory permissions: " . substr(sprintf('%o', fileperms($folder)), -4));
+      error_log("PHP process user: " . get_current_user() . " UID: " . posix_getuid() . " GID: " . posix_getgid());
       throw new \Exception("Sorry but there was an error while uploading the file to the server, please try again or contact the system administrator", 1); 
     }
     chmod($fileLoc, 0666);
     return true;
   }
 
-  public function deleteImg(array $dati){
+    public function deleteMedia(array $dati){
+    error_log("deleteMedia called with data: " . print_r($dati, true));
     try {
-      $file = $this->imageDir.$dati['img'];
-      if(!unlink($file)){ throw new \Exception("Error: file has not been deleted", 1); }
+      if(isset($dati['file']) && isset($dati['type'])){
+        // Determina folder basato su type
+        if ($dati['type'] == 'logo') {
+          $folder = $this->logoDir;
+        } elseif ($dati['type'] == 'image') {
+          $folder = $this->imageDir;
+        } else {
+          $folder = $this->documentDir;
+        }
+        $file = $folder . $dati['file'];
+        if (!file_exists($file)){ throw new \Exception("Error: file $file does not exist", 1); }
+        if(!unlink($file)){ throw new \Exception("Error: file $file has not been deleted", 1); }
+      }
       $sql = "delete from files where id = :id;";
       $this->prepared($sql,["id"=>$dati['id']]);
-      return ["error"=> 0, "output"=>'Ok, the image has been successfully removed.'];
+      return ["error"=> 0, "output"=>'Ok, the media has been successfully removed.'];
     } catch (\Throwable $th) {
-      $this->pdo()->rollBack();
       return ["error"=>1, "output"=>$th->getMessage()];
     }
   }
 
   public function deleteFile(string $path){
     try {
-      if(!unlink($path)){ throw new \Exception("Error: file has not been deleted", 1); }
+       if (!file_exists($path)) {
+        throw new \Exception("Error: file $path does not exist", 1);
+      }
+      if(!unlink($path)){ 
+        error_log("Failed to delete file:" . $path . " Error: " . print_r(error_get_last(), true));
+        throw new \Exception("Error: file has not been deleted", 1); 
+      }
       return ["error"=> 0, "output"=>'Ok, the image has been successfully removed.'];
     } catch (\Throwable $th) {
       return ["error"=>1, "output"=>$th->getMessage()];

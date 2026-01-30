@@ -61,7 +61,7 @@
           <div class="row mb-3">
             <div class="col">
               <label for="license">Select a license</label>
-              <select class="form-select w-auto" id="license" name="license">
+              <select class="form-select w-auto" id="license" name="license" required>
                 <option value="" selected disabled>--license--</option>
               </select>
             </div>

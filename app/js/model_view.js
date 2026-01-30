@@ -40,7 +40,7 @@ function startModel(){
     }else{
       modelConnectedText = 'The model is not connected to an artifact'
       modelConnectedBtn = 'connect model'
-      modelConnectedBtnHref = 'models.php?item='+data.artifact
+      modelConnectedBtnHref = 'dashboard.php'
     }
     $("#modelConnectedText").text(modelConnectedText)
     $("#modelConnectedBtn").text(modelConnectedBtn).attr("href",modelConnectedBtnHref)

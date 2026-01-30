@@ -11,7 +11,10 @@
     <link rel="stylesheet" href="css/artifacts_add.css">
   </head>
   <body>
-    <?php require("assets/header.php"); ?>
+    <?php 
+      require("assets/header.php");
+      require("assets/loadingDiv.html");  
+    ?>
     <main class="<?php echo $mainClass; ?>">
       <div class="container">
         <input type="hidden" name="usr" value="<?php echo $_SESSION['id']; ?>">
@@ -130,49 +133,6 @@
               </div>
             </div>
           </fieldset>
-          <!-- <fieldset>
-            <legend>Chronological definition</legend>
-            <div class="row">
-              <div class="col">
-                <legend>Lower bound</legend>
-              </div>
-            </div>
-            <div class="row mb-3">
-              <div class="col-md-4">
-                <label for="startGenericList">Filter start year by generic cultural period definition</label>
-                <select class="form-select" id="startGenericList">
-                  <option value="">-- no filter --</option>
-                </select>
-              </div>
-              <div class="col-md-4">
-                <label for="startSpecificList">Filter start year by specific cultural period definition</label>
-                <select class="form-select" id="startSpecificList" disabled></select>
-              </div>
-              <div class="col-md-4">
-                <label for="start" class="fw-bold text-danger">Start year</label>
-                <input type="number" class="form-control w-auto" id="start" step="1" data-table="artifact" value="" min="-3000000" max="<?php echo Date('Y'); ?>" required>
-              </div>
-            </div>
-            <div class="row">
-              <div class="col">
-                <legend>Upper bound</legend>
-              </div>
-            </div>
-            <div class="row mb-3">
-              <div class="col-md-4">
-                <label for="endGenericList">Filter end year by generic cultural period definition</label>
-                <select class="form-select" id="endGenericList" disabled></select>
-              </div>
-              <div class="col-md-4">
-                <label for="endSpecificList">Filter end year by specific cultural period definition</label>
-                <select class="form-select" id="endSpecificList" disabled></select>
-              </div>
-              <div class="col-md-4">
-                <label for="end" class="fw-bold text-danger">End year</label>
-                <input type="number" class="form-control w-auto" id="end" step="1" data-table="artifact" value="" min="-3000000" max="<?php echo Date('Y'); ?>" required>
-              </div>
-            </div>
-          </fieldset> -->
           <fieldset>
             <legend>Conservation info</legend>
             <div class="row mb-3">
@@ -203,19 +163,34 @@
           </fieldset>
           <fieldset>
             <legend>Find site</legend>
+            <div class="alert alert-warning text-center">Attention! Changing any of the spatial data will also reset the coordinates of the marker, if present</div>
             <div class="row mb-3">
-              <div class="col-md-4">
-                <div class="mb-3">
-                  <label for="county" class="fw-bold text-danger">County</label>
-                  <select data-table="artifact_findplace" class="form-select" id="county" required>
-                    <option value="" selected disabled>-- select county --</option>
-                  </select>
+              <div class="col-md-3">
+                <div id="gid_0_container" class="mb-3">
+                  <label for="gid_0" class="text-danger fw-bold">Country boundaries</label>
+                  <select id="gid_0" data-table="artifact_findplace" class="form-select gadm" required></select>
                 </div>
-                <div id="cityWrap" class="mb-3">
-                  <label for="city">City</label>
-                  <input id="city" type="text" name="city" class="form-control" value="" placeholder="digit city name" data-cityid=''>
-                  <div id="cityMsg" class="form-text text-danger">No city selected</div>
-                  <div class="list-group" id="citySuggested"></div>
+                <div id="gid_1_container" class="mb-3 hide">
+                  <label for="gid_1">Provinces and equivalent</label>
+                  <select id="gid_1" data-table="artifact_findplace" class="form-select gadm"></select>
+                </div>
+                <div id="gid_2_container" class="mb-3 hide">
+                  <label for="gid_2">Districts and equivalent.</label>
+                  <select id="gid_2" data-table="artifact_findplace" class="form-select gadm"></select>
+                </div>
+                <div id="gid_3_container" class="mb-3 hide">
+                  <label for="gid_3">Communes, Municipalities and equivalent</label>
+                  <select id="gid_3" data-table="artifact_findplace" class="form-select gadm"></select>
+                </div>
+                <div id="gid_4_container" class="mb-3 hide">
+                  <label for="gid_4">Sub-national administrative boundaries</label>
+                  <select id="gid_4" data-table="artifact_findplace" class="form-select gadm"></select>
+                  <small class="text-form">smaller than Communes and Municipalities</small>
+                </div>
+                <div id="gid_5_container" class="mb-3 hide">
+                  <label for="gid_5">Sub-national administrative boundaries</label>
+                  <select id="gid_5" data-table="artifact_findplace" class="form-select gadm"></select>
+                  <small class="text-form">smaller than Communes and Municipalities, available for France</small>
                 </div>
                 <div class="mb-3">
                   <label for="parish">Parish</label>
@@ -240,7 +215,7 @@
                   <textarea data-table="artifact_findplace" id="findplace_notes" rows="5" class="form-control"></textarea>
                 </div>
               </div>
-              <div class="col-md-8">
+              <div class="col-md-9">
                 <div id="map">
                   <div class="alert alert-warning" id="mapAlert">To put a marker on map you have to zoom in</div>
                   <div id="resetMapDiv">

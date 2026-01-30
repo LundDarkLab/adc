@@ -39,7 +39,7 @@ function artifactByCounty(){
   ajaxSettings.url=API+"stats.php";
   ajaxSettings.data={
     trigger:'artifactByCounty',
-    filter:["artifact.category_class > 0"]
+    filter:["a.category_class > 0"]
   };
   $.ajax(ajaxSettings).done(function(data) {
     // $("#loadingDiv").remove()

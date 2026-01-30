@@ -1,15 +1,21 @@
+const toastToolBar = $('#toastBtn');
+const apiPerson = API+"person.php";
+const trigger = 'updatePerson'
 const usr = document.getElementById('user').value;
 const person = document.getElementById('person').value;
 const formPwd = document.getElementById('pwdForm');
 const curPwd = document.getElementById("current_pwd");
 const newPwd = document.getElementById("new_pwd");
 const confPwd = document.getElementById("confirm_pwd");
+const personMainFieldForm = document.getElementById('usrMainFieldForm')
+const personAffiliationForm = document.getElementById('usrAffiliationForm') 
+const personalInformationForm = document.getElementById('personalInformationForm') 
 
 getList(listInstitution.settings,listInstitution.htmlEl,listInstitution.label)
 getList(listPosition.settings,listPosition.htmlEl,listPosition.label)
 
 //set a fast timeout to make sure that list are fully loaded before setting the options selected according to the user's value
-setTimeout(function(){ getPerson(person) }, 500);
+setTimeout(function(){ fetchData(person) }, 500);
 
   
 $("#toggle-pwd").on('click',function() {
@@ -53,6 +59,70 @@ $("#pwdChangeBtn").on('click', function (e) {
   }
 });
 
+$("#changeUsrMainFieldBtn").on('click', changePersonMainField);
+$("#changeUsrAffiliationBtn").on('click', changePersonAffiliation);
+
+function changePersonMainField(e) {
+  if(personMainFieldForm.checkValidity()){
+    e.preventDefault();
+    const settings = {
+      url: apiPerson,
+      dataType: "json",
+      method: "POST",
+      data: {
+        trigger: trigger,
+        person: {
+          id: person,
+          first_name: $("#first_name").val(),
+          last_name: $("#last_name").val(),
+          email: $("#email").val()
+        }
+      }
+    };
+    saveInfo(settings);
+  }
+}
+
+function changePersonAffiliation(e) {
+  if(personAffiliationForm.checkValidity()){
+    e.preventDefault();
+    const settings = {
+      url: apiPerson,
+      dataType: "json",
+      method: "POST",
+      data: {
+        trigger: trigger,
+        person: {
+          id: person,
+          institution: $("#institution").val(),
+          position: $("#position").val()
+        }
+      }
+    };
+    saveInfo(settings);
+  }
+}
+
+function saveInfo(settings){
+  $.ajax(settings)
+    .done(function(data) {
+      console.log(data);
+      if (data.res == 1) {
+        $("#toastDivError .errorOutput").text(data.output);
+        $("#toastDivError").removeClass("d-none");
+      } else {
+        $(".toastTitle").text(data.output)
+        $("#toastDivSuccess").removeClass("d-none")
+        setTimeout(function(){ window.location.reload(); }, 3000);
+      }
+      $("#toastDivContent").removeClass('d-none')
+    })
+    .fail(function(data){
+      console.log(data);
+      $("#toastDivError .errorOutput").html(data.responseText);
+    });
+}
+
 
 
 function checkPwd(){
@@ -68,3 +138,18 @@ function checkPwd(){
   }
 }
 
+
+function fetchData(person){
+  ajaxSettings.url=API+"person.php";
+  ajaxSettings.data={trigger:'getPerson', id:person}
+  $.ajax(ajaxSettings)  
+  .done(function(data) {
+    console.log(data);
+    const person = data.person;
+    $("#first_name").val(person.first_name)
+    $("#last_name").val(person.last_name)
+    $("#email").val(person.email)
+    $("#institution").val(person.institution_id)
+    $("#position").val(person.position_id)
+  });
+}

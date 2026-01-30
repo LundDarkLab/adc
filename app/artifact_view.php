@@ -36,7 +36,7 @@
                 <li id="editModelBtn"><a href="" class="dropdown-item">model metadata</a></li>
               </ul>
             </div>
-            <button type="button" name="delete" id="delete" class="btn btn-light"><i class="mdi mdi-delete-forever"></i> delete</button>
+            <button type="button" name="delete" id="delete" class="btn btn-light" data-bs-toggle="modal" data-bs-target="#deleteModal"><i class="mdi mdi-delete-forever"></i> delete</button>
           </div>  
           <?php } ?>
         </div>
@@ -156,7 +156,6 @@
                       <div id="institutionInfo">
                         <a href="" class="d-block" target="_blank" id="gMapLink" data-bs-toggle="tooltip" data-bs-title="view on Google Maps <br /> [link open a new tab or page]"><i class="mdi mdi-map-marker"></i><span id="storage_address"></span></a>
                         <a href="" class="d-block my-2" target="_blank" id="storage_link" data-bs-toggle="tooltip" data-bs-title="go to official website <br /> [link open a new tab or page]"></a>
-                        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" data-bs-title="available veeeery soon!">view institution collection</button>
                       </div>
                     </li>
                     <li class="list-group-item"><span>Inventory</span><span id="inventory"></span></li>
@@ -174,50 +173,45 @@
               <div id="findplaceSection" class="accordion-collapse collapse" aria-labelledby="findplace-data" data-bs-parent="#accordionArtifact">
                 <div class="accordion-body">
                   <ul class="list-group list-group-flush">
-                    <li class="list-group-item">
+                    <li id="findplace_gid0" class="list-group-item hide">
                       <span>Nation</span>
-                      <span id="findplace_nation"></span>
+                      <span id="fpgid0"></span>
                     </li>
-                    <li class="list-group-item">
-                      <span>County</span>
-                      <span id="findplace_county"></span>
+                    <li id="findplace_gid1" class="list-group-item hide">
+                      <span>County,Provinces,Communes</span>
+                      <span id="fpgid1"></span>
                     </li>
-                    <li class="list-group-item">
-                      <span>City</span>
-                      <span id="findplace_city"></span>
+                    <li id="findplace_gid2" class="list-group-item hide">
+                      <span>City, Districts and equivalent</span>
+                      <span id="fpgid2"></span>
                     </li>
-                    <li class="list-group-item">
+                    <li id="findplace_gid3" class="list-group-item hide">
+                      <span>Communes, Municipalities</span>
+                      <span id="fpgid3"></span>
+                    </li>
+                    <li id="findplace_gid4" class="list-group-item hide">
+                      <span>Sub-national administrative</span>
+                      <span id="fpgid4"></span>
+                    </li>
+                    <li id="findplace_gid5" class="list-group-item hide">
+                      <span>Sub-national administrative</span>
+                      <span id="fpgid5"></span>
+                    </li>
+                    <li id="findplace_parish" class="list-group-item hide">
                       <span>Parish</span>
-                      <span id="findplace_parish"></span>
+                      <span id="fpparish"></span>
                     </li>
-                    <li class="list-group-item">
+                    <li id="findplace_toponym" class="list-group-item hide">
                       <span>Toponym</span>
-                      <span id="findplace_toponym"></span>
+                      <span id="fptoponym"></span>
                     </li>
-                    <li class="list-group-item">
+                    <li id="findplace_coordinates" class="list-group-item hide">
+                      <span>Latitude / Longitude</span>
+                      <span id="fpcoordinates"></span>
+                    </li>
+                    <li id="findplace_notes" class="list-group-item hide">
                       <span>Notes</span>
-                      <span id="findplace_notes"></span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-            <div class="accordion-item" id="measureAccordionSection">
-              <h2 class="accordion-header" id="measure-data">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#measureSection">Dimensions</button>
-              </h2>
-              <div id="measureSection" class="accordion-collapse collapse" aria-labelledby="measure-data" data-bs-parent="#accordionArtifact">
-                <div class="accordion-body">
-                  <small class="txt-adc-dark">Linear measures are in cm, weight is in gr.</small>
-                  <ul class="list-group list-group-flush">
-                    <li class="list-group-item"><span>Length</span><span id="length"></span></li>
-                    <li class="list-group-item"><span>Width</span><span id="width"></span></li>
-                    <li class="list-group-item"><span>Depth</span><span id="depth"></span></li>
-                    <li class="list-group-item"><span>Diameter</span><span id="diameter"></span></li>
-                    <li class="list-group-item"><span>Weight</span><span id="weight"></span></li>
-                    <li class="list-group-item">
-                      <div>Notes</div>
-                      <div id="measures_notes"></div>
+                      <span id="fpnotes"></span>
                     </li>
                   </ul>
                 </div>
@@ -330,8 +324,12 @@
     </div>
   </div>
 </div>
+
+<div id="toast-container" class="toast-container position-fixed top-0 start-50 translate-middle-x p-3"></div>
+
     <?php 
       require("assets/menu.php");
+      require("assets/deleteModal.html");
       require("assets/toastDiv.html"); 
       require("assets/js.html"); 
     ?>

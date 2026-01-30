@@ -1,5 +1,5 @@
 <?php
-require 'vendor/autoload.php';
+require __DIR__ . '/vendor/autoload.php';
 use \Adc\Institution;
 $obj = new Institution();
 $funzione = $_POST['trigger'];

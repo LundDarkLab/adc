@@ -1,3 +1,19 @@
 RewriteEngine On
 RewriteRule ^endpoint/(.*)$ endpoint.php/$1 [L,QSA]
 ## ###################### ####
+
+<IfModule mod_expires.c>
+    ExpiresActive On
+    # Imposta la scadenza di default a 1 giorno per tutti i file
+    ExpiresDefault "access plus 1 day"
+    ExpiresByType text/css "access plus 1 day"
+</IfModule>
+
+<IfModule mod_headers.c>
+    # Disabilita la cache per i file dinamici (come le API)
+    <FilesMatch "\.(php|html)$">
+        Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+        Header set Pragma "no-cache"
+        Header set Expires "Thu, 01 Dec 1994 16:00:00 GMT"
+    </FilesMatch>
+</IfModule>

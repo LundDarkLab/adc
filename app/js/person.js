@@ -24,16 +24,13 @@ function getPerson() {
     $("#email").text(person.email)
     $("#institution").text(person.institution)
     $("#position").text(person.position)
-    $("#city").text(person.city)
-    $("#address").text(person.address)
-    $("#phone").text(person.phone)
 
     if(data.user){
       $("#userInfoList").removeClass('d-none')
       $("#noUsrDiv").remove()
       $("#is_active").text(data.user.is_active == 1 ? 'true':'false')
       $("#role").text(data.user.role)
-      $("#created_at").text(data.user.created)
+      $("#created_at").text(data.user.created_at)
 
       getUsrObjects(data.user.id)
     }else{

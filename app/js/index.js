@@ -10,6 +10,7 @@ const byMaterial = $("#byMaterial");
 const byChronology = $("#byChronology");
 const byDescription = $("#byDescription");
 const byInstitution = $("#byInstitution");
+const byCounty = $('#byCounty');
 const sortBy = $("#sortBy");
 let activeFilter = 0;
 let cronoData = []
@@ -24,11 +25,11 @@ if($("[name=logged]").val() == 0){
   $("#itemTool, #statWrap").addClass(checkDevice()=='pc' ? 'small' :'large');
 }
 currentPageActiveLink('index.php');
+artifactByCounty()
 getFilterList();
 chronoFilter();
 buildGallery(gallery);
 buildStat();
-artifactByCounty()
 
 screen.orientation.addEventListener("change", resizeDOM);
 
@@ -62,12 +63,17 @@ $("#resetGallery").on('click', function(){
   byCategory.val('');
   byMaterial.val('');
   byDescription.val('');
-  // byChronology.val('');
   byInstitution.val('');
+  byCounty.val('');
   $("#macroList .dropdown-item").removeClass('active');
   $("#chronoDropDownBtn").text("chronology")
   activeFilter = 0;
   buildGallery(gallery)
+  if (countyGroup && typeof countyGroup.getBounds === 'function') {
+    map2.fitBounds(countyGroup.getBounds());
+  } else {
+    console.error("countyGroup is not defined or does not have a getBounds method");
+  }
 })
 
 $("#createFromFiltered").on('click', function(){
@@ -163,6 +169,10 @@ function getFilter(){
     filter.push("artifact.storage_place = "+byInstitution.val())
     filter2.push({"artifact.storage_place":"= "+byInstitution.val()})
   }
+  if(byCounty.val()){
+    filter.push("af.gid_1 = '"+byCounty.val()+"'")
+    filter2.push({"af.gid_1":"= '"+byCounty.val()+"'"})
+  }
   buildGallery(gallery);
 }
 
@@ -210,7 +220,7 @@ function artifactByCounty(){
   ajaxSettings.url=API+"stats.php";
   ajaxSettings.data={
     trigger:'artifactByCounty',
-    filter:["artifact.category_class > 0"]
+    filter:["a.category_class > 0"]
   };
   $.ajax(ajaxSettings).done(function(data) { mapStat(data); })
 }

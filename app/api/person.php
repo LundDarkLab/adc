@@ -1,7 +1,12 @@
 <?php
-require 'vendor/autoload.php';
+require __DIR__ . '/vendor/autoload.php';
 use \Adc\Person;
 $obj = new Person();
+
+if ($_SERVER['CONTENT_TYPE'] === 'application/json') {
+  $_POST = json_decode(file_get_contents('php://input'), true);
+}
+
 $funzione = $_POST['trigger'];
 unset($_POST['trigger']);
 if(isset($funzione) && function_exists($funzione)) {

@@ -1,8 +1,11 @@
 <?php
 // echo $_POST['trigger'];
-require 'vendor/autoload.php';
+require __DIR__ . '/vendor/autoload.php';
 use \Adc\Model;
 $obj = new Model();
+if ($_SERVER['CONTENT_TYPE'] === 'application/json') {
+    $_POST = json_decode(file_get_contents('php://input'), true);
+}
 $funzione = $_POST['trigger'];
 unset($_POST['trigger']);
 if(isset($funzione) && function_exists($funzione)) {
@@ -10,6 +13,7 @@ if(isset($funzione) && function_exists($funzione)) {
   echo $trigger;
 }
 
+function saveNewModel($obj){return json_encode($obj->saveNewModel($_POST, $_FILES));}
 function saveModel($obj){return json_encode($obj->saveModel($_POST, $_FILES));}
 function buildGallery($obj){return json_encode($obj->buildGallery($_POST['sort'], $_POST['filter']));}
 function getModel($obj){return json_encode($obj->getModel($_POST['id']));}

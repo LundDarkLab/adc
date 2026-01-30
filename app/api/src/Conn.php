@@ -3,28 +3,91 @@ namespace Adc;
 use PDO;
 class Conn {
   public $conn;
+
   public function connect() {
-    $params = parse_ini_file('config/db.ini');
-    if ($params === false) {
-      throw new \Exception("Error reading database configuration file");
-    }
+    // MODIFICA 1: Passiamo le credenziali come argomenti separati. È più sicuro e standard.
     $conStr = sprintf(
-      "mysql:host=%s;port=%d;dbname=%s;user=%s;password=%s",
-      $params['host'],
-      $params['port'],
-      $params['dbname'],
-      $params['user'],
-      $params['password']
+      "mysql:host=%s;port=%d;dbname=%s",
+      getenv('DB_HOST'),
+      3306,
+      getenv('DB_NAME')
     );
 
-    $this->conn = new \PDO($conStr);
+    $this->conn = new \PDO($conStr, getenv('DB_USER'), getenv('DB_PASSWORD'));
     $this->conn->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+    $this->conn->exec("SET SESSION sql_mode = 'ONLY_FULL_GROUP_BY,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION'");
   }
 
   public function pdo(){
-    if (!$this->conn){ $this->connect();}
+    // MODIFICA 2: Invertiamo la logica per risolvere l'errore "call on null".
+
+    // Prima di tutto, controlliamo se la connessione non è mai stata creata.
+    // Se è null, la creiamo.
+    if (!$this->conn){
+        $this->connect();
+    }
+
+    try {
+        // Ora che siamo sicuri che $this->conn non è null,
+        // tentiamo un'operazione innocua per vedere se la connessione è ancora viva.
+        $this->conn->query("SELECT 1");
+    } catch (\PDOException $e) {
+        // La connessione non è più valida (es. timeout), ne creiamo una nuova.
+        $this->connect();
+    }
+
     return $this->conn;
   }
+
+  // NEW FUNCTIONS ////////////////////////////////////////////////////////
+  public function create(string $table, array $data) {
+    $columns = implode(", ", array_keys($data));
+    $placeholders = implode(", ", array_map(fn($key) => ":$key", array_keys($data)));
+    $sql = "INSERT INTO {$table} ($columns) VALUES ($placeholders)";    
+    $stmt = $this->pdo()->prepare($sql);
+    $exec = $stmt->execute($data);
+    if (!$exec) {throw new \Exception("Error Processing Request: ".$exec, 1);}
+    return true;
+  }
+
+  public function read(string $table, array $conditions = []) {
+    $where = "";
+    if (!empty($conditions)) {
+        $whereClauses = array_map(fn($key) => "$key = :$key", array_keys($conditions));
+        $where = "WHERE " . implode(" AND ", $whereClauses);
+    }
+    $sql = "SELECT * FROM {$table} $where";
+    $stmt = $this->pdo()->prepare($sql);
+    if (!$stmt->execute($conditions)) {
+      throw new \Exception("Error Processing Request: " . implode(", ", $stmt->errorInfo()));
+    }
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+  }
+
+  public function update(string $table, array $data, array $conditions) {
+    $setClause = implode(", ", array_map(fn($key) => "$key = :$key", array_keys($data)));
+    $whereClauses = array_map(fn($key) => "$key = :cond_$key", array_keys($conditions));
+    $where = implode(" AND ", $whereClauses);
+
+    $sql = "UPDATE {$table} SET $setClause WHERE $where";
+    $stmt = $this->pdo()->prepare($sql);
+
+    // Unire i parametri dei dati e delle condizioni
+    foreach ($conditions as $key => $value) { $data["cond_$key"] = $value; }
+    $exec = $stmt->execute($data);
+    if (!$exec) {throw new \Exception("Error Processing Request: ".$exec, 1);}
+    return true;
+}
+  public function delete(string $table, array $conditions) {
+    $whereClauses = array_map(fn($key) => "$key = :$key", array_keys($conditions));
+    $where = implode(" AND ", $whereClauses);
+    $sql = "DELETE FROM {$table} WHERE $where";
+    $stmt = $this->pdo()->prepare($sql);
+    $exec = $stmt->execute($conditions);
+    if (!$exec) {throw new \Exception("Error Processing Request: ".$exec, 1);}
+    return ["error" => 0, "message" => 'Record has been successfully deleted'];
+  }
+  //////////////////////////////////////////////////////////////////////////
 
   public function simple($sql){
     $pdo = $this->pdo();

@@ -24,11 +24,19 @@
         <span class="mdi mdi-book-account"></span>
         person
       </a>
+
+      <?php if($_SESSION['role'] < 3){ ?>
       <span class="titleSection">admin</span>
       <a href='#' class='animated'>
         <span class="mdi mdi-format-list-bulleted-square"></span>
         vocabulary
       </a>
+      <a href='mailComposer.php' class='animated'>
+        <span class="mdi mdi-email-fast"></span>
+        compose email
+      </a>
+      <?php } ?>
+      
       <span class="titleSection">my account</span>
       <a href='settings.php' class='animated'>
         <span class="mdi mdi-cog"></span>
@@ -48,17 +56,21 @@
       <span class="mdi mdi-home"></span>
       home
     </a>
-    <a href="#" class="animated d-lg-none">
-      <span class="mdi mdi-information-outline"></span>
-      about
+    <a href="map.php" class="animated d-lg-none">
+      <span class="mdi mdi-map-marker-radius"></span>
+      map
     </a>
-    <a href="#" class="animated d-lg-none">
-      <span class="mdi mdi-sign-direction"></span>
-      milestones
+    <a href="credits.php" class="animated d-lg-none">
+      <span class="mdi mdi-handshake"></span>
+      credits
     </a>
-    <a href="#" class="animated d-lg-none">
-      <span class="mdi mdi-handshake-outline"></span>
-      partners
+    <a href="policy.php" class="animated d-lg-none">
+      <span class="mdi mdi-scale-balance"></span>
+      legal
+    </a>
+    <a href="db_model.php" class="animated d-lg-none">
+      <span class="mdi mdi-database"></span>
+      db model
     </a>
     <?php if (!isset($_SESSION['id'])) {?>
       <a href="login.php" class="animated d-lg-none">

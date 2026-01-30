@@ -12,10 +12,8 @@ const params = new URLSearchParams(queryString);
 if(params.size == 1){item = parseInt(params.get("item"));}
 
 if(item == 0){ 
-  // trigger = 'addPerson';
   $("#title").text('Add new person profile');
 }else{
-  trigger = 'updatePerson';
   setTimeout(function(){getPerson(item);},500)  
 }
 
@@ -24,20 +22,18 @@ function getPerson(item){
   ajaxSettings.url=API+"person.php";
   ajaxSettings.data={trigger:'getPerson', id:item}
   $.ajax(ajaxSettings).done(function(data) {
+    console.log(data);
+    
     const person = data.person;
-    $("<input/>", {type:'hidden', id:'personId', value:person.id}).prependTo(form)
+    $("<input/>", {type:'hidden', id:'personId', value:item}).prependTo(form)
     $("#title").text("Edit "+person.first_name+" "+person.last_name+" profile");
     $("#first_name").val(person.first_name)
     $("#last_name").val(person.last_name)
     $("#email").val(person.email)
     $("#institution").val(person.institution_id)
     $("#position").val(person.position_id)
-    $("#city").val(person.city)
-    $("#address").val(person.address)
-    $("#phone").val(person.phone)
     
     if(data.user){
-      trigger = 'updatePerson';
       $(".userInput").prop("disabled", false)
       const user = data.user;
       $("#usrFieldAlert").addClass('d-none');
@@ -79,6 +75,7 @@ $("#createAccount").on('change', function(){
 })
 
 $("[name=person]").on('click', (el) => {person(el)})
+
 function person(el){
   if (form.checkValidity()) {
     el.preventDefault();
@@ -93,9 +90,6 @@ function person(el){
         position: $("#position").val()
       }
     }
-    if($("#city").val()){dati.person.city= $("#city").val();}
-    if($("#address").val()){dati.person.address= $("#address").val();}
-    if($("#phone").val()){dati.person.phone= $("#phone").val();}
 
     trigger = item == 0 ? 'addPerson' : 'updatePerson';
 

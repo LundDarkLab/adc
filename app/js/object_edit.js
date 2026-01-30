@@ -91,6 +91,8 @@ function getObject(){
     $("#encumbrance").val(data.encumbrance)
     $("#status").val(data.status == 1 ? 2 :1)
     $("label[for=status]").text(data.status == 1 ? status_label+'complete' : status_label+'under processing')
+    $("#thumbPreview").css('background-image', 'url(archive/thumb/'+data.thumbnail+')')
+    initModel(data);
   });
 }
 

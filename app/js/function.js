@@ -5,7 +5,7 @@ let domContentLoaded = false;
 
 /////////////// COLLECTION DATA STRUCTURE ///////////////
 var DEFAULTCOLLECTION = {
-  type: "DC_COLL",
+  type: "BITFROST_COLL",
   version: "2.0",
   id: self.crypto.randomUUID(),
   user: $("[name=activeUsr]").val() || "unregistered", //active user id
@@ -26,29 +26,29 @@ function resetCollection(){
 
 // store and retrieve from LocalStorage
 function retrieveCollectionData(){
-  return JSON.parse(localStorage.getItem('DYNCOLLECTION')) || undefined;
+  try {
+    const data = localStorage.getItem('BITFROSTCOLLECTION');
+    return data ? JSON.parse(data) : undefined;
+  } catch (e) {
+    console.error('Invalid JSON in localStorage for BITFROSTCOLLECTION:', e);
+    return undefined;
+  }
 }
 function storeCollectionData(){
   COLLECTIONDATA.time = new Date().toISOString(); // update time to current time
-  localStorage.setItem('DYNCOLLECTION', JSON.stringify(COLLECTIONDATA));
+  localStorage.setItem('BITFROSTCOLLECTION', JSON.stringify(COLLECTIONDATA));
 }
 
 function validateCollection(collection){
-  if (collection.type !== "DC_COLL") return false;
+  if (collection.type !== "BITFROST_COLL") return false;
   return true;
 }
 
 /////////////////////////////////////////////////////////
 //handlers for export / import / delete collection
-$("#btExportCollection").on('click', function(){
-  exportCollection();
-});
-$("#btImportCollection").on('click', function(){
-  importCollection();
-});
-$("#ifileJSON").on('change', function(){
-  getJSON(this.files);
-});
+$("#btExportCollection").on('click', function(){ exportCollection();});
+$("#btImportCollection").on('click', function(){ importCollection();});
+$("#ifileJSON").on('change', function(){ getJSON(this.files);});
 $("#btResetCollection").on('click', function(){
   if(COLLECTIONDATA.items.length == 0)return;
   if(confirm('Delete the current Collection?')){
@@ -66,7 +66,7 @@ function exportCollection(){
   }
   var element = document.createElement('a');
 	element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(JSON.stringify(COLLECTIONDATA, null, 2)));
-	element.setAttribute('download', "collection.json");
+	element.setAttribute('download', "bitfrost_collection.json");
 	element.style.display = 'none';
 	document.body.appendChild(element);
 	element.click();
@@ -77,16 +77,16 @@ function importCollection(){
 }
 function getJSON(files){
 	if((files)&&(files.length>0)){
-	    var reader = new FileReader();
+	  var reader = new FileReader();
 		reader.onload = importJSON;
 		reader.readAsText(files[0]);
 	}
 }
 function importJSON(event){
   var newColl = JSON.parse(event.target.result);
-  if(!validateCollection(newColl)) return;  // check if the imported data is a valid collection
+  if(!validateCollection(newColl)) return;
   COLLECTIONDATA = newColl;
-  COLLECTIONDATA.user = $("[name=activeUsr]").val() || "unregistered"; //no matter who saved them, they are now of the current user
+  COLLECTIONDATA.user = $("[name=activeUsr]").val() || "unregistered";
   storeCollectionData();  
   updateCollection();
 }
@@ -225,6 +225,7 @@ function checkName(data){
 
 
 function cutString(string, length) {
+  if (!string || typeof string !== 'string') return '';
   let short = string.substr(0, length);
   if (/^\S/.test(string.substr(length)))
   return short.replace(/\s+\S*$/, "") + '...';
@@ -246,12 +247,24 @@ function generateRandomPassword(){
 }
 
 function gallery(data){
+  console.log(data);
   wrapDiv = "#wrapGallery";
   $(wrapDiv).html('');
   $("#viewGallery > span").text(data.length)
+  updateCollection();
+  if(data.length == 0){
+    $("<div/>",{class:'alert alert-warning'}).html('No items found').appendTo(wrapDiv);
+    return;
+  }
   data.forEach((item) => {
     items.push(item)
-    var materialObject = JSON.parse(item.material);
+    let materialObject = {};
+    try {
+      materialObject = JSON.parse(item.material);
+    } catch (e) {
+      console.warn('Failed to parse item.material for item ID:', item.id, e);
+      // Fall back to empty object if parsing fails
+    }
     var materialValues = [];
     for (var key in materialObject) {
       if (materialObject.hasOwnProperty(key)) {
@@ -285,10 +298,7 @@ function gallery(data){
       removeFromCollection(item.id)
     })
   });
-  updateCollection(); // MC: I moved outside of the loop to avoid updating the collection for each item
 }
-
-
 
 function updateCollection() {
   const collectionDiv = $('#wrapCollection');
@@ -311,7 +321,13 @@ function updateCollection() {
   displayCollectionMetadata();
   // add cards
   COLLECTIONDATA.items.forEach(item => {
-    var materialObject = JSON.parse(item.material);
+    let materialObject = {};
+    try {
+      materialObject = JSON.parse(item.material);
+    } catch (e) {
+      console.warn('Failed to parse item.material for item ID:', item.id, e);
+      // Fall back to empty object if parsing fails
+    }
     var materialValues = [];
     for (var key in materialObject) {
       if (materialObject.hasOwnProperty(key)) {
@@ -350,7 +366,7 @@ function addToCollection(id) {
 }
 
 function removeFromCollection(id) {
-  COLLECTIONDATA = JSON.parse(localStorage.getItem('DYNCOLLECTION'));
+  COLLECTIONDATA = JSON.parse(localStorage.getItem('BITFROSTCOLLECTION'));
   COLLECTIONDATA.items = COLLECTIONDATA.items.filter(item => item.id !== id);
   storeCollectionData();
   updateCollection();
@@ -389,40 +405,6 @@ function getCity(query){
   });
 }
 
-function getCityFromLonLat(ll, zoom){
-  ajaxSettings.url=API+"get.php";
-  ajaxSettings.data={trigger: 'getCityFromLonLat', point:ll};
-  $.ajax(ajaxSettings)
-  .done(function(data) {
-    if(data.length==0){
-      $("#mapAlert")
-        .removeClass()
-        .addClass('alert alert-danger')
-        .text('Attention! You clicked out of the project area!')
-      return false;
-    }
-    if (marker != undefined) { map.removeLayer(marker)};
-    marker = L.marker([ll[1], ll[0]]).addTo(map);
-    if($("#county").length){ $("#county").val(data[0].county).trigger('change'); }
-    $("[name=city]").val(data[0].name).attr({"data-cityId":data[0].id})
-    $("#longitude").val(ll[0].toFixed(4));
-    $("#latitude").val(ll[1].toFixed(4));
-    setMapExtent('jsonCity',data[0].id)
-  })
-
-  //reverse address geocoding
-  if($("#address").length){
-    let geoapi = nominatimReverse+'lat='+ll[1]+'&lon='+ll[0];
-    $.getJSON( geoapi, function( data ) {
-      let addr = data.address.road;
-      if(data.address.house_number && data.address.house_number !== 'undefined'){
-        addr = addr+" "+data.address.house_number;
-      }
-      $("#address").val(addr)
-    });
-  }
-}
-
 function getDate(){
   let data = new Date();
   let d = data.getDate();
@@ -435,7 +417,7 @@ function getList(settings,selName,label, callback = null){
   ajaxSettings.url=API+"get.php";
   ajaxSettings.data=settings;
   $.ajax(ajaxSettings)
-  .done(function(data) {
+  .done(function(data) {   
     if(selName=='material'){
       data.class.forEach((opt) => { $("<option/>").val(opt.id).text(opt[label]).appendTo("#material>#matClass")});
       data.specs.forEach((opt) => { $("<option/>").val(opt.id).text(opt[label]).appendTo("#material>#matSpecs")});
@@ -663,4 +645,145 @@ function copy_to_clipboard(el) {
   const link = host+'/'+element+'_view.php?uuid='+text
   navigator.clipboard.writeText(link);
   console.log(link);
+}
+
+
+////////////////////////////////////////////////////////////
+///////////  NEW FUNCTIONS             /////////////////////
+////////////////////////////////////////////////////////////
+
+function createRecord(endpoint, trigger, table, values, callback = null){
+  ajaxSettings.url = API+endpoint;
+  ajaxSettings.data = {trigger: trigger, table:table, values:values}
+  $.ajax(ajaxSettings)
+  .done(function(response){
+    console.log(response);
+    
+    let toastClass = response.error === 0 ? "success" : "danger";
+    showToast(response.message, toastClass, callback);
+  })
+  .fail(function (jqXHR) {
+    const errorMessage = jqXHR.responseJSON?.message || "An unexpected error occurred.";
+    showToast(errorMessage, "danger");
+  });
+}
+
+function readRecord(endpoint, trigger, table, conditions = {}, callback){
+  ajaxSettings.url=API+endpoint;
+  ajaxSettings.data = {trigger: trigger, table:table, conditions:conditions}
+  $.ajax(ajaxSettings)
+  .done(callback)
+  .fail(function (jqXHR) {
+    const errorMessage = jqXHR.responseJSON?.message || "An unexpected error occurred.";
+    showToast(errorMessage, "danger");
+  });
+}
+
+function updateRecord(endpoint, trigger, table, values, conditions, callback = null) {
+  ajaxSettings.url=API+endpoint;
+  ajaxSettings.data = {trigger: trigger, table:table, values:values, conditions:conditions};
+  $.ajax(ajaxSettings)
+  .done(function(response){
+    console.log(response);
+    let toastClass = response.error === 0 ? "success" : "danger";
+    showToast(response.message, toastClass, callback);
+  })
+  .fail(function (jqXHR) {
+    const errorMessage = jqXHR.responseJSON?.message || "An unexpected error occurred.";
+    showToast(errorMessage, "danger");
+  });
+}
+
+function deleteRecord(endpoint, trigger, table, id, callback = null){
+  ajaxSettings.url=API+endpoint;
+  ajaxSettings.data = {trigger: trigger, table:table, conditions:{id:id}}
+  $.ajax(ajaxSettings)
+  .done(function(response){
+    let toastClass = response.error === 0 ? "success" : "danger";
+    showToast(response.message, toastClass, callback);
+  })
+  .fail(function (jqXHR) {
+    const errorMessage = jqXHR.responseJSON?.message || "An unexpected error occurred.";
+    showToast(errorMessage, "danger");
+  });
+}
+
+
+// how to use it
+// showToast('Message', 'success', () => location.reload());
+// showToast('Redirecting...', 'info', () => { window.location.href = 'link.php?id=123'; });
+// showToast('Custom message', 'danger', customFunction);
+function showToast(message, type, callback = null) {
+  const toastId = `toast-${Date.now()}`;
+  const toastHTML = `
+    <div id="${toastId}" class="toast align-items-center text-bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="d-flex">
+        <div class="toast-body">${message}</div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+      </div>
+    </div>
+  `;
+
+  const toastContainer = document.getElementById("toast-container");
+  toastContainer.innerHTML = toastHTML;
+
+  const toastElement = document.getElementById(toastId);
+  const toastInstance = new bootstrap.Toast(toastElement);
+  toastInstance.show();
+  toastElement.addEventListener("hidden.bs.toast", () => { 
+    toastElement.remove(); 
+    if (typeof callback === "function") { callback(); }
+  });
+}
+
+function createElement(tag, className, parent) {
+  const element = document.createElement(tag);
+  element.className = className;
+  parent.appendChild(element);
+  return element;
+}
+
+function createInput(type, value, readOnly, className, parent, attributes = {}) {
+  const input = document.createElement('input');
+  input.type = type;
+  input.value = value || '';
+  input.readOnly = readOnly;
+  input.className = className;
+  for (const key in attributes) { input.setAttribute(key, attributes[key]); }
+  parent.appendChild(input);
+  return input;
+}
+
+//how to use it: setInputValue('fieldId', value)
+//to add some attributes: setInputValue('fieldId', value, {'attribute': 'value', 'attribute2': 'value2'... })
+function setInputValue(id, value, attributes = {}) {
+  const element = document.getElementById(id);
+  if (element) {
+    element.value = value || '';
+    for (const key in attributes) { element.setAttribute(key, attributes[key]); }
+  }
+}
+
+function setCheckbox(id, checked, checkedText, uncheckedText) {
+  const element = document.getElementById(id);
+  const label = document.querySelector(`label[for="${id}"]`);
+  if (element) {
+    element.checked = checked;
+    if (label) { label.textContent = checked ? checkedText : uncheckedText; }
+    element.addEventListener('click', function() {
+      let newLabel = this.checked ? checkedText : uncheckedText;
+      if (label) { label.textContent = newLabel; }
+    });
+  }
+}
+setElementVisibility('gid_1', true);
+function setElementVisibility(id, visible) {
+  if (typeof visible !== 'boolean') {
+    console.error('"visible" parameter must be a boolean');
+    return;
+  }
+  const element = document.getElementById(id);
+  if (element) { 
+    visible ? element.classList.remove('hide') : element.classList.add('hide') 
+  }
 }

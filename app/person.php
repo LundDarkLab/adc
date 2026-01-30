@@ -53,25 +53,7 @@
               </select>
             </div>
           </div>
-          <div class="row mb-3">
-            <h5 class="bg-light p-2 border rounded">Personal information</h5>
-            <label for="city" class="col-sm-2 col-form-label">City</label>
-            <div class="col-sm-10">
-              <input type="text" class="form-control form-control-sm" id="city" name="city">
-            </div>
-          </div>
-          <div class="row mb-3">
-            <label for="address" class="col-sm-2 col-form-label">Address</label>
-            <div class="col-sm-10">
-              <input type="text" class="form-control form-control-sm" id="address" name="address">
-            </div>
-          </div>
-          <div class="row mb-3">
-            <label for="phone" class="col-sm-2 col-form-label">Phone</label>
-            <div class="col-sm-10">
-              <input type="text" class="form-control form-control-sm" id="phone" name="phone">
-            </div>
-          </div>
+          
 
           <!-- user section -->
           <div id="usrFieldAlert" class="alert alert-info">

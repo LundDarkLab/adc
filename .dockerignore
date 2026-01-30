@@ -1,0 +1,23 @@
+# Git version control files
+.git
+.gitignore
+
+# Docker specific files
+.dockerignore
+docker-compose.yml
+docker-compose.override.yml
+
+# Environment variables - Should be passed at runtime, not built into the image
+.env
+
+# Node.js dependencies - Will be installed inside the container
+node_modules/
+webhook/node_modules/
+
+# IDE/Editor specific files
+.vscode/
+
+# Documentation and other non-essential files
+documentation/
+README.md
+

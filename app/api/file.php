@@ -1,5 +1,5 @@
 <?php
-require 'vendor/autoload.php';
+require __DIR__ . '/vendor/autoload.php';
 use \Adc\File;
 $obj = new File();
 $funzione = $_POST['trigger'];
@@ -19,6 +19,6 @@ function addMedia($obj){
 }
 
 function editImage($obj){return json_encode($obj->editImage($_POST));}
-function deleteImg($obj){return json_encode($obj->deleteImg($_POST));}
+function deleteMedia($obj){return json_encode($obj->deleteMedia($_POST));}
 
 ?>

@@ -1,149 +1,57 @@
-name: bitfrost2
-   
 services:
-# Web application service in PHP for the bitfrost 2.0 portal 
-  app:
-    container_name: bitfrost-app
-    build:
-      context: .
-      dockerfile: Dockerfile.app
-    restart: unless-stopped
-        #    volumes:
-        #      - ./:/var/www/html/
-    develop:
-      watch:
-        - action: rebuild
-          path: ./
-    ports:
-      - ${APP_PORT_HTTP:-80}:80
-      - ${APP_PORT_HTTPS:-443}:443
-# Database service
   db:
-    container_name: bitfrost-mysql
-    image: mysql
+    container_name: db
+    image: mysql:8.0
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-"TestInstance"}
-      MYSQL_USER: ${MYSQL_USER:-"webuser"}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-"BItFROST"}
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-"bitfrost"}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
     ports:
-      - ${MYSQL_PORT:-3306}:3306
-
-# Webhook service listening to the gitops webhook and pulling the changes
-  gitops-webhook:
-    container_name: bitfrost-gitops-webhook    
+      - ${MYSQL_PORT}:3306
+    # Per gestire le transazioni pesanti di GADM
+    command: --max_allowed_packet=1G 
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./db-init:/docker-entrypoint-initdb.d
+  app:
+    container_name: app
     build:
-      context: .
-      dockerfile: Dockerfile.webhook
-    command: ["node", "webhook-handler.js"]
+      context: ./app
+      dockerfile: app.Dockerfile
     restart: unless-stopped
-    develop:
-      watch:
-        - action: sync
-          path: ./webhook/webhook-handler.js
-          target: /app/webhook-handler.js
-        - action: rebuild
-          path: ./webhook/package.json
+    ports:
+      - ${APP_PORT_HTTP}:80
+        #- ${APP_PORT_HTTPS}:443
     volumes:
-      - ./:/app/project_root/:Z
-      - /var/run/docker.sock:/var/run/docker.sock
-    ports:
-      - ${WEBHOOK_PORT:-3000}:3000
-        #    extra_hosts:
-        #        - "host.docker.internal:host-gateway"
-     
-# Dev containers
-# Postgres database for local deployment
-  postgres:
-    container_name: bitfrost-postgres
-    image: ${POSTGRES_IMAGE:-postgis/postgis:16-3.4}
-    healthcheck:
-      test: [ "CMD", "pg_isready", "-q", "-d", "postgres", "-U", "postgres" ]
-      timeout: 45s
-      interval: 10s
-      retries: 3
-    volumes:
-      - ./data/postgres-data:/var/lib/postgresql/data:Z
-      - ./scripts/init.sh:/docker-entrypoint-initdb.d/:ro # Script to set up database schema and roles
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_HOST: ${POSTGRES_HOST}
-      AUTHENTICATOR_ROLE: ${PGRST_AUTH_ROLE}
-      AUTHENTICATOR_PASSWORD: ${PGRST_AUTH_PASSWORD}
-      ANONYMOUS_ROLE: ${PGRST_DB_ANON_ROLE}
-      API_SCHEMA: ${PGRST_DB_SCHEMA}
-    restart: unless-stopped      
-    ports:
-      - ${POSTGRES_PORT}:5432
-
-# PostgREST api service handling the database access and authorization with KC JWT
-  postgrest:
-    container_name: bitfrost-postgrest
-    image: postgrest/postgrest:latest
-    environment:
-      PGRST_DB_URI: ${PGRST_DB_URI}
-      PGRST_DB_SCHEMA: ${PGRST_DB_SCHEMA}
-      PGRST_DB_ANON_ROLE: ${PGRST_DB_ANON_ROLE}
-      PGRST_SERVER_PROXY_URI: ${PGRST_SERVER_PROXY_URI}
-      PGRST_JWT_SECRET: ${PGRST_JWT_SECRET}
-      PGRST_ROLE_CLAIM_KEY: ${PGRST_ROLE_CLAIM_KEY}
-      # PGRST_LOG_LEVEL: info
-      PGPASSWORD: ${PGRST_AUTH_PASSWORD}
-      PGUSER: ${PGRST_AUTH_ROLE}
-      PGRST_ADMIN_SERVER_PORT: 3001
-    restart: unless-stopped      
-    ports:
-      - ${PGRST_PORT}:3000
-      - ${PGRST_ADMIN_SERVER_PORT}:3001
-
-# Keycloak service for authentication and authorization
-  keycloak:
-    container_name: bitfrost-keycloak
-    build:
-      context: .
-      dockerfile: Dockerfile.kc
-      args:
-        KEYCLOAK_VERSION: 22.0.0
-    command: ['start', '--optimized']
-    environment:
-      JAVA_OPTS_APPEND: ${JAVA_OPTS_APPEND}
-      KC_DB_PASSWORD: ${KC_DB_PASSWORD}
-      KC_DB_URL: ${KC_DB_URL}
-      KC_DB_USERNAME: ${KC_DB_USERNAME}
-      KC_HEALTH_ENABLED: ${KC_HEALTH_ENABLED}
-      KC_METRICS_ENABLED: ${KC_METRICS_ENABLED}
-      KC_HOSTNAME_URL: ${KC_HOSTNAME_URL}
-      KC_HOSTNAME_ADMIN_URL: ${KC_HOSTNAME_ADMIN_URL}
-      KC_PROXY: ${KC_PROXY}
-      KC_HOSTNAME_STRICT: ${KC_HOSTNAME_STRICT}
-      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
-      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
-    restart: unless-stopped      
-    ports:
-      - ${KC_PORT}:8080
-      - ${KC_DEBUG_PORT}:8787 # debug port
+      - archive:/var/www/html/archive
     depends_on:
-      - postgres
-
-# Nginx proxy manager for managing the reverse proxy and SSL certificates
-# You probably have your own, as do we, but just to keep everything in one place...
-  npm:
-    container_name: bitfrost-nginxproxymanager
-    image: 'jc21/nginx-proxy-manager:latest'
-    healthcheck:
-      test: ["CMD", "/usr/bin/check-health"]
-      interval: 1m
-      timeout: 3s
-      retries: 3
-      start_period: 15s
-    volumes:
-      - ./data/nginx-data:/data:Z
-      - ./data/letsencrypt:/etc/letsencrypt:Z    
+      - db
+    environment:
+      - APP_BASE_URL=${APP_BASE_URL}
+      - DB_HOST=db
+      - DB_USER=${MYSQL_USER}
+      - DB_PASSWORD=${MYSQL_PASSWORD}
+      - DB_NAME=${MYSQL_DATABASE}
+      - MAILHOST=${MAILHOST}
+      - MAILPORT=${MAILPORT}
+      - MAILUSER=${MAILUSER}
+      - MAILPASSWORD=${MAILPASSWORD}
+      - MAILSETFROM=${MAILSETFROM}
+      - MAILSETFROMNAME=${MAILSETFROMNAME}
+  webhook:
+    container_name: webhook
+    build:
+      context: .
+      dockerfile: webhook/webhook.Dockerfile
     restart: unless-stopped
     ports:
-      # These ports are in format <host-port>:<container-port>
-      - ${NPM_HTTP}:80 # Public HTTP Port
-      - ${NPM_HTTPS}:443 # Public HTTPS Port
-      - ${NPM_ADMIN}:81  # Admin Web Port
+      - ${WEBHOOK_PORT}:3000
+    volumes:
+      - .:/app/project_root
+      - /app/project_root/webhook/node_modules
+      - /var/run/docker.sock:/var/run/docker.sock
+volumes:
+  db_data:
+  archive:

@@ -1,17 +1,22 @@
 <?php
-$currentDir = __DIR__;
-if (strpos($currentDir, 'prototype_dev') !== false) {
-  $rootFolder = 'prototype_dev';
-} else {
-  $rootFolder = 'plus';
-}
+$destinationFolder = $_SERVER['DOCUMENT_ROOT']."/archive/models/preview/";
+
 $fileName = $_FILES["nxz"]["name"];
 $fileTmpLoc = $_FILES["nxz"]["tmp_name"];
-$fileLoc = $_SERVER['DOCUMENT_ROOT']."/".$rootFolder."/archive/models/preview/".$fileName;
+$fileLoc = $destinationFolder.$fileName;
 $fileType = $_FILES["nxz"]["type"];
 $fileSize = $_FILES["nxz"]["size"];
 $fileExt = pathinfo($fileName, PATHINFO_EXTENSION);
 $fileErrorMsg = $_FILES["nxz"]["error"];//0 false, 1 true
+
+if (!is_dir($destinationFolder)) {
+    // Tentiamo di crearla ricorsivamente con i permessi corretti.
+    if (!mkdir($destinationFolder, 0775, true)) {
+        echo "Error: The destination folder does not exist and could not be created.";
+        exit();
+    }
+}
+
 if (!$fileTmpLoc) {
   echo "Please browse for a file before clicking the upload button.";
   exit();

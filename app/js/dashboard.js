@@ -4,7 +4,7 @@ const usrInst = $("[name=usrInst]").val()
 let issues = 0;
 
 catList()
-mapInit()
+mapInit('dashboard')
 getArtifacts()
 getModels()
 getInstitutions(0)
@@ -170,7 +170,7 @@ function getInstitutions(filterCat){
       let logo = item.logo ? item.logo : 'default.jpg';
       let card = $("<div/>",{class:"card mb-3"}).appendTo(cardWrap)  
       let row = $("<div/>", {class:'row g-0'}).appendTo(card)
-      $("<div/>", {class:'cardLogo col-md-4'}).css("background-image", "url(img/logo/"+logo+")").appendTo(row)
+      $("<div/>", {class:'cardLogo col-md-4'}).css("background-image", "url(./archive/logo/"+logo+")").appendTo(row)
       let col2 = $("<div/>", {class:'col-md-8'}).appendTo(row)
       let body =$("<div/>",{class:'card-body'}).appendTo(col2)
       $("<h5/>",{class:'card-title fw-bold'}).text(item.name+" ("+item.abbreviation+")").appendTo(body)
@@ -187,20 +187,31 @@ function getInstitutions(filterCat){
         $("<a/>",{href:'institution_edit.php?item='+item.id, class:'btn btn-sm btn-outline-secondary'}).html('<span class="mdi mdi-pencil"></span> edit').appendTo(btnDiv)
       }
 
-
-      if(item.artifact == 0){
+      if((usrCls == 1 || (usrCls == 2 && usrInst == item.id)) && item.artifact_count == 0){
         $("<button/>",{class:'btn btn-sm btn-outline-danger ms-3'}).html('<span class="mdi mdi-delete-forever"></span> delete').appendTo(btnDiv).on('click',function(){deleteInstitution(item.id)})
       }
 
       L.marker([parseFloat(item.lat), parseFloat(item.lon)],{icon:storagePlaceIco})
-        .bindPopup("<div class='text-center'><h6 class='p-0 m-0'>"+item.name+"</h6><p class='p-0 m-0'>Artifacts stored: <strong>"+item.artifact+"</strong></p></div>")
+        .bindPopup("<div class='text-center'><h6 class='p-0 m-0'>"+item.name+"</h6><p class='p-0 m-0'>Artifacts stored: <strong>"+item.artifact_count+"</strong></p></div>")
         .addTo(institutionGroup);
     });
-    map.fitBounds(institutionGroup.getBounds())
+
+    if (institutionGroup.getLayers().length === 1) {
+      let singleMarker = institutionGroup.getLayers()[0];
+      map.setView(singleMarker.getLatLng(), 16);
+    } else {
+      map.fitBounds(institutionGroup.getBounds());
+    }
+    
     btnHome.on('click', function (e) {
       e.preventDefault()
       e.stopPropagation()
-      map.fitBounds(institutionGroup.getBounds());
+      if (institutionGroup.getLayers().length === 1) {
+        let singleMarker = institutionGroup.getLayers()[0];
+        map.setView(singleMarker.getLatLng(), 16);
+      } else {
+        map.fitBounds(institutionGroup.getBounds());
+      }
     });
   });
 }
@@ -250,7 +261,9 @@ function deleteInstitution(inst){
     ajaxSettings.data = {trigger:'deleteInstitution', id:inst}
     $.ajax(ajaxSettings).done(function(data){
       alert(data.output)
-      if(data.res = 1){ getInstitutions(0) }
+      if(data.res = 1){ 
+        getInstitutions(0) 
+      }
     })
   }
 }

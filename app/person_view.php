@@ -42,18 +42,6 @@
                   <span class="fw-bold">Position: </span>
                   <span id="position"></span>
                 </li>
-                <li class="list-group-item">
-                  <span class="fw-bold">City: </span>
-                  <span id="city"></span>
-                </li>
-                <li class="list-group-item">
-                  <span class="fw-bold">Address: </span>
-                  <span id="address"></span>
-                </li>
-                <li class="list-group-item">
-                  <span class="fw-bold">Phone: </span>
-                  <span id="phone"></span>
-                </li>
               </ul>
             </div>
           </div>

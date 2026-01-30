@@ -48,17 +48,39 @@ $("#randomColor").on('click',function(){
   $('[name=color]').minicolors('value', randomColor());
 })
 
-$("[name=city]").on({
-  keyup: function(){
-    let city = $(this).val()
-    if(city.length >= 2){
-      osmSearch(city)
-      // getCity(city)
-    }else{
-      citySuggested.html('').fadeOut('fast')
-    }
-  }
-})
+// $("[name=city]").on({
+//   keyup: function(){
+//     autocompleted = true;
+//     let city = $(this).val()
+//     if(city.length >= 3){
+//       osmSearch(city).then(results => {
+//         console.log("OSM search results:", results);
+//         if(results && results.length > 0){
+//           let listHTML = '<ul class="list-group">'
+//           results.forEach((item, i) => {
+//             listHTML += '<li class="list-group-item list-group-item-action cityItem" data-cityid="'+item.place_id+'" data-lon="'+item.lon+'" data-lat="'+item.lat+'">'+item.display_name+'</li>'
+//           });
+//           listHTML += '</ul>'
+//           citySuggested.html(listHTML).fadeIn('fast')
+//         }else{
+//           citySuggested.html('').fadeOut('fast')
+//         }
+//       }).catch(error => {
+//         console.error("Errore nella ricerca OSM:", error);
+//         citySuggested.html('').fadeOut('fast')
+//       });
+//     }else{
+//       autocompleted = false;
+//       citySuggested.html('').fadeOut('fast')
+//     }
+//   },
+//   blur: function(){
+//     let city = $(this).val()
+//     if(city.length < 3){
+//       citySuggested.html('').fadeOut('fast')
+//     }
+//   }
+// })
 
 $(document).on('click', (event) => {
   if(!$(event.target).closest('#citySuggested').length &&
@@ -124,54 +146,94 @@ logoInput.addEventListener('change', event => {
   }
 })
 
-$("[type=submit]").on('click', (el) => {addInstitution(el)})
-
-function addInstitution(el){
-  if(form.checkValidity()){
-    el.preventDefault();
-    fd.append('trigger', trigger)
-    if($("[name=institution]").length > 0){fd.append('id', $("[name=institution]").val()) }
-    let is_storage_place = $("#is_storage_place").is(":checked") ? 1 : 0;
-    fd.append('is_storage_place', is_storage_place)
-    // if(is_storage_place==1){}
-    let color = is_storage_place == 1 ? $("#color").val() : null
-    fd.append('color', color)
-    fd.append('category', $("#category").val())
-    fd.append('name', $("#name").val())
-    fd.append('abbreviation', $("#abbreviation").val())
-    fd.append('city', $("#city").val())
-    fd.append('address', $("#address").val())
-    fd.append('lon', $("#longitude").val())
-    fd.append('lat', $("#latitude").val())
-    fd.append('url', $("#url").val())
-    if(logoInput.files.length > 0){fd.append('logo', logoInput.files[0])}
-    $.ajax({
-      type: "POST",
-      enctype: 'multipart/form-data',
-      url: endpoint,
-      dataType: 'json',
-      data: fd,
-      processData: false,
-      contentType: false,
-      cache: false,
-      timeout: 800000,
-      success: function (data) {
-        if (data.res==0) {
-          $("#toastDivError .errorOutput").text(data.output);
-          $("#toastDivError").removeClass("d-none");
-        }else {
-          $(".toastTitle").text(data.output)
-          gotoIndex.appendTo(toastToolBar);
-          gotoDashBoard.appendTo(toastToolBar);
-          $("#toastDivSuccess").removeClass("d-none")
-        }
-        $("#toastDivContent").removeClass('d-none')
-      },
-      error: function (e) {
-        console.log(e);
-      }
-    });
+$("#city, #latitude, #longitude").on('focus', function() {
+  // Se il campo è vuoto, mostriamo l'istruzione
+  if (!$(this).val().trim()) {
+    showMapInstruction(this);
+    // Togliamo il focus per evitare loop di messaggi su alcuni browser
+    $(this).blur();
   }
+});
+
+// Aggiungi submit sul form
+$("[name=newInstitutionForm]").on('submit', function(e) {
+  let form = this;
+  let $city = $("#city");
+  let city = $city.val().trim();
+  let lat = $("#latitude").val().trim();
+  let lon = $("#longitude").val().trim();
+
+  if (!city || !lat || !lon) {
+    e.preventDefault();
+    // Rimuoviamo momentaneamente readonly per permettere al browser di mostrare il messaggio
+    $city.prop('readonly', false);
+    $city[0].setCustomValidity("Please select a location on the map to fill in the city, latitude, and longitude fields.");
+    form.reportValidity();
+    // Ripristiniamo readonly dopo un breve delay o quando l'utente chiude il messaggio
+    setTimeout(() => { $city.prop('readonly', true); }, 1000);
+    
+    return false;
+  } else {
+    $city[0].setCustomValidity("");
+  }
+
+  e.preventDefault();
+  addInstitution(form);
+});
+
+function addInstitution(formEl) {
+  fd.append('trigger', trigger);
+  if ($("[name=institution]").length > 0) { fd.append('id', $("[name=institution]").val()); }
+  let is_storage_place = $("#is_storage_place").is(":checked") ? 1 : 0;
+  fd.append('is_storage_place', is_storage_place);
+  let color = is_storage_place == 1 ? $("#color").val() : null;
+  fd.append('color', color);
+  fd.append('category', $("#category").val());
+  fd.append('name', $("#name").val());
+  fd.append('abbreviation', $("#abbreviation").val());
+  fd.append('city', $("#city").val());
+  fd.append('address', $("#address").val());
+  fd.append('lon', $("#longitude").val());
+  fd.append('lat', $("#latitude").val());
+  fd.append('url', $("#url").val());
+  if (logoInput.files.length > 0) { fd.append('logo', logoInput.files[0]); }
+
+  $.ajax({
+    type: "POST",
+    enctype: 'multipart/form-data',
+    url: endpoint,
+    dataType: 'json',
+    data: fd,
+    processData: false,
+    contentType: false,
+    cache: false,
+    timeout: 800000,
+    success: function (data) {
+      if (data.res == 0) {
+        $("#toastDivError .errorOutput").text(data.output);
+        $("#toastDivError").removeClass("d-none");
+      } else {
+        $(".toastTitle").text(data.output);
+        gotoIndex.appendTo(toastToolBar);
+        gotoDashBoard.appendTo(toastToolBar);
+        $("#toastDivSuccess").removeClass("d-none");
+      }
+      $("#toastDivContent").removeClass('d-none');
+    },
+    error: function (e) {
+      console.log(e);
+    }
+  });
+}
+
+function showMapInstruction(element) {
+  element.setCustomValidity("Please select a location on the map to fill in this field.");
+  element.reportValidity();
+  
+  // Opzionale: rimuove il messaggio dopo 3 secondi per non bloccare la visualizzazione
+  setTimeout(() => {
+    element.setCustomValidity("");
+  }, 3000);
 }
 
 function getInstitution(id){

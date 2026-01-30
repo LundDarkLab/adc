@@ -116,14 +116,14 @@
           <fieldset>
             <legend>Upload model</legend>
             <div class="row">
-              <div class="col" id="nxzWrap">
+              <div class="col d-block" id="nxzWrap">
                 <label for="nxz" class="form-label inputLabel">select .nxz file</label>
                 <input class="form-control" type="file" id="nxz" name="nxz" accept=".nxz,.nxs">
               </div>
             </div>
             <div class="row mb-3">
               <div class="col">
-                <div class="alert alert-danger" role="alert" id="uploadTip">
+                <div class="alert alert-danger d-none" role="alert" id="uploadTip">
                 Before uploading you have to select the "measure unit" from the specifica field in the "Object paradata" section of the form
                 </div>
                 <progress id="progressBar" value="0" max="100" style="width:100%;"></progress>
@@ -134,7 +134,7 @@
             <div class="row mb-3">
               <div class="col">
                 <div id="wrap3d">
-                  <div id="alertBg">
+                  <div id="alertBg" class="d-none">
                     <div class="alert alert-danger text-center">
                       <h3>Waiting for the model...</h3>
                       <h6>the model will be displayed after uploading an allowed file</h6>
@@ -145,7 +145,7 @@
               </div>
             </div>
             <div class="row mb-3">
-              <div id="thumbWrap" class="col">
+              <div id="thumbWrap" class="col d-block">
                 <label for="thumb" class="form-label inputLabel">Upload a thumbnail</label>
                 <input class="form-control" type="file" id="thumb" name="thumb" accept="image/jpeg, image/png, image/jpg" >
                 <div class="col-md-4 my-3 border rounded" id="thumbPreview"></div>
@@ -170,16 +170,6 @@
       require("assets/menu.php");
       require("assets/js.html");
     ?>
-    <!-- <script type="text/javascript" src="assets/3dhop/spidergl.js"></script>
-    <script type="text/javascript" src="assets/3dhop/presenter.js"></script>
-    <script type="text/javascript" src="assets/3dhop/nexus.js"></script>
-    <script type="text/javascript" src="assets/3dhop/ply.js"></script>
-    <script type="text/javascript" src="assets/3dhop/trackball_turntable.js"></script>
-    <script type="text/javascript" src="assets/3dhop/trackball_turntable_pan.js"></script>
-    <script type="text/javascript" src="assets/3dhop/trackball_pantilt.js"></script>
-    <script type="text/javascript" src="assets/3dhop/trackball_sphere.js"></script>
-    <script type="text/javascript" src="assets/3dhop/init.js"></script>
-    <script src="js/3dhop_function.js"></script> -->
     <script type="text/javascript" src="assets/3dhop/spidergl.js"></script>
     <script type="text/javascript" src="assets/3dhop/presenter.js"></script>
     <script type="text/javascript" src="assets/3dhop/nexus.js"></script>
