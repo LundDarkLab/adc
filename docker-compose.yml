@@ -25,7 +25,6 @@ services:
       - ${APP_PORT_HTTP}:80
         #- ${APP_PORT_HTTPS}:443
     volumes:
-      - ./app:/var/www/html
       - archive:/var/www/html/archive
     depends_on:
       - db
