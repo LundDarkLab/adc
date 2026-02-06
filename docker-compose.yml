@@ -1,3 +1,4 @@
+name: bitfrost
 services:
   db:
     container_name: db
