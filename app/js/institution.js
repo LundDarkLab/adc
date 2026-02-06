@@ -258,7 +258,7 @@ function getInstitution(id){
     marker = L.marker([data.lat, data.lon]).addTo(map);
     map.setView([data.lat, data.lon], 17)
     if (data.logo) {
-      $("#logoPreview").attr({"src":'img/logo/'+data.logo, "height":'100%'})
+      $("#logoPreview").attr({"src":'archive/logo/'+data.logo, "height":'100%'})
       $("#imgPlaceholder").show()
     }else{
 

@@ -70,7 +70,7 @@ $.ajax(ajaxSettings).done(function(data) {
   let institution = data.storage_place;
   
   let gMapLink = 'http://maps.google.com/maps?q='+institution.name.replace(/ /g,"+");
-  $("#institutionLogo>img").attr("src", "img/logo/"+institution.logo)
+  $("#institutionLogo>img").attr("src", "archive/logo/"+institution.logo)
   $("#storage_name").text(institution.name)
   $("#gMapLink").attr("href",gMapLink)
   $("#storage_address").text(institution.city+", "+institution.address)
