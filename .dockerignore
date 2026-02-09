@@ -1,0 +1,19 @@
+# Git e configurazioni IDE
+.git
+.vscode
+.env
+
+# Dipendenze (vengono installate nel Dockerfile)
+api/vendor/
+node_modules/
+
+# Cartelle pesanti o locali (gestite con i volumi)
+workfile/
+archive/
+img/
+documentation/
+
+# File di log e temporanei
+*.log
+*.zip
+*.sql

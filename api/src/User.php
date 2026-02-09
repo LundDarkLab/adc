@@ -79,13 +79,17 @@ class User extends Conn{
 
   public function checkAdmin(){
     $sql = "select count(*) tot from user;";
-    $res = $this->simple($sql);
+    $stmt = $this->pdo()->prepare($sql);
+    $stmt->execute();
+    $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
     return $res[0]['tot'];
   }
 
   protected function checkEmail(string $email){
     $sql = "select u.id, p.id person, concat(coalesce(p.first_name,''),' ',coalesce(p.last_name,'')) as name, p.email, p.institution, u.role, u.password_hash from person p inner join user u on u.person = p.id where p.email = '".$email."' and u.is_active = 1;";
-    $out = $this->simple($sql);
+    $stmt = $this->pdo()->prepare($sql);
+    $stmt->execute();
+    $out = $stmt->fetchAll(\PDO::FETCH_ASSOC);
     $x = count($out);
     if ($x == 0) { throw new \Exception("The email is not in the database or your account is disabled. Please try again, if the problem persists please contact the project manager", 1); }
     return $out[0];
@@ -99,7 +103,9 @@ class User extends Conn{
   protected function checkResetRequest(string $email){
     // Controlla se esiste una richiesta attiva (non scaduta) 
     $sql = "SELECT * FROM reset_password WHERE email = '" . $email . "' AND exp_date > DATE_SUB(NOW(), INTERVAL 1 DAY)";
-    $activeRequests = $this->simple($sql);
+    $stmt = $this->pdo()->prepare($sql);
+    $stmt->execute();
+    $activeRequests = $stmt->fetchAll(\PDO::FETCH_ASSOC);
     
     if (count($activeRequests) > 0) { 
         throw new \Exception("Sorry, but there is already an active request for this email.<br>If you did not receive the email with the link to reset your password, please search in spam or contact the system administrator: giuseppe.naponiello@ark.lu.se", 1); 
@@ -116,7 +122,9 @@ class User extends Conn{
   public function checkToken(array $payload){
     // Cerca token VALIDI (non scaduti)
     $sql = "SELECT * FROM reset_password WHERE token = '".$payload['token']."' and exp_date > now();";
-    $out = $this->simple($sql);
+    $stmt = $this->pdo()->prepare($sql);
+    $stmt->execute();
+    $out = $stmt->fetchAll(\PDO::FETCH_ASSOC);
     error_log("checkToken query: ".$sql);
     error_log("checkToken count:".count($out));
     // Se non trova nessun record, il token è scaduto o non esiste
@@ -139,7 +147,10 @@ class User extends Conn{
 
   public function getUsers(){
     $sql="select * from user_artifact_view order by name asc;";
-    return $this->simple($sql);
+    $stmt = $this->pdo()->prepare($sql);
+    $stmt->execute();
+    $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    return $res;
   }
 
   public function activeUsers(?int $institution = null, ?int $role = null, ?string $string = null){
@@ -152,7 +163,10 @@ class User extends Conn{
 
     $sql = "select concat(person.first_name,' ', person.last_name) user, person.email, person.institution, user.role from person inner join user on user.person = person.id where ".$conditions." order by 1,2 asc;";
 
-    return $this->simple($sql);
+    $stmt = $this->pdo()->prepare($sql);
+    $stmt->execute();
+    $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    return $res;
   }
 
   public function login(array $dati){

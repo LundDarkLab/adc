@@ -5,6 +5,7 @@ use PDO;
 use Dotenv\Dotenv;
 class Conn {
   public $conn;
+  private $pdo = null;
   
   /**
    * Magic method to handle dynamic method calls.
@@ -26,33 +27,28 @@ class Conn {
   }
   /******************************************************************/
   public function connect() {
-    $dotenvPath = __DIR__ . '/../config';
-    if (!file_exists($dotenvPath . '/.env')) {
-      error_log('Missing .env file at ' . realpath($dotenvPath . '/.env'));
-      return null;
-    }
-    $dotenv = Dotenv::createImmutable($dotenvPath);
-    $dotenv->load();
-    $dotenv->required(['DBHOST', 'DBPORT', 'DBDBNAME', 'DBUSER', 'DBPASSWORD']);
-    $host =     $_ENV['DBHOST'];
-    $port =     $_ENV['DBPORT'];
-    $dbname =   $_ENV['DBDBNAME'];
-    $username = $_ENV['DBUSER'];
-    $password = $_ENV['DBPASSWORD'];
+    $host = getenv('DB_HOST') ?: 'db';
+    $port = 3306;  // Porta interna del container DB (non esterna)
+    $dbname = getenv('DB_NAME') ?: 'dyncoll';  // Corretto da 'DB_DBNAME' a 'DB_NAME'
+    $username = getenv('DB_USER') ?: 'dyncoll';
+    $password = getenv('DB_PASSWORD') ?: '';
 
     $conStr = sprintf(
-      'mysql:host=%s;port=%d;dbname=%s;user=%s;password=%s',
-      $host,
-      $port,
-      $dbname,
-      $username,
-      $password
+        'mysql:host=%s;port=%d;dbname=%s',  // Rimossi user e password dalla DSN
+        $host,
+        $port,
+        $dbname
     );
-    $this->conn = new \PDO($conStr);
-    $this->conn->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-    $this->conn->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
-    // Impostazioni aggiuntive per MySQL
-    $this->conn->setAttribute(\PDO::MYSQL_ATTR_INIT_COMMAND, "SET NAMES utf8mb4");
+
+    try {
+        $this->conn = new \PDO($conStr, $username, $password);  // User e password come parametri separati
+        $this->conn->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+        $this->conn->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
+        $this->conn->setAttribute(\PDO::MYSQL_ATTR_INIT_COMMAND, "SET NAMES utf8mb4");
+    } catch (\PDOException $e) {
+        error_log("PDO connection failed: " . $e->getMessage());
+        throw $e;
+    }
   }
 
   public function pdo(){

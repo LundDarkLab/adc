@@ -195,8 +195,8 @@
   <script src="https://cdn.maptiler.com/maptiler-sdk-js/v1.2.0/maptiler-sdk.umd.js"></script>
   <script src="https://cdn.maptiler.com/leaflet-maptilersdk/v2.0.0/leaflet-maptilersdk.js"></script>
   <script src="https://www.gstatic.com/charts/loader.js"></script>
-  <script src="js/maps/geo_config.js" charset="utf-8"></script>
-  <script src="js/maps/geo_function.js" charset="utf-8"></script>
+  <script src="js/maps/geo_config.js?v=<?php echo filemtime('js/maps/geo_config.js'); ?>" charset="utf-8"></script>
+  <script src="js/maps/geo_function.js?v=<?php echo filemtime('js/maps/geo_function.js'); ?>" charset="utf-8"></script>
   <!-- <script src="js/charts.js" charset="utf-8"></script> -->
-  <script src="js/index.js" charset="utf-8" type="module"></script>
+  <script src="js/index.js?v=<?php echo filemtime('js/index.js'); ?>" charset="utf-8" type="module"></script>
 </html>

@@ -1,7 +1,31 @@
-api/config/
-api/vendor/
-archive/
-documentation/site/
-notes/
-.vscode/
-workfile/
+# --- Dipendenze e System files ---
+api/vendor/ 
+node_modules/
+.vscode/ 
+.env
+*.log
+
+# --- Cartelle di lavoro locali ---
+workfile/ 
+notes/ 
+documentation/site/ 
+
+# --- Gestione Dati Persistenti (Strategia .gitkeep) ---
+# Escludiamo il contenuto ma manteniamo la cartella nel repository
+# 1. Ignora tutto il contenuto di archive a qualsiasi profondità
+archive/** 
+# 2. Permetti a Git di guardare dentro le cartelle (altrimenti non trova i file)
+!archive/**/
+# 3. Mantieni i file .gitkeep per conservare la struttura delle cartelle vuote
+!archive/**/.gitkeep
+# 4. ECCEZIONE SPECIFICA: Mantieni questo file specifico e caricalo alla build
+!archive/models/sphere.ply
+
+img/logo/*
+!img/logo/default.jpg
+
+# --- Backup e Dump ---
+db-init/*.sql
+db-init/*.sql.gz
+archive/*.zip 
+archive/*.sql
