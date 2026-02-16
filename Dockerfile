@@ -30,7 +30,8 @@ RUN chown -R www-data:www-data /var/www/html \
 
 RUN echo "error_log = /var/log/apache2/php_errors.log" >> /usr/local/etc/php/php.ini \
     && echo "log_errors = On" >> /usr/local/etc/php/php.ini \
-    && echo "display_errors = Off" >> /usr/local/etc/php/php.ini  # Disabilita display nel browser per produzione
-
+    && echo "display_errors = Off" >> /usr/local/etc/php/php.ini \
+    && echo "upload_max_filesize = 200M" >> /usr/local/etc/php/php.ini \
+    && echo "post_max_size = 200M" >> /usr/local/etc/php/php.ini
 
 EXPOSE 80

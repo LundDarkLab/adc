@@ -59,7 +59,7 @@ export async function getModels(filters={}){
       let valueElement;
       const valueText = field.value;
       if(field.label === 'Description' && valueText.split(/\s+/).length >= 50){
-        const truncatedText = cutStringByWords(valueText, 50);
+        const truncatedText = cutStringByWords(valueText, 20);
         valueElement = document.createElement('a');
         valueElement.innerHTML = truncatedText; 
         valueElement.classList.add('d-inline-block', 'text-black' );

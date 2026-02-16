@@ -44,7 +44,15 @@ async function loadLeafletDependencies() {
 
 async function load3DHopDependencies() {
   await loadCSS('css/my3dhop.css', '', '');
-  // await loadScript('path/to/3dhop.js', '', '');
+  await loadScript('assets/3dhop/spidergl.js');
+  await loadScript('assets/3dhop/presenter.js');
+  await loadScript('assets/3dhop/nexus.js');
+  await loadScript('assets/3dhop/ply.js');
+  await loadScript('assets/3dhop/trackball_turntable.js');
+  await loadScript('assets/3dhop/trackball_turntable_pan.js');
+  await loadScript('assets/3dhop/trackball_pantilt.js');
+  await loadScript('assets/3dhop/trackball_sphere.js');
+  await loadScript('assets/3dhop/init.js');
 }
 
 // === ROUTING DELLE PAGINE ===
@@ -62,9 +70,15 @@ const pageRoutes = {
     init: () => import('./features/artifact/pages/artifactEdit.js').then(m => m.initEditPage())
   },
   'artifact_view': {
-    css: ['css/artifact_view.css', 'css/my3dhop.css'],
+    css: ['css/artifact_view.css'],
     dependencies: [loadLeafletDependencies, load3DHopDependencies],
     init: () => import('./features/artifact/pages/artifactView.js').then(m => m.initViewPage())
+  },
+  // MODELS
+  'model_add': {
+    css: ['css/model_add.css'],
+    dependencies: [load3DHopDependencies],
+    init: () => import('./features/model/pages/modelAdd.js').then(m => m.initAddPage())
   },
 };
 

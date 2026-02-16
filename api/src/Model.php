@@ -418,5 +418,27 @@ class Model extends Conn{
       return ["res"=>0, "output"=>$e->getMessage()];
     }
   }
+
+  public function checkName(array $data): array {
+    $payload = $data['payload'] ?? $data;
+    $name = $payload['name'] ?? null;
+  
+    if (empty($name)) {
+      return [
+        'error' => 1,
+        'message' => 'Missing required field: name'
+      ];
+    }
+  
+    $sql = "SELECT EXISTS(SELECT 1 FROM model WHERE name = :name) as `exists`;";
+    $stmt = $this->pdo()->prepare($sql);
+    $stmt->execute(['name' => $name]);
+    $exists = (bool) $stmt->fetchColumn();
+  
+    return [
+      'error' => 0,
+      'exists' => $exists,
+      'message' => $exists ? 'Name already exists' : 'Name is available'
+    ];
+  }
 }
-?>

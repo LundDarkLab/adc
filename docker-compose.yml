@@ -3,13 +3,9 @@ services:
     build: .
     container_name: lund-web-app
     restart: unless-stopped
-    ports:
-      - "8080:80"
-    volumes:
-      - .:/var/www/html
-      - ./archive:/var/www/html/archive
-      - ./img:/var/www/html/img
-    env_file: .env # Passa DB_HOST, DB_NAME, ecc. a PHP
+    # ❌ RIMUOVI ports (in produzione usa nginx reverse proxy)
+    # ❌ RIMUOVI volumes (il codice è copiato nel Dockerfile)
+    env_file: .env
     depends_on:
       db:
         condition: service_healthy
@@ -21,18 +17,15 @@ services:
     command: 
       - --max_allowed_packet=512M
       - --innodb_buffer_pool_size=1G
-      - --log-error=/var/log/mysql/error.log  # File normale invece di fd
-      - --general-log=1
-      - --general-log-file=/var/log/mysql/general.log  # File normale invece di fd
+      - --log-error=/var/log/mysql/error.log
+      # ❌ RIMUOVI general-log in produzione (rallenta)
     env_file: .env
     environment:
-      # Mappatura: Trasforma i nomi agnostici in nomi tecnici MySQL
       - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
       - MYSQL_USER=${DB_USER}
       - MYSQL_PASSWORD=${DB_PASSWORD}
       - MYSQL_DATABASE=${DB_NAME}
-    ports:
-      - ${DB_PORT}:3306
+    # ❌ RIMUOVI ports (NON esporre MySQL pubblicamente!)
     volumes:
       - lund_db_data:/var/lib/mysql
       - ./db-init:/docker-entrypoint-initdb.d

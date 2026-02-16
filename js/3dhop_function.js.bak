@@ -7,8 +7,9 @@ import { initAnnotations } from "./components/viewer/annotations.js";
 import { initSection } from "./components/viewer/section.js";
 import { measureTool } from "./helpers/viewerMeasure.js";
 
-const artifactId = document.getElementById('artifactId') && document.getElementById('artifactId').value || null;
-const activeUser = document.getElementById('activeUsr') && document.getElementById('activeUsr').value || null;
+const artifactId = document.getElementById('artifactId').value;
+const activeUser = document.getElementById('activeUsr').value;
+const role = document.getElementById('role').value;
 const isLoggedUser = activeUser && activeUser !== 'unregistered' && !Number.isNaN(Number(activeUser));
 
 const viewerEl = {
@@ -61,38 +62,31 @@ const tooltipBtnList = toolBtnList.map(tooltipBtn => new bootstrap.Tooltip(toolt
 //////////////// FUNCTIONS //////////////////////////////////
 /////////////////////////////////////////////////////////////
 
-
-/**
- * Inizializza il modello 3DHOP: permessi, metadati, annotazioni, listener e viewer.
- * @param {Object} model - Oggetto modello ricevuto dal backend.
- */
 async function initModel(model) {
   const mainData = model.model;
+  const modelId = mainData.id;
   const object = model.model_object;
   measure_unit = object[0].measure_unit;
 
-  handleUserPermissions(mainData);
-  renderModelMetadata(mainData);
-  await syncAnnotations(model);
-  initListeners();
-  startupViewer(object);
-}
+  if(Number.isNaN(Number(activeUser?.value)) || activeUser?.value === 'unregistered') {
+    const btSaveModelParam = document.getElementsByName('saveModelParam')[0];
+    if(btSaveModelParam) btSaveModelParam.remove();
+  }
 
-/**
- * Gestisce i permessi utente e la visibilità dei bottoni/moduli.
- * @param {Object} mainData - Dati principali del modello.
- */
-function handleUserPermissions(mainData) {
-  const modelId = mainData.id;
-  let statusAlert, statusBtnClass, statusBtnValue;
+  //fill modal metadata
+  let statusAlert, statusTooltip, statusBtnClass, statusBtnValue, statusBtnTooltip;
   if(mainData.status_id == 1){
     statusAlert = 'alert-danger';
-    statusBtnClass = 'btn-success';
-    statusBtnValue = 2;
+    statusTooltip = 'model not visible in the main gallery. Click the "change visibility" button or edit the model to change model visibility'
+    statusBtnClass = 'btn-success'
+    statusBtnValue = 2
+    statusBtnTooltip = 'Mark model as complete. The Model will be visible in the main gallery'
   }else{
     statusAlert = 'alert-success';
-    statusBtnClass = 'btn-warning';
-    statusBtnValue = 1;
+    statusTooltip = 'model visible in the main gallery. Click the "change visibility" button or edit the model to change model visibility';
+    statusBtnClass = 'btn-warning'
+    statusBtnValue = 1
+    statusBtnTooltip = 'Mark model as under processing. The Model will not be visible in the main gallery'
   }
   const modelStatus = document.querySelector("#model-status");
   modelStatus.classList.add(statusAlert);
@@ -102,17 +96,9 @@ function handleUserPermissions(mainData) {
     btn.value = statusBtnValue;
     btn.addEventListener('click', () => changeModelStatus(modelId));
   }else{
-    document.querySelector("#toolBarModel")?.remove();
-    const btSaveModelParam = document.getElementsByName('saveModelParam')[0];
-    if(btSaveModelParam) btSaveModelParam.remove();
-  }
-}
+    document.querySelector("#toolBarModel").remove();
+  } 
 
-/**
- * Popola la UI con i metadati del modello.
- * @param {Object} mainData - Dati principali del modello.
- */
-function renderModelMetadata(mainData) {
   const isEmpty = (value) => value === null || value === undefined || value === '';
   Object.keys(mainData).forEach(key => {    
     if(!isEmpty(mainData[key])) {
@@ -120,6 +106,9 @@ function renderModelMetadata(mainData) {
         const doi = document.querySelector("#model-doi");
         if(doi){
           doi.setAttribute('href', mainData.doi);
+          const img = document.createElement('img');
+          img.src = mainData.doi_svg;
+          doi.appendChild(img);
         }
         const btn = document.createElement('a');
         btn.className = 'btn btn-light';
@@ -138,32 +127,103 @@ function renderModelMetadata(mainData) {
       document.querySelector(`#model-${key}`)?.parentElement?.remove();
     }
   });
-}
+  
+  object.forEach((element, index) => {
+    // se ci sono più modelli nel canvas crea le miniature per cambiare mesh
+    const thumbPath = 'archive/thumb/'+element.thumbnail;
+    const thumbDiv = document.createElement('div');
+    thumbDiv.className = 'thumb';
+    document.querySelector('#object-control').appendChild(thumbDiv);
+    const img = document.createElement('img');
+    img.className = 'img-fluid';
+    img.src = thumbPath;
+    thumbDiv.appendChild(img);
+    const backdrop = document.createElement('div');
+    backdrop.className = 'backdrop';
+    thumbDiv.appendChild(backdrop);
+    backdrop.style.display = 'none';
+    thumbDiv.addEventListener('click', function(){
+      backdrop.style.display = backdrop.style.display === 'none' ? 'block' : 'none';
+      const vis = backdrop.style.display === 'none';
+      presenter.setInstanceVisibilityByName('mesh_'+index, vis, true);
+    });
 
-/**
- * Sincronizza le annotazioni tra localStorage e viewsManager.
- * @param {Object} model - Oggetto modello ricevuto dal backend.
- */
-async function syncAnnotations(model) {
-  const mainData = model.model;
-  const object = model.model_object;
+    const row = document.createElement('div');
+    row.className = 'row';
+    const listWrap = document.querySelector("#listWrap");
+    if (listWrap) listWrap.appendChild(row);
+    const thumb = document.createElement('div');
+    thumb.className = 'col-4';
+    row.appendChild(thumb);
+    const img2 = document.createElement('img');
+    img2.className = 'img-fluid rounded';
+    img2.src = thumbPath;
+    thumb.appendChild(img2);
+    const metadata = document.createElement('div');
+    metadata.className = 'col-8';
+    row.appendChild(metadata);
+    const ul = document.createElement('ul');
+    ul.className = 'list-group list-group-flush';
+    metadata.appendChild(ul);
+
+    const field = new Set(['acquisition_method','status','author','owner','license_acronym','create_at','description','note','software','points','polygons','textures','scans','pictures','encumbrance','measure_unit']);
+    Object.keys(element).forEach(key => {
+      if (field.has(key)){
+        if(element[key]){
+          const li = document.createElement('li');
+          li.className = 'list-group-item';
+          ul.appendChild(li);
+          const span1 = document.createElement('span');
+          span1.textContent = key;
+          li.appendChild(span1);
+          const span2 = document.createElement('span');
+          span2.textContent = element[key];
+          li.appendChild(span2);
+        }
+      }
+    })
+    if(isLoggedUser){
+      const navBarObj = document.createElement('nav');
+      navBarObj.className = "my-3 pb-2 border-bottom";
+      metadata.appendChild(navBarObj);
+      const a = document.createElement('a');
+      a.href = 'object_edit.php?model='+mainData.id+'&item='+element.id;
+      a.className = 'btn btn-sm btn-adc-dark';
+      a.textContent = 'edit';
+      navBarObj.appendChild(a);
+      if(object.length > 1){
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'btn btn-sm btn-danger float-end';
+        button.textContent = 'delete object';
+        navBarObj.appendChild(button);
+      }
+    }
+  });
+
   // retrieve collection data from LocalStorage
   const stateManager = await collectionState();
   const currentState = stateManager.getState();
   stateManager.sync();
   const activeCollection = currentState.activeCollection;
+  
   if (activeCollection && activeCollection.items) {
     COLLECTIONITEM = activeCollection.items.find(item => item.id == artifactId);
   }
+  
   // Load annotations from viewsStorage
   viewsManager = await viewsStorage();
   const savedAnnotations = viewsManager.getAnnotations(artifactId);
+  
   if (savedAnnotations) {
     VIEWER_ANNOTATIONS = savedAnnotations;
   } else if (COLLECTIONITEM && COLLECTIONITEM.annotations) {
     VIEWER_ANNOTATIONS = COLLECTIONITEM.annotations;
     viewsManager.setAnnotations(artifactId, VIEWER_ANNOTATIONS);
   }
+  
+  initListeners();
+  startupViewer(object);
 }
 
 function initListeners() {
@@ -204,75 +264,17 @@ function initListeners() {
   if (btOrtho) btOrtho.addEventListener('click', () => setOrtho());
 }
 
-
-/**
- * Inizializza il viewer 3DHOP e chiama la callback quando la scena è pronta.
- * @param {Array} object - Array di oggetti modello.
- * @param {Function} [onReady] - Callback opzionale da chiamare quando la scena è pronta.
- */
-function startupViewer(object, onReady) {
+function startupViewer(object) {
   presenter = new Presenter("draw-canvas");
   init3dhop(isLoggedUser);
-  const myScene = createViewerScene(object);
-  presenter.setScene(myScene);
-  setupViewerState();
-  setupViewerComponents();
-  applyInitialViewerState();
-
-  // Attendi che la scena sia pronta
-  if (typeof onReady === "function") {
-    waitForSceneReady(presenter, onReady);
-  }
-}
-
-/**
- * Polling per sapere quando la scena è pronta.
- * @param {Presenter} presenter - L'istanza del presenter.
- * @param {Function} callback - Funzione da chiamare quando la scena è pronta.
- */
-function waitForSceneReady(presenter, callback) {
-  const check = () => {
-    if (presenter._isSceneReady && presenter._isSceneReady()) {
-      callback();
-    } else {
-      setTimeout(check, 50);
-    }
-  };
-  check();
-}
-
-/**
- * Crea la scena 3DHOP con meshes, istanze e configurazione trackball.
- * @param {Array} object - Array di oggetti modello.
- * @returns {Object} - Oggetto scena per 3DHOP.
- */
-function createViewerScene(object) {
-  const meshes = {
-    "sphere": { url: "archive/models/sphere.ply" },
-    "cube": { url: "archive/models/cube.ply" }
-  };
-  const modelInstances = {};
-  object.forEach((element, index) => {
-    meshes['mesh_' + index] = { url: 'archive/models/' + element.object };
-    modelInstances['mesh_' + index] = {
-      mesh: 'mesh_' + index,
-      tags: ['Group'],
-      color: [0.5, 0.5, 0.5],
-      backfaceColor: [0.5, 0.5, 0.5, 3],
-      specularColor: [0, 0, 0, 256]
-    };
-  });
-  let clippingBorderSize = 0.1;
-  if (measure_unit === "mm") clippingBorderSize = 0.5;
-  if (measure_unit === "m") clippingBorderSize = 0.0005;
-
-  const trackball = getTrackballConfig();
-
-  return {
-    meshes,
-    modelInstances,
+  const myScene = {
+    meshes: { 
+      "sphere": { url: "archive/models/sphere.ply" },  
+      "cube": { url: "archive/models/cube.ply" },
+    },
+    modelInstances: {},
     spots: {},
-    trackball,
+    trackball: {},
     space: {
       centerMode: "scene",
       radiusMode: "scene",
@@ -284,19 +286,13 @@ function createViewerScene(object) {
       measurementColor: [0.5, 1, 0.5],
       showClippingPlanes: true,
       showClippingBorder: true,
-      clippingBorderSize,
+      clippingBorderSize: 0.1,
       clippingBorderColor: [0, 1, 1]
     }
   };
-}
 
-/**
- * Restituisce la configurazione della trackball in base allo stato di navigazione.
- * @returns {Object} - Configurazione trackball.
- */
-function getTrackballConfig() {
-  if (DEFAULT_VIEWER_STATE.navigation === "turntable") {
-    return {
+  if(DEFAULT_VIEWER_STATE.navigation == "turntable"){
+    myScene.trackball = {
       type: TurntablePanTrackball,
       trackOptions: {
         startPhi: DEFAULT_VIEWER_STATE.trackState[0],
@@ -310,8 +306,8 @@ function getTrackballConfig() {
         minMaxDist: [0.1, 5]
       }
     };
-  } else if (DEFAULT_VIEWER_STATE.navigation === "sphere") {
-    return {
+  } else if(DEFAULT_VIEWER_STATE.navigation == "sphere"){
+    myScene.trackball = {
       type: SphereTrackball,
       trackOptions: {
         startMatrix: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
@@ -323,13 +319,27 @@ function getTrackballConfig() {
       }
     };
   }
-  return {};
-}
 
-/**
- * Imposta lo stato iniziale del viewer e aggiorna variabili globali.
- */
-function setupViewerState() {
+  object.forEach((element, index) => {
+    myScene.meshes['mesh_'+index] = {
+      url: 'archive/models/' + element.object 
+    };
+    myScene.modelInstances['mesh_'+index] = {
+      mesh: 'mesh_'+index, 
+      tags: ['Group'], 
+      color: [0.5, 0.5, 0.5], 
+      backfaceColor: [0.5, 0.5, 0.5, 3], 
+      specularColor: [0, 0, 0, 256]
+    };
+  });
+
+  if(measure_unit === "mm")
+    myScene.config.clippingBorderSize = 0.5;
+  if(measure_unit === "m")
+    myScene.config.clippingBorderSize = 0.0005;
+
+  presenter.setScene(myScene);
+
   DEFAULT_VIEWER_STATE.homeTrackState = presenter.getTrackballPosition();
   DEFAULT_VIEWER_STATE.trackState = DEFAULT_VIEWER_STATE.homeTrackState.slice();
   presenter._onEndMeasurement = onEndMeasure;
@@ -343,26 +353,15 @@ function setupViewerState() {
 
   VIEWER_STATE = structuredClone(DEFAULT_VIEWER_STATE);
   VIEWER_STATE.trackState = VIEWER_STATE.homeTrackState.slice();
-}
 
-/**
- * Inizializza i componenti viewer: luce, griglia, misure, annotazioni, sezioni.
- */
-function setupViewerComponents() {
   lightComponent = initLightController(presenter, VIEWER_STATE);
   gridComponent = initGrid(presenter, sceneBB, gStep, VIEWER_STATE, measure_unit);
   measure = measureTool(presenter, VIEWER_STATE, viewerEl, measure_unit);
   presenter._onEndPickingPoint = measure.onEndPick;
-  annotations = initAnnotations(
-    presenter, VIEWER_STATE, viewerEl, VIEWER_ANNOTATIONS, artifactId, measure_unit, measure, setViewerState, storeAnnotations
-  );
-  section = initSection(presenter, VIEWER_STATE, DEFAULT_VIEWER_STATE);
-}
-
-/**
- * Applica lo stato iniziale al viewer e aggiorna UI e rendering.
- */
-function applyInitialViewerState() {
+  annotations = initAnnotations( presenter, VIEWER_STATE, viewerEl, VIEWER_ANNOTATIONS, artifactId, measure_unit, measure, setViewerState, storeAnnotations );
+  section = initSection(presenter, VIEWER_STATE,DEFAULT_VIEWER_STATE);
+  
+  
   gridComponent.startupGrid(VIEWER_STATE.grid);
   lightComponent.setLighting(VIEWER_STATE.lighting, VIEWER_STATE.lightDir);
   presenter.animateToTrackballPosition(VIEWER_STATE.trackState);
@@ -371,6 +370,7 @@ function applyInitialViewerState() {
   setTransparency(VIEWER_STATE.transparent);
   setSpecular(VIEWER_STATE.specular);
   setOrtho(VIEWER_STATE.ortho);
+
 
   presenter._onTrackballUpdate = onTrackballUpdate;
   presenter.ui._onCanvasScroll = event => event.preventDefault();

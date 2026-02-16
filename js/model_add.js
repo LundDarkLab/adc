@@ -1,5 +1,5 @@
 const form = $("[name=newModelForm]")[0];
-const uuid = self.crypto.randomUUID();
+const uuid = globalThis.crypto.randomUUID();
 const nxz = document.getElementById('nxz');
 const thumb = document.getElementById('thumb');
 const endpoint = 'api/modelPreview.php';
@@ -55,7 +55,6 @@ $("[name=measure_unit").on('change', function(){
   if($(this).val()){
     $("#uploadTip").text('To prevent the file from overwriting other files with the same name, the system will assign a unique id as the name of the file')
     $("#nxzWrap").show();
-    measure_unit = $(this).val()
   }
 })
 
@@ -121,9 +120,9 @@ function uploadFile(){
     el("status").innerHTML = "Sorry but you can upload only nxz files. You are trying to upload a "+val+" file type";
     return false;
   }
-  var nxzUpload = new FormData();
+  let nxzUpload = new FormData();
   nxzUpload.append("nxz", nxz.files[0], nxz.files[0].name);
-  var ajax = new XMLHttpRequest();
+  let ajax = new XMLHttpRequest();
   $("#progressBar").show()
   ajax.upload.addEventListener("progress", progressHandler, false);
   ajax.addEventListener("load", completeHandler, false);
@@ -135,7 +134,7 @@ function uploadFile(){
 
 function progressHandler(event){
   el("loaded_n_total").innerHTML = "Uploaded "+event.loaded+" bytes of "+event.total;
-  var percent = (event.loaded / event.total) * 100;
+  let percent = (event.loaded / event.total) * 100;
   el("progressBar").value = Math.round(percent);
   el("status").innerHTML = Math.round(percent)+"% uploaded... please wait";
 }
@@ -153,35 +152,35 @@ function completeHandler(event){
       mesh:"nxz", 
       tags: ['Group'], 
       color: [0.5, 0.5, 0.5], 
-      backfaceColor: [0.5, 0.5, 0.5, 3.0], 
-      specularColor: [0.0, 0.0, 0.0, 256.0]
+      backfaceColor: [0.5, 0.5, 0.5, 3], 
+      specularColor: [0, 0, 0, 256]
     }
   }
   const trackBallOpt = { 
     type: TurntablePanTrackball, 
     trackOptions: {
-      startPhi: 15.0, 
-      startTheta: 15.0, 
-      startDistance: 2.0, 
+      startPhi: 15, 
+      startTheta: 15, 
+      startDistance: 2, 
       minMaxPhi: [-180, 180], 
-      minMaxTheta: [-90.0, 90.0], 
-      minMaxDist: [0.1, 3.0] 
+      minMaxTheta: [-90, 90], 
+      minMaxDist: [0.1, 3] 
     }
   }
   const spaceOpt = {
     centerMode: "scene", 
     radiusMode: "scene", 
-    cameraNearFar: [0.01, 5.0]
+    cameraNearFar: [0.01, 5]
   }
   const configOpt = {
-    pickedpointColor: [1.0, 0.0, 1.0], 
-    measurementColor: [0.5, 1.0, 0.5], 
+    pickedpointColor: [1, 0, 1], 
+    measurementColor: [0.5, 1, 0.5], 
     showClippingPlanes: true, 
     showClippingBorder: true, 
     clippingBorderSize: 0.5, 
-    clippingBorderColor: [0.0, 1.0, 1.0]
+    clippingBorderColor: [0, 1, 1]
   }
-  scene = {
+  let scene = {
     meshes: {"nxz" : { url: './archive/models/preview/'+nxz.files[0].name }},
     modelInstances : instanceOpt,
     trackball: trackBallOpt,
@@ -189,12 +188,11 @@ function completeHandler(event){
     config: configOpt
   }
   init3dhop();
-  presenter = new Presenter("draw-canvas");
+  let presenter = new Presenter("draw-canvas");
   presenter.setScene(scene);
   presenter._onEndMeasurement = onEndMeasure;
   presenter._onEndPickingPoint = onEndPick;
   presenter.setClippingPointXYZ(0.5, 0.5, 0.5);
-  gStep = 1.0;
   startupGrid('gridBase')
   //light component
   setupLightController()

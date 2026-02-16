@@ -1,38 +1,35 @@
 <?php
-$currentDir = __DIR__;
-// Same detection
-$requestUri = $_SERVER['REQUEST_URI'] ?? '';
-if (strpos($requestUri, '/prototype_dev/') !== false) {
-  $rootFolder = 'prototype_dev';
-} elseif (strpos($requestUri, '/plus/') !== false) {
-  $rootFolder = 'plus';
-} else {
-  $rootFolder = '';
-}
-$fileName = $_FILES["nxz"]["name"];
-$fileTmpLoc = $_FILES["nxz"]["tmp_name"];
-$fileLoc = $_SERVER['DOCUMENT_ROOT'] . "/" . $rootFolder . "/archive/models/preview/" . $fileName;
-$fileType = $_FILES["nxz"]["type"];
-$fileSize = $_FILES["nxz"]["size"];
-$fileExt = pathinfo($fileName, PATHINFO_EXTENSION);
-$fileErrorMsg = $_FILES["nxz"]["error"];//0 false, 1 true
-if (!$fileTmpLoc) {
-  echo "Please browse for a file before clicking the upload button.";
-  exit();
-}
+header('Content-Type: application/json');
+$projectRoot = dirname(__DIR__);
+file_put_contents($projectRoot . '/archive/models/preview/upload_debug.log', print_r($_FILES, true), FILE_APPEND);
+try {
+    if (!isset($_FILES["nxz"])) {
+        throw new Exception("No file uploaded.");
+    }
 
-if ($fileExt !== 'nxz') {
-  echo "Sorry but you can upload only nxz files. You are trying to upload a ".$fileExt." file type";
-  exit();
-}
-if ($fileType !== 'application/octet-stream') {
-  echo "Sorry but you can upload only nxz files. You are trying to upload a ".$fileType." file type";
-  exit();
-}
-if(move_uploaded_file($fileTmpLoc, $fileLoc)){
-  chmod($fileLoc, 0666);
-  echo $fileName." upload is complete";
-} else {
-  echo "move_uploaded_file function failed, view server log for more details";
+    $fileName = $_FILES["nxz"]["name"];
+    $fileTmpLoc = $_FILES["nxz"]["tmp_name"];
+    $fileLoc = $projectRoot . "/archive/models/preview/" . $fileName;
+    $fileType = $_FILES["nxz"]["type"];
+    $fileSize = $_FILES["nxz"]["size"];
+    $fileExt = pathinfo($fileName, PATHINFO_EXTENSION);
+    $fileErrorMsg = $_FILES["nxz"]["error"];
+
+    if (!$fileTmpLoc) {
+        throw new Exception("Please browse for a file before clicking the upload button.");
+    }
+    if ($fileExt !== 'nxz') {
+        throw new Exception("Sorry but you can upload only nxz files. You are trying to upload a ".$fileExt." file type");
+    }
+    if ($fileType !== 'application/octet-stream') {
+        throw new Exception("Sorry but you can upload only nxz files. You are trying to upload a ".$fileType." file type");
+    }
+    if (!move_uploaded_file($fileTmpLoc, $fileLoc)) {
+        throw new Exception("move_uploaded_file function failed, view server log for more details");
+    }
+    chmod($fileLoc, 0666);
+    echo json_encode(['success' => true, 'message' => $fileName." upload is complete", "filename" => $fileName]);
+} catch (Exception $e) {
+    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
 }
 ?>

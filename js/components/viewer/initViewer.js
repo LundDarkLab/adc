@@ -1,4 +1,4 @@
-import { isIOS, isMobile } from '../../js/helpers/utils.js';
+import { isIOS, isMobile } from "../../helpers/utils.js";
 
 // Factory function: init3dhop
 function init3dhop(isLoggedUser) {

@@ -9,16 +9,12 @@ node_modules/
 workfile/ 
 notes/ 
 documentation/site/ 
+docker-compose.override.yml
 
 # --- Gestione Dati Persistenti (Strategia .gitkeep) ---
-# Escludiamo il contenuto ma manteniamo la cartella nel repository
-# 1. Ignora tutto il contenuto di archive a qualsiasi profondità
 archive/** 
-# 2. Permetti a Git di guardare dentro le cartelle (altrimenti non trova i file)
 !archive/**/
-# 3. Mantieni i file .gitkeep per conservare la struttura delle cartelle vuote
 !archive/**/.gitkeep
-# 4. ECCEZIONE SPECIFICA: Mantieni questo file specifico e caricalo alla build
 !archive/models/sphere.ply
 
 img/logo/*
