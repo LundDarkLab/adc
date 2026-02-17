@@ -1,4 +1,8 @@
 <?php
+// converti i warning in exception così vengono intercettati dal catch e non generano errori
+set_error_handler(function($errno, $errstr, $errfile, $errline) {
+  throw new \ErrorException($errstr, 0, $errno, $errfile, $errline);
+});
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
@@ -23,6 +27,12 @@ $availableClasses = [
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $input = json_decode(file_get_contents('php://input'), true);
+  if (!$input || !isset($input['class'])) { 
+    $input = $_POST;
+  }
+  error_log("POST: " . print_r($_POST, true));
+  error_log("FILES: " . print_r($_FILES, true));
+  error_log("INPUT: " . print_r($input, true));
   if (isset($input['class']) && isset($input['action'])) {
     $className = $input['class'];
     $action = $input['action'];
@@ -32,19 +42,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       $class = $availableClasses[$className];
       $obj = new $class();
       if (method_exists($obj, $action)) {
-        if (isset($_FILES['file']) && $_FILES['file']['error'] === UPLOAD_ERR_OK) {
-          $input['file'] = [
-            'tmp_name' => $_FILES['file']['tmp_name'],
-            'name' => $_FILES['file']['name'],
-            'type' => $_FILES['file']['type']
-          ];
-        }
         try {
           if (empty($input)) {$input = [];}
-          $response = $obj->$action($input);
+          $reflection = new ReflectionMethod($obj, $action);
+          $numParams = $reflection->getNumberOfParameters();
+          if ($numParams === 2) {
+            $response = $obj->$action($input, $_FILES);
+          } else {
+            $response = $obj->$action($input);
+          }
           echo json_encode(['error' => 0, 'data' => $response]);
         } catch (Exception $e) {
-          http_response_code(500); // Errore del server
+          http_response_code(500);
           echo json_encode(['error' => 1, 'message' => $e->getMessage()]);
         }
       } else {

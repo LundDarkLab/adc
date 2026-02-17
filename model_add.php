@@ -14,7 +14,7 @@
     <div id="sideMenu"></div>
     <main>
       <div class="container">
-        <form name="newModelForm" enctype="multipart/form-data" method="post">
+        <form name="newModelForm" id="newModelForm" enctype="multipart/form-data" method="post">
           <div id="tip" class="alert alert-light border">
             <div>
               <h5 class="fw-bold w-50 d-inline-block">Create a new model</h5>
@@ -52,7 +52,8 @@
               <div class="col col-md-6">
                 <div class="mb-3">
                   <label for="doi">DOI URL</label>
-                  <input type="text" class="form-control" pattern="10\.5281\/zenodo\.\d+" title="invalid DOI format" placeholder="example: https://doi.org/10.5281/zenodo.11207959" data-table="model" id="doi">
+                  <input type="text" class="form-control" title="invalid DOI format" placeholder="example: https://doi.org/10.5281/zenodo.11207959" data-table="model" name="doi" id="doi">
+                    <div id="doiError" class="invalid-feedback d-none"></div>
                 </div>
                 <div>
                   <label for="citation">Citation</label>
@@ -110,44 +111,44 @@
             <div class="row mb-3">
               <div class="col-md-4">
                 <label for="acquisition_method" class="text-danger fw-bold">Acquisition method</label>
-                <select class="form-select" name="acquisition_method" id="acquisition_method" data-table="object_param" required>
+                <select class="form-select" name="acquisition_method" id="acquisition_method" data-table="model_param" required>
                   <option value="" selected disabled>-- select value --</option>
                 </select>
               </div>
               <div class="col-md-4">
                 <label for="measure_unit" class="text-danger fw-bold">Measure unit</label>
-                <select class="form-select" name="measure_unit" id="measure_unit" data-table="object_param" required>
+                <select class="form-select" name="measure_unit" id="measure_unit" data-table="model_param" required>
                   <option value="" selected disabled>-- select unit --</option></select>
               </div>
               <div class="col-md-4">
                 <label for="software">Software</label>
-                <input class="form-control" type="text" id="software" name="software" data-table="object_param">
+                <input class="form-control" type="text" id="software" name="software" data-table="model_param">
               </div>
             </div>
             <div class="row mb-3">
               <div class="col-md-2">
                 <label for="points">Points</label>
-                <input type="number" class="form-control" min="0" step="1" name="points" id="points" value="" data-table="object_param">
+                <input type="number" class="form-control" min="0" step="1" name="points" id="points" value="" data-table="model_param">
               </div>
               <div class="col-md-2">
                 <label for="polygons">Polygons</label>
-                <input type="number" class="form-control" min="0" step="1" name="polygons" id="polygons" value="" data-table="object_param">
+                <input type="number" class="form-control" min="0" step="1" name="polygons" id="polygons" value="" data-table="model_param">
               </div>
               <div class="col-md-2">
                 <label for="textures">Textures</label>
-                <input type="number" class="form-control" min="0" step="1" name="textures" id="textures" value="" data-table="object_param">
+                <input type="number" class="form-control" min="0" step="1" name="textures" id="textures" value="" data-table="model_param">
               </div>
               <div class="col-md-2">
                 <label for="scans">Scans</label>
-                <input type="number" class="form-control" min="0" step="1" name="scans" id="scans" value="" data-table="object_param">
+                <input type="number" class="form-control" min="0" step="1" name="scans" id="scans" value="" data-table="model_param">
               </div>
               <div class="col-md-2">
                 <label for="pictures">Pictures</label>
-                <input type="number" class="form-control" min="0" step="1" name="pictures" id="pictures" value="" data-table="object_param">
+                <input type="number" class="form-control" min="0" step="1" name="pictures" id="pictures" value="" data-table="model_param">
               </div>
               <div class="col-md-2">
                 <label for="encumbrance" data-bs-toggle="tooltip" title="you can enter a value or let the system calculate it"><span class="mdi mdi-information-outline"></span> Encumbrance</label>
-                <input type="text" class="form-control" name="encumbrance" id="encumbrance" value="" data-table="object_param">
+                <input type="text" class="form-control" name="encumbrance" id="encumbrance" value="" data-table="model_param">
               </div>
             </div>
           </fieldset>
@@ -165,7 +166,7 @@
                 Before uploading you have to select the "measure unit" from the specifica field in the "Object paradata" section of the form
                 </div>
                 <progress id="progressBar" class="d-none" value="0" max="100" style="width:100%;"></progress>
-                <h3 id="status">status</h3>
+                <p id="status"></p>
                 <p id="loaded_n_total"></p>
               </div>
             </div>
@@ -184,8 +185,8 @@
             </div>
             <div class="row mb-3 d-none" id="thumbWrapRow">
               <div id="thumbWrap" class="col">
-                <label for="thumb" class="form-label inputLabel">Upload a thumbnail</label>
-                <input class="form-control" type="file" id="thumb" name="thumb" accept="image/jpeg, image/png, image/jpg" >
+                <p>Remember to take a screenshot before saving, as it will be used in the gallery to represent the model. You can take a screenshot by clicking on the button with the <span class="mdi mdi-camera"></span> icon in the viewer or by clicking on the button below.</p>
+                <button type="button" class="btn btn-primary btScreenshot">Take a screenshot</button>
                 <div class="col-md-4 my-3 border rounded" id="thumbPreview"></div>
                 <div id="thumbNotAllowed"></div>
               </div>

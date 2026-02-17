@@ -1,4 +1,4 @@
-import { buildFormData } from './buildFormData.js';
+import { buildFormData,buildFormDataForSubmit } from './buildFormData.js';
 import { fetchApi } from './fetch.js';
 import { bsAlert } from '../../components/bsComponents.js';
 
@@ -77,85 +77,78 @@ export function handleFormSubmit(form, options = {}) {
 
     try {
       // 4. Prepara dati
-      let data = buildFormData(formEl, formOptions);
-
-       // 5. Converti '' a null se abilitato
-      if (convertEmptyStringsToNull) {
-        const convertEmptyToNull = (obj) => {
-          for (let key in obj) {
-            if (obj[key] === '') {
-              obj[key] = null;
-            } else if (typeof obj[key] === 'object' && obj[key] !== null) {
-              convertEmptyToNull(obj[key]);
-            }
-          }
-        };
-        convertEmptyToNull(data);
-      }
-      
-      // 6. Modifica dati se necessario (es: aggiungere array)
-      if (beforeSubmit) {
-        data = beforeSubmit(data);
-      }
-
-      // 7. Aggiungi class e action per l'endpoint
-      data.class = className;
-      data.action = action;
-
-      // 8. Invia dati
-      let result;
-
-      // Per upload file - usa FormData con fetch nativo
+      let data;
       if (useFormData) {
-        const formData = new FormData();
-        
-        // Aggiungi class e action
-        formData.append('class', className);
-        formData.append('action', action);
-        
-        // Aggiungi dati del form
-        Object.entries(data).forEach(([table, fields]) => {
-          if (table === 'class' || table === 'action') return; // Già aggiunti
-          
-          Object.entries(fields).forEach(([field, value]) => {
-            const key = `${table}[${field}]`;
-            if (Array.isArray(value)) {
-              value.forEach(v => formData.append(`${key}[]`, v));
-            } else {
-              formData.append(key, value);
-            }
-          });
-        });
-        
-        const endpoint = url || formEl.action || '';
-        const fetchOptions = { method: method || 'POST', body: formData };
-        
-        // Aggiungi headers se forniti (es: Authorization)
-        if (headers) {
-          fetchOptions.headers = headers;
-        }
-        result = await fetch(endpoint, fetchOptions).then(r => r.json());
+        // data = new FormData(formEl);
+        data = buildFormDataForSubmit(formEl, formOptions);
+        // Aggiungi class e action se non presenti
+        if (!data.has('class')) data.append('class', className);
+        if (!data.has('action')) data.append('action', action);
       } else {
-        // Default - usa fetchApi con JSON (usa ENDPOINT e POST di default)
-        const fetchOptions = { body: data };
-        // Aggiungi url solo se fornito
-        if (url) { fetchOptions.url = url; }
-        // Aggiungi method solo se fornito
-        if (method) { fetchOptions.method = method; }
-        // Aggiungi headers solo se forniti (es: JWT Bearer)
-        if (headers) {fetchOptions.headers = headers;}
-
-        result = await fetchApi(fetchOptions);
+        data = buildFormData(formEl, formOptions);
+        data.class = className;
+        data.action = action;
+        // 5. Converti '' a null se abilitato
+        if (convertEmptyStringsToNull) {
+          const convertEmptyToNull = (obj) => {
+            for (let key in obj) {
+              if (obj[key] === '') {
+                obj[key] = null;
+              } else if (typeof obj[key] === 'object' && obj[key] !== null) {
+                convertEmptyToNull(obj[key]);
+              }
+            }
+          };
+          convertEmptyToNull(data);
+        }
       }
 
-      // 9. Success
+      // 6. Modifica dati se necessario (es: aggiungere file, array, blob)
+      if (beforeSubmit) {
+        const beforeResult = await beforeSubmit(data);
+        if (beforeResult === false) {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+          }
+          return;
+        }
+        if (typeof beforeResult === 'object') {
+          data = beforeResult;
+        }
+      }
+
+      // 7. Invia dati
+      let result;
+      // if (useFormData) {
+      //   // Usa direttamente il FormData (già modificato in beforeSubmit)
+      //   const endpoint = url || formEl.action || '';
+      //   const fetchOptions = { method: method || 'POST', body: data };
+      //   if (headers) { fetchOptions.headers = headers; }
+      //   result = await fetch(endpoint, fetchOptions).then(r => r.json());
+      // } else {
+      //   // Default - usa fetchApi con JSON (usa ENDPOINT e POST di default)
+      //   const fetchOptions = { body: data };
+      //   if (url) { fetchOptions.url = url; }
+      //   if (method) { fetchOptions.method = method; }
+      //   if (headers) { fetchOptions.headers = headers; }
+      //   result = await fetchApi(fetchOptions);
+      // }
+
+      const fetchOptions = { body: data };
+      if (url) { fetchOptions.url = url; }
+      if (method) { fetchOptions.method = method; }
+      if (headers) { fetchOptions.headers = headers; }
+      result = await fetchApi(fetchOptions);
+
+      // 8. Success
       if (resetOnSuccess) { formEl.reset(); }
       if (onSuccess) { onSuccess(result); }
     } catch (error) {
-      // 10. Error
+      // 9. Error
       if (onError) { onError(error); }
     } finally {
-      // 11. Riabilita submit button
+      // 10. Riabilita submit button
       if (submitBtn) {
         submitBtn.disabled = false;
         submitBtn.textContent = originalText;

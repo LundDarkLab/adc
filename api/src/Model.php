@@ -28,51 +28,63 @@ class Model extends Conn{
   }
 
   public function saveModel($data, $files){
+    file_put_contents('/tmp/debug.log', print_r($data, true), FILE_APPEND);
     try {
       $this->pdo()->beginTransaction();
-      // prepare & save model data
-      $thumbExt = pathinfo($files['thumb']["name"], PATHINFO_EXTENSION);
-      $modelArray = array(
-        'name'=>$data['name'],
-        'description'=>$data['description'], 
-        'thumbnail'=>$this->uuid.".".$thumbExt,
-        'doi' => $data['doi'],
-        'doi_svg' => $data['doi_svg'],
-        'citation' => $data['citation'],
-        'created_by' => $data['author'],
-        'updated_by' => $data['author']
-      );
-      if(isset($data['note'])){$modelArray['note']=$data['note'];}
-      $sql = $this->buildInsert("model", $modelArray);
-      $this->prepared($sql, $modelArray);
-      $data['model'] = $this->pdo()->lastInsertId();      
+      $thumbExt = pathinfo($files['thumbnail']["name"], PATHINFO_EXTENSION);
+      $modelExt = pathinfo($files['object']["name"], PATHINFO_EXTENSION);
+      $data['model']['created_by'] = $data['model']['updated_by'] = $data['model_object']['author'];
+      // $data['model']['thumbnail'] = $files['thumbnail']['name'];
+      $data['model']['thumbnail'] = $this->uuid.".".$thumbExt;
+      $sqlModel = $this->buildInsert("model", $data['model']);
+      $stmt = $this->pdo()->prepare($sqlModel);
+      $stmt->execute($data['model']);
+      $modelId = $this->pdo()->lastInsertId();
 
       // prepare & save model_object data
-      $objectData = $this->buildObjectData($data, $files);
-      $sqlObject = $this->buildInsert("model_object", $objectData);
-      $this->prepared($sqlObject, $objectData);
-      $data['object'] = $this->pdo()->lastInsertId();
-
-      //prepare & save model_view data
-      $viewData = $this->buildObjectView($data);
-      $sqlView = $this->buildInsert('model_view', $viewData);
-      $this->prepared($sqlView, $viewData);
+      if (isset($data['model_object']['object_description'])) {
+        $data['model_object']['description'] = $data['model_object']['object_description'];
+        unset($data['model_object']['object_description']);
+      }
+      if (isset($data['model_object']['object_note'])) {
+        $data['model_object']['note'] = $data['model_object']['object_note'];
+        unset($data['model_object']['object_note']);
+      }
+      $data['model_object']['updated_by'] = $data['model_object']['author'];
+      $data['model_object']['model'] = $modelId;
+       $data['model_object']['thumbnail'] = $this->uuid.".".$thumbExt;
+      $data['model_object']['object'] = $this->uuid.".".$modelExt;
+      $sqlModelObject = $this->buildInsert("model_object", $data['model_object']);
+      $stmt = $this->pdo()->prepare($sqlModelObject);
+      $stmt->execute($data['model_object']);
+      $modelObjectId = $this->pdo()->lastInsertId();
       
       //prepare & save object_param
-      $paramData = $this->buildObjectParam($data);
-      $sqlParam = $this->buildInsert('model_param', $paramData);
-      $this->prepared($sqlParam, $paramData);
+      $data['model_param']['object'] = $modelObjectId;
+      $sqlModelParam = $this->buildInsert('model_param', $data['model_param']);
+      $stmt = $this->pdo()->prepare($sqlModelParam);
+      $stmt->execute($data['model_param']);
 
+      
+      //upload, move, handle image and 3d file
+      $this->handle3dFile($files['object']);
+      $this->handleImg($files['thumbnail']);
+      
       $this->pdo()->commit();
 
-      //upload, move, handle image and 3d file
-      $this->handle3dFile($files['nxz']);
-      $this->handleImg($files['thumb']);
-
-      return ["res"=> 1, "output"=>'Ok, the model has been successfully created.', "id"=>$data['model']]; 
+      return [
+        "error"=> 0, 
+        "output"=>'Ok, the model has been successfully created.', 
+        "id"=>$modelId,
+        "data"=>$data,
+        "files"=>$files
+      ]; 
     } catch (\Exception $e) {
       $this->pdo()->rollback();
-      return ["res"=>0, "output"=>$e->getMessage()];
+      return [
+        "error"=>1, 
+        "output"=>$e->getMessage()
+      ];
     }
   }
 
@@ -153,8 +165,10 @@ class Model extends Conn{
     if(!move_uploaded_file($file["tmp_name"], $this->modelDir.$newName)){
       throw new \Exception("move_uploaded_file function failed, view server log for more details", 1);
     }
+    if(!unlink($this->modelPreview.$file["name"])){
+      throw new \Exception("unlink function failed", 1);
+    }
     chmod($this->modelDir.$newName, 0777);
-    unlink($this->modelPreview.$file["name"]);
     return true;
   }
 

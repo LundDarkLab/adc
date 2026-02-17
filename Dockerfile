@@ -34,4 +34,9 @@ RUN echo "error_log = /var/log/apache2/php_errors.log" >> /usr/local/etc/php/php
     && echo "upload_max_filesize = 200M" >> /usr/local/etc/php/php.ini \
     && echo "post_max_size = 200M" >> /usr/local/etc/php/php.ini
 
+COPY docker-entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+
 EXPOSE 80

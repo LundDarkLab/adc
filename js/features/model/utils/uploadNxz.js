@@ -1,4 +1,4 @@
-import { startupViewer } from "../../../3dhop_function.js";
+import { presenter, initModel } from "../../../3dhop_function.js";
 
 const statusEl = document.getElementById('status');
 const progressBar = document.getElementById('progressBar');
@@ -57,7 +57,7 @@ function completeHandler(event){
       object: 'preview/' + response.filename,
       measure_unit: measureUnitInput.value
     }];
-    startupViewer(modelObject, viewerReady);
+    initModel(modelObject, viewerReady);
 
   } else {
     statusEl.textContent = response.message;
@@ -76,4 +76,12 @@ function abortHandler(event){
 
 function viewerReady(){
   console.log("Viewer pronto!");
+  if (presenter && presenter._scene && presenter._scene.config) {
+    presenter._scene.config.autoSaveScreenshot = false;
+  }
+  document.getElementById('alertBg').remove();
+  document.getElementById('btParadata').remove();
+  document.getElementById('btWidescreen').remove();
+  const thumbWrapRow = document.getElementById('thumbWrapRow');
+  thumbWrapRow.classList.remove('d-none');
 }

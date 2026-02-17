@@ -1,0 +1,32 @@
+site_name: Dynamic Collections
+site_url: https://dyncoll.ht.lu.se/
+repo_url: https://github.com/LundDarkLab/adc
+
+docs_dir: docs      # Cartella con la documentazione (default)
+
+theme:
+  # name: readthedocs
+  name: material
+  palette:
+    primary: indigo
+  features:
+    - navigation.tabs
+    - navigation.sections
+
+nav:
+  - Home: index.md
+  - 👨‍💻 Developer Guide:
+      - Overview: developer/index.md
+      - Architecture: developer/architecture.md
+      - Deployment: developer/deployment.md
+      - Maintenance: developer/maintenance.md
+  - 👤 User Guide:
+      - Introduction: user/index.md
+      - Getting Started: user/getting-started.md
+      - Features: user/features.md
+
+markdown_extensions:
+  - admonition
+  - codehilite
+  - toc:
+      permalink: true

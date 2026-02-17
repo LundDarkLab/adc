@@ -76,7 +76,7 @@
       <button type="button" id="btWidescreen" class="btn btn-adc-blue" data-bs-toggle="tooltip" title="toggle wide mode">
         <span class="mdi mdi-monitor-screenshot"></span>
       </button>
-      <button type="button" id="btScreenshot" class="btn btn-adc-blue" data-bs-toggle="tooltip" title="save a screenshot of the current view">
+      <button type="button" id="btScreenshot" class="btn btn-adc-blue btScreenshot" data-bs-toggle="tooltip" title="save a screenshot of the current view">
         <span class="mdi mdi-camera"></span>
       </button>
       <button type="button" id="btParadata" class="btn btn-adc-blue btParadataToggle" data-bs-toggle="tooltip" title="view model and objects paradata">
@@ -95,22 +95,22 @@
   <div id="modelToolsV" class="rounded modelTools">
 
     <div id="trackballControlsWrap" class="m-1">
-        <button class="btn btn-sm btn-outline-secondary btView" value="top" data-bs-toggle="tooltip" title="From Above">
+        <button type="button" class="btn btn-sm btn-outline-secondary btView" value="top" data-bs-toggle="tooltip" title="From Above">
           <span class="mdi mdi-arrow-down-bold"></span>
         </button>
-        <button class="btn btn-sm btn-outline-secondary btView" value="left" data-bs-toggle="tooltip" title="From Left">
+        <button type="button" class="btn btn-sm btn-outline-secondary btView" value="left" data-bs-toggle="tooltip" title="From Left">
           <span class="mdi mdi-arrow-right-bold"></span>
         </button>
-        <button class="btn btn-sm btn-outline-secondary btView" value="front" data-bs-toggle="tooltip" title="From Front">
+        <button type="button" class="btn btn-sm btn-outline-secondary btView" value="front" data-bs-toggle="tooltip" title="From Front">
           <span class="mdi mdi-arrange-bring-forward"></span>
         </button>
-        <button class="btn btn-sm btn-outline-secondary btView" value="right" data-bs-toggle="tooltip" title="From Right">
+        <button type="button" class="btn btn-sm btn-outline-secondary btView" value="right" data-bs-toggle="tooltip" title="From Right">
           <span class="mdi mdi-arrow-left-bold"></span>
         </button>
-        <button class="btn btn-sm btn-outline-secondary btView" value="back" data-bs-toggle="tooltip" title="From Back">
+        <button type="button" class="btn btn-sm btn-outline-secondary btView" value="back" data-bs-toggle="tooltip" title="From Back">
           <span class="mdi mdi-arrange-send-backward"></span>
         </button>
-        <button class="btn btn-sm btn-outline-secondary btView" value="bottom" data-bs-toggle="tooltip" title="From Below">
+        <button type="button" class="btn btn-sm btn-outline-secondary btView" value="bottom" data-bs-toggle="tooltip" title="From Below">
           <span class="mdi mdi-arrow-up-bold"></span>
         </button>
     </div> 

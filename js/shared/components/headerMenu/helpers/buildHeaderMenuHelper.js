@@ -44,6 +44,7 @@ export async function buildMenu() {
 }
 
 function setupHeaderMenuToggle(toggleBtn) {
+  const userMenu = document.getElementById("userMenu");
   const loggedValue = checkLogged.isLogged;
   const device = checkDevice();
   if(userMenu) {userMenu.classList.add('closed');}

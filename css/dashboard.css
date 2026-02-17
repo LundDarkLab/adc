@@ -103,6 +103,13 @@
 #modelDataWrap{
   grid-template-columns: repeat(2, 1fr);
 }
+#modelDataWrap .card-header{
+  background: rgba(222, 226, 230,0.5);
+  background: -moz-linear-gradient(180deg, rgba(222, 226, 230,0.5) 0%, #2b3035 100%);
+  background: -webkit-linear-gradient(180deg, rgba(222, 226, 230,0.5) 0%, #2b3035 100%);
+  background: linear-gradient(180deg, rgba(222,226,230,0.5) 0%, #2b3035 100%);
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr="#ffffff",endColorstr="#797979",GradientType=1);
+}
 #personDataWrap{
   grid-template-columns: repeat(2, 1fr);
 }

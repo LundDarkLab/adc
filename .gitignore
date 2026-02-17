@@ -10,6 +10,7 @@ workfile/
 notes/ 
 documentation/site/ 
 docker-compose.override.yml
+site/
 
 # --- Gestione Dati Persistenti (Strategia .gitkeep) ---
 archive/** 

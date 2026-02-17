@@ -7,8 +7,8 @@ import { initAnnotations } from "./components/viewer/annotations.js";
 import { initSection } from "./components/viewer/section.js";
 import { measureTool } from "./helpers/viewerMeasure.js";
 
-const artifactId = document.getElementById('artifactId') && document.getElementById('artifactId').value || null;
-const activeUser = document.getElementById('activeUsr') && document.getElementById('activeUsr').value || null;
+const artifactId = document.getElementById('artifactId')?.value || null;
+const activeUser = document.getElementById('activeUsr')?.value || null;
 const isLoggedUser = activeUser && activeUser !== 'unregistered' && !Number.isNaN(Number(activeUser));
 
 const viewerEl = {
@@ -16,7 +16,7 @@ const viewerEl = {
   btGrid: document.getElementById('btGrid'),
 }
 
-let presenter, viewsManager, lightComponent, gridComponent, annotations, measure, section;
+let presenter, viewsManager, lightComponent, gridComponent, measure, section;
 
 // scene data
 let sceneBB = [-Number.MAX_VALUE, -Number.MAX_VALUE, -Number.MAX_VALUE, Number.MAX_VALUE, Number.MAX_VALUE, Number.MAX_VALUE];
@@ -64,18 +64,34 @@ const tooltipBtnList = toolBtnList.map(tooltipBtn => new bootstrap.Tooltip(toolt
 
 /**
  * Inizializza il modello 3DHOP: permessi, metadati, annotazioni, listener e viewer.
- * @param {Object} model - Oggetto modello ricevuto dal backend.
+ * Può essere chiamata sia con il formato completo (backend) sia con solo l'array oggetti modello (upload).
+ * @param {Object|Array} modelOrObject - Oggetto modello ricevuto dal backend o array di oggetti modello.
  */
-async function initModel(model) {
-  const mainData = model.model;
-  const object = model.model_object;
+async function initModel(modelOrObject, onReady) {
+  let mainData, object, isUpload = false;
+  if (Array.isArray(modelOrObject)) {
+    // Chiamata da uploadNxz.js: solo array oggetti modello
+    object = modelOrObject;
+    mainData = {
+      id: null,
+      status_id: 2,
+      // altri campi vuoti o di default se necessario
+    };
+    isUpload = true;
+  } else {
+    // Chiamata standard: oggetto completo dal backend
+    mainData = modelOrObject.model;
+    object = modelOrObject.model_object;
+  }
   measure_unit = object[0].measure_unit;
 
-  handleUserPermissions(mainData);
-  renderModelMetadata(mainData);
-  await syncAnnotations(model);
+  if (!isUpload) {
+    handleUserPermissions(mainData);
+    renderModelMetadata(mainData);
+    await syncAnnotations(modelOrObject);
+  }
   initListeners();
-  startupViewer(object);
+  startupViewer(object, onReady);
 }
 
 /**
@@ -152,7 +168,7 @@ async function syncAnnotations(model) {
   const currentState = stateManager.getState();
   stateManager.sync();
   const activeCollection = currentState.activeCollection;
-  if (activeCollection && activeCollection.items) {
+  if (activeCollection?.items) {
     COLLECTIONITEM = activeCollection.items.find(item => item.id == artifactId);
   }
   // Load annotations from viewsStorage
@@ -160,7 +176,7 @@ async function syncAnnotations(model) {
   const savedAnnotations = viewsManager.getAnnotations(artifactId);
   if (savedAnnotations) {
     VIEWER_ANNOTATIONS = savedAnnotations;
-  } else if (COLLECTIONITEM && COLLECTIONITEM.annotations) {
+  } else if (COLLECTIONITEM?.annotations) {
     VIEWER_ANNOTATIONS = COLLECTIONITEM.annotations;
     viewsManager.setAnnotations(artifactId, VIEWER_ANNOTATIONS);
   }
@@ -170,8 +186,12 @@ function initListeners() {
   const btHome = document.getElementById('btHome');
   if(btHome) btHome.addEventListener('click', () => setViewerState(null));
 
-  const btScreenshot = document.getElementById("btScreenshot");
-  if(btScreenshot) btScreenshot.addEventListener('click', () => screenshot());
+  const btScreenshot = document.getElementsByClassName('btScreenshot');
+  [...btScreenshot].forEach(btn => {
+    btn.addEventListener('click', () => {
+      screenshot();
+    })
+  });
 
   const btParadataToggle = document.getElementsByClassName('btParadataToggle');
   [...btParadataToggle].forEach(btn => {
@@ -232,7 +252,7 @@ function startupViewer(object, onReady) {
  */
 function waitForSceneReady(presenter, callback) {
   const check = () => {
-    if (presenter._isSceneReady && presenter._isSceneReady()) {
+    if (presenter._isSceneReady?.()) {
       callback();
     } else {
       setTimeout(check, 50);
@@ -353,7 +373,7 @@ function setupViewerComponents() {
   gridComponent = initGrid(presenter, sceneBB, gStep, VIEWER_STATE, measure_unit);
   measure = measureTool(presenter, VIEWER_STATE, viewerEl, measure_unit);
   presenter._onEndPickingPoint = measure.onEndPick;
-  annotations = initAnnotations(
+  initAnnotations(
     presenter, VIEWER_STATE, viewerEl, VIEWER_ANNOTATIONS, artifactId, measure_unit, measure, setViewerState, storeAnnotations
   );
   section = initSection(presenter, VIEWER_STATE, DEFAULT_VIEWER_STATE);
@@ -443,17 +463,17 @@ function setViewerState(viewerState) {
   setTransparency(VIEWER_STATE.transparent);
   setSpecular(VIEWER_STATE.specular);
   setOrtho(VIEWER_STATE.ortho);
-  if(section && section.setSections) {
+  if (section?.setSections) {
     const hasActiveSections = VIEWER_STATE.clipping && (VIEWER_STATE.clipping[0] || VIEWER_STATE.clipping[1] || VIEWER_STATE.clipping[2]);
     
-    if(hasActiveSections) {
+    if (hasActiveSections) {
       const sectionsBox = document.getElementById('sections-box');
-      if(sectionsBox && sectionsBox.classList.contains('d-none')) {
+      if (sectionsBox?.classList.contains('d-none')) {
         sectionsBox.classList.remove('d-none');
       }
       
       const btSection = document.getElementById('btSection');
-      if(btSection && !btSection.checked) {
+      if (btSection && !btSection.checked) {
         btSection.checked = true;
       }
     }
@@ -571,8 +591,23 @@ async function storeCollectionData() {
   stateManager.sync();
 }
 
-function screenshot() {
-  return presenter.saveScreenshot();
+export let thumbnailBlob = null;
+function screenshot(callback) {
+  presenter.saveScreenshot();
+  // Attendi che il dataURL venga generato (dopo il repaint)
+  setTimeout(async () => {
+    const dataUrl = presenter.screenshotData;
+    if (dataUrl) {
+      // Mostra la preview
+      const thumbPreview = document.getElementById('thumbPreview');
+      thumbPreview.innerHTML = `<img src="${dataUrl}" class="img-fluid rounded"/>`;
+      // Converte il dataURL in Blob per il FormData
+      const res = await fetch(dataUrl);
+      const blob = await res.blob();
+      thumbnailBlob = blob;
+      if (typeof callback === 'function') callback(blob);
+    }
+  }, 200); // 200ms di delay per sicurezza
 }
 
 function viewFrom(direction) {
@@ -609,9 +644,7 @@ function addAxes() {
   // X axis (red)
   point = [rad, 0, 0, 1]
   tpoint = SglMat4.mul4(presenter._scene.modelInstances["mesh_0"].transform.matrix, point);
-  linesBuffer = [];
-  linesBuffer.push([0, 0, 0]);
-  linesBuffer.push([tpoint[0], tpoint[1], tpoint[2]]);	
+  linesBuffer = [[0, 0, 0],[tpoint[0], tpoint[1], tpoint[2]]];
   const axisX = presenter.createEntity("XXaxis", "lines", linesBuffer);
   axisX.color = [1, 0.2, 0.2, 1];
   axisX.zOff = 0;
@@ -619,9 +652,7 @@ function addAxes() {
   // Y axis (green)
   point = [0, rad, 0, 1]
   tpoint = SglMat4.mul4(presenter._scene.modelInstances["mesh_0"].transform.matrix, point);
-  linesBuffer = [];
-  linesBuffer.push([0, 0, 0]);
-  linesBuffer.push([tpoint[0], tpoint[1], tpoint[2]]);	
+  linesBuffer = [[0, 0, 0],[tpoint[0], tpoint[1], tpoint[2]]];
   const axisY = presenter.createEntity("YYaxis", "lines", linesBuffer);
   axisY.color = [0.2, 1, 0.2, 1];
   axisY.zOff = 0;
@@ -629,9 +660,7 @@ function addAxes() {
   // Z axis (blue)
   point = [0, 0, rad, 1]
   tpoint = SglMat4.mul4(presenter._scene.modelInstances["mesh_0"].transform.matrix, point);	
-  linesBuffer = [];
-  linesBuffer.push([0, 0, 0]);
-  linesBuffer.push([tpoint[0], tpoint[1], tpoint[2]]);	
+  linesBuffer = [[0, 0, 0],[tpoint[0], tpoint[1], tpoint[2]]];
   const axisZ = presenter.createEntity("ZZaxis", "lines", linesBuffer);
   axisZ.color = [0.2, 0.2, 1, 1];
   axisZ.zOff = 0;	
@@ -651,8 +680,8 @@ function onTrackballUpdate(trackState) {
 }
 
 function updateGrid(trackState) {
-  if (typeof presenter._scene.entities === 'undefined') return;
-  if (typeof presenter._scene.entities["gridBB"] === 'undefined') return;
+  if (presenter._scene.entities === undefined) return;
+  if (presenter._scene.entities["gridBB"] === undefined) return;
   const tt=[0,0,0];
   tt[0] = (trackState[2] / presenter.sceneRadiusInv) + presenter.sceneCenter[0];
   tt[1] = (trackState[3] / presenter.sceneRadiusInv) + presenter.sceneCenter[1];
@@ -706,4 +735,4 @@ function resizeCanvas() {
   });
 }
 
-export { initModel, startupViewer, resizeCanvas };
+export { presenter, initModel, resizeCanvas };
