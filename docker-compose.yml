@@ -16,8 +16,8 @@ services:
     ports:
       - "127.0.0.1:8081:80"    # Solo loopback: Apache esterno fa da proxy verso qui
     volumes:
-      - ./archive:/var/www/html/archive
-      - ./img:/var/www/html/img
+      - /var/www/html/archive:/var/www/html/archive
+      - /var/www/html/img:/var/www/html/img
     depends_on:
       db:
         condition: service_healthy
@@ -64,7 +64,7 @@ services:
       - --optimizer_switch=derived_merge=off # Evita problemi con query spaziali complesse
 
       # --- Log ---
-      - --log-error=/var/log/mysql/error.log
+      # - --log-error=/var/log/mysql/error.log
     volumes:
       - lund_db_data:/var/lib/mysql
       - ./db-init:/docker-entrypoint-initdb.d   # Dump SQL importato al primo avvio
