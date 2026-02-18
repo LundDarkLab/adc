@@ -1,4 +1,4 @@
-import { fetchApi } from "./helper.js";
+import { fetchApi } from "../shared/utils/fetch.js";
 
 export async function roleList(data) {
   try {
@@ -7,7 +7,7 @@ export async function roleList(data) {
       action: 'roleList',
       data: data
     };
-    const response = await fetchApi({ url: ENDPOINT, body: payload });
+    const response = await fetchApi({ body: payload });
     if (response.error === 1) throw new Error("Error fetching Role list");
     return response.data;
   } catch (error) {

@@ -1,38 +1,86 @@
+# ==============================================================================
+# docker-compose.yml — Produzione
+# Reverse proxy: Apache esterno sulla porta 8081 → container web sulla 80
+# Il DB è nel container, isolato sulla rete interna
+# ==============================================================================
+
 services:
+
   web:
-    build: .
+    build:
+      context: .
+      target: production
     container_name: lund-web-app
     restart: unless-stopped
     env_file: .env
+    ports:
+      - "127.0.0.1:8081:80"    # Solo loopback: Apache esterno fa da proxy verso qui
     volumes:
       - ./archive:/var/www/html/archive
       - ./img:/var/www/html/img
     depends_on:
       db:
         condition: service_healthy
+    networks:
+      - internal
 
-#   db:
-#     image: mysql:8.4.7
-#     container_name: lund-db-local
-#     restart: always
-#     command: 
-#       - --max_allowed_packet=512M
-#       - --innodb_buffer_pool_size=1G
-#       - --log-error=/var/log/mysql/error.log
-#     env_file: .env
-#     environment:
-#       - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
-#       - MYSQL_USER=${DB_USER}
-#       - MYSQL_PASSWORD=${DB_PASSWORD}
-#       - MYSQL_DATABASE=${DB_NAME}
-#     volumes:
-#       - lund_db_data:/var/lib/mysql
-#       - ./db-init:/docker-entrypoint-initdb.d
-#     healthcheck:
-#       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "${DB_USER}", "--password=${DB_PASSWORD}"]
-#       interval: 10s
-#       timeout: 5s
-#       retries: 5
+  db:
+    image: mysql:8.4.7
+    container_name: lund-db
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    command:
+      # --- Packet e connessioni ---
+      - --max_allowed_packet=1G              # GADM livello 3-4 può avere righe > 512MB
+      - --net_buffer_length=1M
 
-# volumes:
-#   lund_db_data:
+      # --- InnoDB buffer e I/O ---
+      - --innodb_buffer_pool_size=2G         # Più cache = meno I/O su disco durante import
+      - --innodb_buffer_pool_instances=2     # Parallelismo buffer pool
+      - --innodb_log_file_size=512M          # Log file grandi = meno checkpoint durante import massiccio
+      - --innodb_flush_log_at_trx_commit=2   # Prestazioni import: scrivi log ogni secondo, non ad ogni commit
+                                             # ATTENZIONE: in caso di crash potresti perdere ~1s di transazioni
+                                             # Rimetti a 1 dopo l'import se vuoi massima durabilità
+      - --innodb_flush_method=O_DIRECT       # Evita double buffering con la cache OS
+
+      # --- Timeout (critici per import lunghi) ---
+      - --net_read_timeout=3600              # 1 ora: evita disconnect durante import di geometrie grandi
+      - --net_write_timeout=3600
+      - --wait_timeout=28800                 # 8 ore: evita che le connessioni idle vengano chiuse
+      - --interactive_timeout=28800
+      - --lock_wait_timeout=300              # 5 minuti per lock su tabelle spaziali
+
+      # --- Import e bulk operations ---
+      - --bulk_insert_buffer_size=256M       # Buffer per INSERT multipli (MyISAM e spatial)
+      - --myisam_sort_buffer_size=128M       # Usato durante ricostruzione indici spaziali
+      - --key_buffer_size=256M
+
+      # --- Dati spaziali ---
+      - --optimizer_switch=derived_merge=off # Evita problemi con query spaziali complesse
+
+      # --- Log ---
+      - --log-error=/var/log/mysql/error.log
+    volumes:
+      - lund_db_data:/var/lib/mysql
+      - ./db-init:/docker-entrypoint-initdb.d   # Dump SQL importato al primo avvio
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "${DB_USER}", "--password=${DB_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - internal                # Il DB non è mai esposto all'esterno
+
+volumes:
+  lund_db_data:
+    name: lund_db_data
+
+networks:
+  internal:
+    driver: bridge
+    name: lund_internal

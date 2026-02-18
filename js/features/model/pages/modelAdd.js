@@ -4,7 +4,6 @@ import { buildModelLists } from '../components/modelSelect.js';
 import { thumbnailBlob } from '../../../3dhop_function.js';
 import { handleFormSubmit } from '../../../shared/utils/handleFormSubmit.js';
 import { bsAlert } from '../../../components/bsComponents.js';
-import { generateUUID } from '../../../helpers/utils.js';
 
 const nxz = document.getElementById('nxz'); 
 const doiInput = document.getElementById('doi');
@@ -34,7 +33,6 @@ export async function initAddPage(){
         const baseName = nxz.files[0].name.replace(/\.[^/.]+$/, "");
         data.append('thumbnail', thumbnailBlob, `${baseName}.png`); 
       }
-      // return false;
       return data;
     },
     onSuccess: (result) => {

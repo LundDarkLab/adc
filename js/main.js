@@ -74,6 +74,12 @@ const pageRoutes = {
     dependencies: [loadLeafletDependencies, load3DHopDependencies],
     init: () => import('./features/artifact/pages/artifactView.js').then(m => m.initViewPage())
   },
+  // PERSON - USER
+  'person_add': {
+    css: ['css/person_add.css'],
+    dependencies: [],
+    init: () => import('./features/person/pages/personAdd.js').then(m => m.initAddPage())
+  },
   // MODELS
   'model_add': {
     css: ['css/model_add.css'],
