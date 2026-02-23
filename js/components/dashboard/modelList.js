@@ -41,6 +41,7 @@ export async function getModels(filters={}){
     const fields = [
       { label: 'Model ID', value: model.id },
       { label: 'Model object', value: model.model },
+      { label: 'Model name', value: model.name },
       { label: 'Author', value: model.author },
       { label: 'Institution', value: model.owner },
       { label: 'Last update', value: model.last_update },
@@ -66,10 +67,10 @@ export async function getModels(filters={}){
         valueElement.tabIndex = 0;
         valueElement.style.cursor = 'pointer';
         valueElement.title = 'Click to see full description';
-        valueElement.setAttribute('data-bs-toggle', 'popover');
-        valueElement.setAttribute('data-bs-trigger', 'click');
-        valueElement.setAttribute('data-bs-placement', 'top');
-        valueElement.setAttribute('data-bs-content', valueText);
+        valueElement.dataset.bsToggle = 'popover';
+        valueElement.dataset.bsTrigger = 'click';
+        valueElement.dataset.bsPlacement = 'top';
+        valueElement.dataset.bsContent = valueText;
         valueElement.setAttribute('title', '');
       } else {
         valueElement = document.createElement('span');

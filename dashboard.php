@@ -5,7 +5,8 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
   <head>
-    <?php require("assets/meta.php"); ?>
+    <?php require "assets/meta.php"; ?>
+    <title>Dashboard - 3D</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI=" crossorigin=""/>
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
@@ -14,8 +15,8 @@
     <link rel="stylesheet" href="css/dashboard.css">
   </head>
   <body>
-    <?php 
-      require("assets/header.php");
+    <?php
+      require "assets/header.php";
     ?>
     
     <main class="mainSection">
@@ -129,9 +130,9 @@
         </div>
       </div>
     </main>
-    <?php require("assets/menu.php"); ?>
-    <?php require("./assets/footer.php"); ?>
-    <?php require("assets/js.html"); ?>
+    <?php require "assets/menu.php"; ?>
+    <?php require "./assets/footer.php"; ?>
+    <?php require "assets/js.html"; ?>
     <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js" integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM=" crossorigin=""></script>
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
     <script src="js/dashboard.js" type="module" charset="utf-8"></script>

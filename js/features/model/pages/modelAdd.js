@@ -37,12 +37,14 @@ export async function initAddPage(){
     },
     onSuccess: (result) => {
       console.log('Model created:', result);
-      const bsClass = result.data.error === 0 ? 'success' : 'danger';
-      bsAlert(result.data.output, bsClass, 3000, () => {window.location.href = 'dashboard.php'});
+      if (result.data.error === 0) {
+        bsAlert(result.data.output, 'success', 3000, () => {window.location.href = 'dashboard.php';});
+      }else{
+        bsAlert(result.data.output,'danger', 5000);
+      }
     },
     onError: (error) => {
       console.error('Error creating model:', error);
-      bsAlert(error,'danger', 5000);  
     }
   });
 }

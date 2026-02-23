@@ -1,6 +1,5 @@
 import { showLoading } from "../helpers/helper.js";
-import { getValidatedValue, cutString } from "../helpers/utils.js";
-import { artifactIssues } from "../components/artifact_issues.js";
+import { getValidatedValue } from "../helpers/utils.js";
 import { getArtifacts } from "../components/dashboard/artifactList.js";
 import { getModels } from "../components/dashboard/modelList.js";
 import { getInstitutionsList } from "../components/dashboard/institutionList.js";
@@ -10,8 +9,8 @@ import { addInstitutionMarkers } from "../helpers/mapHelper.js";
 
 import { initFilters } from "../components/dashboard/dashboard_filters.js";
 
-const userId = parseInt(document.getElementById('user').value);
-const isLoggedUser = userId && userId !== 'unregistered' && !isNaN(Number(userId));
+const userId = Number.parseInt(document.getElementById('user').value);
+const isLoggedUser = userId && userId != 'unregistered' && !Number.isNaN(Number(userId));
 export let map = null;
 export async function initDashboard() {
   showLoading(true);
@@ -73,10 +72,11 @@ export async function applyFilters(element){
     case 'model':
       getModels(filters.model);
       break;
-    case 'institution':
+    case 'institution': {
       const institutions = await getInstitutionsList(filters.institution);
       addInstitutionMarkers(map, { error: 0, data: { items: institutions } });
       break;
+    }
     case 'person':
       await getPersonsList(filters.person);
       break;  

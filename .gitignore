@@ -14,15 +14,15 @@ site/
 
 # --- Gestione Dati Persistenti (Strategia .gitkeep) ---
 archive/** 
-!archive/**/
-!archive/**/.gitkeep
-!archive/models/sphere.ply
+# !archive/**/
+# !archive/**/.gitkeep
+# !archive/models/sphere.ply
 
-img/logo/*
-!img/logo/default.jpg
+# img/logo/*
+# !img/logo/default.jpg
 
 # --- Backup e Dump ---
 db-init/*.sql
 db-init/*.sql.gz
-archive/*.zip 
-archive/*.sql
+# archive/*.zip 
+# archive/*.sql

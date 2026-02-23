@@ -5,7 +5,7 @@ export function checkName(){
   const checkNameResult = document.getElementById('checkNameResult');
   const nameInput = document.getElementById('name');
 
-  checkNameBtn.addEventListener('click', function() {
+  checkNameBtn.addEventListener('click', async function() {
     checkNameResult.textContent = '';
     checkNameResult.className = '';
     const name = nameInput.value.trim();
@@ -22,8 +22,10 @@ export function checkName(){
       return;
     }
 
-    const result = checkNameApi(name);
-    if(result.exists){
+    const result = await checkNameApi(name);
+    console.log(result);
+    
+    if(result.data.exists){
       checkNameResult.textContent = 'The name is already taken, please choose another one';
       checkNameResult.className = 'alert alert-danger m-0 p-1';
     } else {

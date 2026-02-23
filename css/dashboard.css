@@ -35,6 +35,8 @@
 #modelList,
 #institutionList,
 #personList {
+  display: flex;
+  flex-direction: column;
   height: 600px;
   overflow-y: hidden;
 }
@@ -57,14 +59,6 @@
   border-radius: 0.375rem;
   box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
   padding: 1rem;
-}
-
-#artifactList,
-#modelList,
-#institutionList,
-#personList {
-  display: flex;
-  flex-direction: column;
 }
 
 .issuesElement {
@@ -157,5 +151,12 @@
   #institutionList,
   #personList {
     grid-column: 1;
+  }
+}
+
+/* X-Large devices (large desktops, 1200px and up) */
+@media (min-width: 1400px) {
+  #modelDataWrap{
+    grid-template-columns: repeat(3, 1fr);
   }
 }
