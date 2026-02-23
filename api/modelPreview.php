@@ -25,11 +25,16 @@ try {
         throw new Exception("Sorry but you can upload only nxz files. You are trying to upload a ".$fileType." file type");
     }
     if (!move_uploaded_file($fileTmpLoc, $fileLoc)) {
-        throw new Exception("move_uploaded_file function failed, view server log for more details");
+        // throw new Exception("move_uploaded_file function failed, view server log for more details");
+        throw new Exception(
+        "move_uploaded_file failed. " .
+        "tmp: $fileTmpLoc | " .
+        "dest: $fileLoc | " .
+        "error: " . error_get_last()['message']
+    );
     }
     chmod($fileLoc, 0666);
     echo json_encode(['success' => true, 'message' => $fileName." upload is complete", "filename" => $fileName]);
 } catch (Exception $e) {
     echo json_encode(['success' => false, 'message' => $e->getMessage()]);
 }
-?>
