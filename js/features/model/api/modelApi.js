@@ -8,3 +8,9 @@ export async function checkNameApi(name) {
   const response = await fetchApi({ body: payload });
   return response;
 }
+
+export async function getModelDetailsApi(modelId) {
+  payload.action = 'getModelApi';
+  payload.modelId = modelId;
+  return await fetchApi({ body: payload });
+}

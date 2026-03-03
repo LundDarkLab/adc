@@ -2,15 +2,41 @@ import { bsAlert } from "../bsComponents.js";
 import { confirmAction } from "../../helpers/helper.js";
 import { getDateString } from "../../helpers/utils.js";
 
-export function initAnnotations( presenter, viewerState, viewerEl, viewerAnnotations, artifactId, measure_unit, measureTool, setViewerState, storeAnnotations ){
-  
+function validateAnnotations(annotations, action) {
+  if(action === "export" || action === "clear") {
+    const hasViews = Object.keys(annotations.views).length > 0;
+    const hasSpots = Object.keys(annotations.spots).length > 0;
+    const hasNotes = annotations.notes?.text?.trim().length > 0;
+    if(!hasViews && !hasSpots && !hasNotes) {
+      bsAlert('No annotations to ' + action + '.', 'warning', 3000);
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * @param {Object} viewerContext - Contesto del viewer 3DHOP
+ * @param {Object} viewerContext.presenter
+ * @param {Object} viewerContext.viewerState
+ * @param {Object} viewerContext.viewerEl
+ * @param {Object} viewerContext.measureTool
+ * @param {Function} viewerContext.setViewerState
+ * @param {Object} annotationsContext - Contesto delle annotations
+ * @param {Object} annotationsContext.viewerAnnotations
+ * @param {string|number} annotationsContext.modelId
+ * @param {string} annotationsContext.measure_unit
+ * @param {Function} annotationsContext.storeAnnotations
+ */
+export function initAnnotations(viewerContext, annotationsContext){
+  const { presenter, viewerState, viewerEl, measureTool, setViewerState } = viewerContext;
+  const { viewerAnnotations, modelId, measure_unit, storeAnnotations } = annotationsContext;
+
   let spotPicking = false;
   let spotPickingName = "";
   let selectedSpot = null;
 
-  // DOM elements
-  const wrapAnnotations = document.getElementById('wrapAnnotations');
-  const btTogglePanel = document.getElementsByClassName('toggleAnnotations');
+  // DOM elements  
   const btAddView = document.getElementById('btAddView');
   const btAddSpot = document.getElementById('btAddSpot');
   const btStopSpot = document.getElementById('btStopSpot');
@@ -21,13 +47,6 @@ export function initAnnotations( presenter, viewerState, viewerEl, viewerAnnotat
 
   // Initialize listeners
   function initListeners() {
-    [...btTogglePanel].forEach(btn => {
-      btn.addEventListener('click', () => {
-        if(wrapAnnotations) {
-          wrapAnnotations.classList.toggle('invisible');
-        }
-      });
-    });
     if(btAddView) btAddView.addEventListener('click', () => storeView());
     if(btAddSpot) btAddSpot.addEventListener('click', () => addSpot());
     if(btStopSpot) btStopSpot.addEventListener('click', () => spotPickEnd());
@@ -62,8 +81,8 @@ export function initAnnotations( presenter, viewerState, viewerEl, viewerAnnotat
     selectedSpot = spotName;
     
     // Cambia colore dello spot nel canvas
-    if(presenter._scene && presenter._scene.spots[spotName]) {
-      presenter._scene.spots[spotName].color = [1.0, 1.0, 0.0];
+    if(presenter._scene?.spots[spotName]) {
+      presenter._scene.spots[spotName].color = [1, 1, 0];
       presenter.repaint();
     }
     
@@ -94,8 +113,8 @@ export function initAnnotations( presenter, viewerState, viewerEl, viewerAnnotat
     if(!spotName) return;
     
     // Ripristina colore originale dello spot nel canvas
-    if(presenter._scene && presenter._scene.spots[spotName]) {
-      presenter._scene.spots[spotName].color = [1.0, 0.0, 1.0]; // Magenta (colore originale)
+    if(presenter._scene?.spots[spotName]) {
+      presenter._scene.spots[spotName].color = [1, 0, 1]; // Magenta (colore originale)
       presenter.repaint();
     }
     
@@ -420,10 +439,10 @@ export function initAnnotations( presenter, viewerState, viewerEl, viewerAnnotat
         viewerAnnotations.spots[spot].point[0], 
         viewerAnnotations.spots[spot].point[1], 
         viewerAnnotations.spots[spot].point[2], 
-        1.0
+        1
       ];
       const tpoint = SglMat4.mul4(presenter._scene.modelInstances["mesh_0"].transform.matrix, opoint);
-      const spotColor = (selectedSpot === spot) ? [1.0, 1.0, 0.0] : [1.0, 0.0, 1.0];
+      const spotColor = (selectedSpot === spot) ? [1, 1, 0] : [1, 0, 1];
 
       const newSpot = {
         mesh: "sphere",
@@ -453,12 +472,8 @@ export function initAnnotations( presenter, viewerState, viewerEl, viewerAnnotat
       }
       delete viewerAnnotations.spots[spotName];
       displaySpots();
-      storeAnnotations();      
+      storeAnnotations();
     });
-  }
-
-  function validateAnnotations(action) {
-    return true;
   }
 
   function exportAnnotations() {
@@ -468,11 +483,11 @@ export function initAnnotations( presenter, viewerState, viewerEl, viewerAnnotat
     viewerAnnotations.time = new Date().toISOString();
     const element = document.createElement('a');
     element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(JSON.stringify(viewerAnnotations, null, 2)));
-    element.setAttribute('download', `${year}-${month}-${day}_DynColl_artifact_${artifactId}annotations.json`);
+    element.setAttribute('download', `${year}-${month}-${day}_DynColl_model_${modelId}_annotations.json`);
     element.style.display = 'none';
     document.body.appendChild(element);
     element.click();
-    document.body.removeChild(element);
+    element.remove();
   }
 
   function importAnnotations() {
@@ -483,49 +498,63 @@ export function initAnnotations( presenter, viewerState, viewerEl, viewerAnnotat
     input.click();
   }
 
-  function getJSON(event) {
+  async function getJSON(event) {
     const file = event.target.files[0];
     if(!file) return;
     
-    const reader = new FileReader();
-    reader.onload = importJSON;
-    reader.readAsText(file);
+    try {
+      const text = await file.text();
+      importJSON(text);
+    } catch(error) {
+      bsAlert('Error reading file: ' + error.message, 'danger', 5000);
+      console.error(error);
+    }
   }
 
-  function importJSON(event) {
+  // Estratte fuori da importJSON per ridurre cognitive complexity
+  function mergeViews(newViews) {
+    if(!newViews) return;
+    for(const viewName in newViews) {
+      if(!viewerAnnotations.views[viewName]) {
+        viewerAnnotations.views[viewName] = newViews[viewName];
+      }
+    }
+  }
+
+  function mergeSpots(newSpots) {
+    if(!newSpots) return;
+    for(const spotName in newSpots) {
+      if(!viewerAnnotations.spots[spotName]) {
+        viewerAnnotations.spots[spotName] = newSpots[spotName];
+      }
+    }
+  }
+
+  function mergeNotes(newNotes) {
+    if(!newNotes?.text) return;
+    viewerAnnotations.notes.text = viewerAnnotations.notes.text
+      ? viewerAnnotations.notes.text + "\n---\n" + newNotes.text
+      : newNotes.text;
+  }
+
+  function importJSON(text) {
     try {
-      const newAnn = JSON.parse(event.target.result);
-      
-      if(newAnn.object != artifactId) {
-        bsAlert(`Cannot import annotations: artifact ID mismatch!\nCurrent artifact: ${artifactId}\nImported file: ${newAnn.object}`, 'danger', 5000);
+      const newAnn = JSON.parse(text);
+
+      if(newAnn.type !== "DC_SO_ANN" || newAnn.version !== "2.0") {
+        bsAlert('Cannot import: invalid file format.', 'danger', 5000);
         return;
       }
 
-      if(newAnn.views) {
-        for(let viewName in newAnn.views) {
-          if(!viewerAnnotations.views[viewName]) {
-            viewerAnnotations.views[viewName] = newAnn.views[viewName];
-          }
-        }
+      if(newAnn.object != modelId) {
+        bsAlert(`Cannot import annotations: model ID mismatch!\nCurrent model: ${modelId}\nImported file: ${newAnn.object}`, 'danger', 5000);
+        return;
       }
 
-      if(newAnn.spots) {
-        for(let spotName in newAnn.spots) {
-          if(!viewerAnnotations.spots[spotName]) {
-            viewerAnnotations.spots[spotName] = newAnn.spots[spotName];
-          }
-        }
-      }
+      mergeViews(newAnn.views);
+      mergeSpots(newAnn.spots);
+      mergeNotes(newAnn.notes);
 
-      if(newAnn.notes && newAnn.notes.text) {
-        if(viewerAnnotations.notes.text) {
-          viewerAnnotations.notes.text += "\n---\n" + newAnn.notes.text;
-        } else {
-          viewerAnnotations.notes.text = newAnn.notes.text;
-        }
-      }
-
-      viewerAnnotations.user = viewerAnnotations.user;
       storeAnnotations();
       displayViews();
       displaySpots();

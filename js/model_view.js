@@ -47,7 +47,7 @@ function startModel(){
     $("#name").val(data.model.name)
     $("#description").val(data.model.description)
     $("#note").val(data.model.note)
-    let status_id, status_label = 'mark model as ';
+    let status_label = 'mark model as ';
     $("#status").val(data.model.status_id == 1 ? 2 :1)
     $("label[for=status]").text(data.model.status_id == 1 ? status_label+'complete' : status_label+'under processing')
     $("#loadingDiv,[name=enlargeScreen]").remove()

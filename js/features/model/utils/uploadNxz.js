@@ -76,7 +76,7 @@ function abortHandler(event){
 
 function viewerReady(){
   console.log("Viewer pronto!");
-  if (presenter && presenter._scene && presenter._scene.config) {
+  if (presenter?._scene?.config) {
     presenter._scene.config.autoSaveScreenshot = false;
   }
   document.getElementById('alertBg').remove();

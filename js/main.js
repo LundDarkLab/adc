@@ -86,6 +86,11 @@ const pageRoutes = {
     dependencies: [load3DHopDependencies],
     init: () => import('./features/model/pages/modelAdd.js').then(m => m.initAddPage())
   },
+  'model_view': {
+    css: ['css/model_view.css'],
+    dependencies: [load3DHopDependencies],
+    init: () => import('./features/model/pages/modelView.js').then(m => m.initViewPage())
+  },
 };
 
 // === INIZIALIZZAZIONE PRINCIPALE ===

@@ -22,10 +22,10 @@ export async function initViewPage() {
 
   await Promise.all([
     setAlertStatus(artifactData.data.artifact.status, artifactData.data.artifact.status_id),
-    artifactViewAccordion(artifactData.data),
-    initViewPageMap(artifactData.data.artifact_findplace),
-    initMedia(artifactData.data.media || {}),
-    initListener()
+    Promise.resolve(artifactViewAccordion(artifactData.data)),
+    Promise.resolve(initViewPageMap(artifactData.data.artifact_findplace)),
+    Promise.resolve(initMedia(artifactData.data.media || {})),
+    Promise.resolve(initListener())
   ]);
 }
 
@@ -36,4 +36,5 @@ function setAlertStatus(statusText, statusId) {
   const alert = document.getElementById('status')
   alert.textContent = statusText;
   alert.classList.add(statusId === 1 ? 'alert-danger' : 'alert-success');
+  return Promise.resolve();
 }

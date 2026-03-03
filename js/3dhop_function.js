@@ -1,4 +1,3 @@
-import { collectionState } from "./modules/collectionStorage.js";
 import { viewsStorage } from "./modules/viewsStorage.js";
 import { init3dhop } from "./components/viewer/initViewer.js";
 import { initGrid } from "./components/viewer/grid.js";
@@ -7,8 +6,7 @@ import { initAnnotations } from "./components/viewer/annotations.js";
 import { initSection } from "./components/viewer/section.js";
 import { measureTool } from "./helpers/viewerMeasure.js";
 
-const artifactId = document.getElementById('artifactId')?.value || null;
-const activeUser = document.getElementById('activeUsr')?.value || null;
+const activeUser = document.getElementById('userId')?.value || null;
 const isLoggedUser = activeUser && activeUser !== 'unregistered' && !Number.isNaN(Number(activeUser));
 
 const viewerEl = {
@@ -17,12 +15,12 @@ const viewerEl = {
 }
 
 let presenter, viewsManager, lightComponent, gridComponent, measure, section;
+let modelId = null; 
 
 // scene data
 let sceneBB = [-Number.MAX_VALUE, -Number.MAX_VALUE, -Number.MAX_VALUE, Number.MAX_VALUE, Number.MAX_VALUE, Number.MAX_VALUE];
 let gStep, measure_unit;
 
-let COLLECTIONITEM;
 let DEFAULT_VIEWER_STATE = {
   grid : 'gridBase',
   axes : false,
@@ -42,11 +40,13 @@ let DEFAULT_VIEWER_STATE = {
   clippingPoint : [0.5, 0.5, 0.5],
   clippingRender : [true, true],
 };
+
 let VIEWER_STATE = {};
+
 let VIEWER_ANNOTATIONS = {
   type: "DC_SO_ANN",
   version: "2.0",
-  object: artifactId,
+  object: null,
   user: activeUser,
   time: new Date().toISOString(),
   notes: {text:""},
@@ -83,12 +83,17 @@ async function initModel(modelOrObject, onReady) {
     mainData = modelOrObject.model;
     object = modelOrObject.model_object;
   }
+  
+  // Imposta modelId dalla risposta del backend
+  modelId = mainData.id ?? null;
+  VIEWER_ANNOTATIONS.object = modelId;
+
   measure_unit = object[0].measure_unit;
 
   if (!isUpload) {
     handleUserPermissions(mainData);
     renderModelMetadata(mainData);
-    await syncAnnotations(modelOrObject);
+    await syncAnnotations(modelId);
   }
   initListeners();
   startupViewer(object, onReady);
@@ -158,31 +163,19 @@ function renderModelMetadata(mainData) {
 
 /**
  * Sincronizza le annotazioni tra localStorage e viewsManager.
- * @param {Object} model - Oggetto modello ricevuto dal backend.
+ * @param {string|number} modelId - ID del modello.
  */
-async function syncAnnotations(model) {
-  const mainData = model.model;
-  const object = model.model_object;
-  // retrieve collection data from LocalStorage
-  const stateManager = await collectionState();
-  const currentState = stateManager.getState();
-  stateManager.sync();
-  const activeCollection = currentState.activeCollection;
-  if (activeCollection?.items) {
-    COLLECTIONITEM = activeCollection.items.find(item => item.id == artifactId);
-  }
-  // Load annotations from viewsStorage
+async function syncAnnotations(modelId) {
   viewsManager = await viewsStorage();
-  const savedAnnotations = viewsManager.getAnnotations(artifactId);
+  const savedAnnotations = viewsManager.getAnnotations(modelId);
   if (savedAnnotations) {
     VIEWER_ANNOTATIONS = savedAnnotations;
-  } else if (COLLECTIONITEM?.annotations) {
-    VIEWER_ANNOTATIONS = COLLECTIONITEM.annotations;
-    viewsManager.setAnnotations(artifactId, VIEWER_ANNOTATIONS);
   }
 }
 
 function initListeners() {
+  const wrapAnnotations = document.getElementById('wrapAnnotations');
+  const paradataModal = document.getElementById('paradata-modal');
   const btHome = document.getElementById('btHome');
   if(btHome) btHome.addEventListener('click', () => setViewerState(null));
 
@@ -192,12 +185,28 @@ function initListeners() {
       screenshot();
     })
   });
+  
+  const btTogglePanel = document.getElementsByClassName('toggleAnnotations');
+  [...btTogglePanel].forEach(btn => {
+    btn.addEventListener('click', () => {
+        if(wrapAnnotations) {
+          wrapAnnotations.classList.toggle('d-none');
+          if(!wrapAnnotations.classList.contains('d-none') && paradataModal) {
+            paradataModal.classList.add('d-none');
+          }
+        }
+      });
+    });
 
   const btParadataToggle = document.getElementsByClassName('btParadataToggle');
   [...btParadataToggle].forEach(btn => {
     btn.addEventListener('click', async () => {
-      const paradataModal = document.getElementById('paradata-modal');
-      paradataModal.classList.toggle('d-none');
+      if(paradataModal){
+        paradataModal.classList.toggle('d-none');
+        if(!paradataModal.classList.contains('d-none') && wrapAnnotations) {
+          wrapAnnotations.classList.add('d-none');
+        }
+      }
     });
   });
 
@@ -373,9 +382,21 @@ function setupViewerComponents() {
   gridComponent = initGrid(presenter, sceneBB, gStep, VIEWER_STATE, measure_unit);
   measure = measureTool(presenter, VIEWER_STATE, viewerEl, measure_unit);
   presenter._onEndPickingPoint = measure.onEndPick;
-  initAnnotations(
-    presenter, VIEWER_STATE, viewerEl, VIEWER_ANNOTATIONS, artifactId, measure_unit, measure, setViewerState, storeAnnotations
-  );
+  const viewerContext = {
+      presenter,
+      viewerState: VIEWER_STATE,
+      viewerEl,
+      measureTool: measure,
+      setViewerState
+    };
+  const annotationsContext = {
+      viewerAnnotations: VIEWER_ANNOTATIONS,
+      modelId,
+      measure_unit,
+      storeAnnotations
+    }
+
+  initAnnotations(viewerContext, annotationsContext);
   section = initSection(presenter, VIEWER_STATE, DEFAULT_VIEWER_STATE);
 }
 
@@ -396,9 +417,9 @@ function applyInitialViewerState() {
   presenter.ui._onCanvasScroll = event => event.preventDefault();
 }
 
-function changeModelStatus(model) {
+function changeModelStatus(modelId) {
   const status = document.querySelector("button[name=modelVisibility").value;
-  const dati = {trigger:'changeModelStatus', dati:{id:model, status:status}};
+  const dati = {trigger:'changeModelStatus', dati:{id:modelId, status:status}};
   fetch(API+"model.php", {
     method: 'POST',
     headers: {'Content-Type': 'application/x-www-form-urlencoded'},
@@ -573,22 +594,11 @@ function setAxes(value){
 function storeAnnotations() {
   VIEWER_ANNOTATIONS.time = new Date().toISOString();
   storeViewsData();
-  
-  if (COLLECTIONITEM) {
-    COLLECTIONITEM.annotations = VIEWER_ANNOTATIONS;
-    storeCollectionData();
-  }
 }
 
 async function storeViewsData() {
   const viewsManager = await viewsStorage();
-  viewsManager.setAnnotations(artifactId, VIEWER_ANNOTATIONS);
-}
-
-async function storeCollectionData() {
-  const stateManager = await collectionState();
-  const currentState = stateManager.getState();
-  stateManager.sync();
+  viewsManager.setAnnotations(modelId, VIEWER_ANNOTATIONS);
 }
 
 export let thumbnailBlob = null;

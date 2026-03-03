@@ -20,8 +20,7 @@ export function initMedia(mediaArray) {
   if(documents && documents.length > 0){setDocPanel(documents);};
   if(references && references.length > 0){setRefPanel(references);};
   if(videos && videos.length > 0){setVidPanel(videos);};
-  
-  
+  return Promise.resolve();
 }
 
 function setImgPanel(images){

@@ -131,4 +131,5 @@ export function artifactViewAccordion(data){
       el.textContent = value ?? 'Not defined';
     }
   });
+  return Promise.resolve();
 }

@@ -291,15 +291,85 @@ class Model extends Conn{
     return ["tot" => $this->simple($totSql), "gallery" => $this->simple($gallerySql)];
 }
 
+  public function getModelApi(array $data){
+    try {
+      $id = $data['modelId'] ?? null;
+      if (!$id) {
+        throw new \Exception("Missing required parameter: modelId", 1);
+      }
+      $modelDetails = $this->getModel($id);
+      return ["error"=>0, "response"=>$modelDetails];
+    } catch (\Exception $e) {
+      return ["error"=>1, "response"=>$e->getMessage()];
+    }
+  }
+
   public function getModel(int $id){
-    $out['model'] = $this->simple("select m.id, m.name, m.note, m.uuid, NULLIF(m.description, 'no description available') description, m.thumbnail, status.id status_id, status.value status, m.create_at, m.updated_at, concat(p.last_name,' ',p.first_name) created_by, m.doi, m.doi_svg, m.citation from model m inner join list_item_status status ON m.status = status.id inner join user on m.created_by = user.id inner join person p on user.person = p.id where m.id =  ".$id.";")[0];
-    //check if it's connected to an artifact
-    $artifact_model = $this->simple("select artifact from artifact_model where model = ".$id.";");
-    if(!empty($artifact_model)){$out['artifact'] = $artifact_model[0]['artifact'];}
-    ////////////////////////////////////////
-    $out['model_biblio'] = $this->simple("select * from model_biblio where model = ".$id.";");
-    $out['model_object'] = $this->simple("select obj.id, obj.object, obj.thumbnail, status.value status, obj.author author_id, concat(author.first_name,' ',author.last_name) author, obj.owner owner_id, owner.name owner, obj.license license_id, license.license license, license.acronym license_acronym, license.link license_link, obj.create_at, obj.updated_at, nullif(obj.description,'no object description') description, obj.note, obj.uuid, method.value acquisition_method, param.software, param.points, param.polygons, param.textures, param.scans, param.pictures, param.encumbrance, param.measure_unit from model_object obj inner join list_item_status status ON obj.status = status.id inner join user on obj.author = user.id inner join person author on user.person = author.id inner join institution owner on obj.owner = owner.id inner join license on obj.license = license.id inner join model_param param on param.object = obj.id inner join list_model_acquisition method on param.acquisition_method = method.id where model =".$id.";");
-    $out['model_view'] = $this->simple("select * from model_view where model = ".$id." and default_view = true;")[0];
+    $stmt = $this->pdo()->prepare(
+      "SELECT m.id, m.name, m.note, m.uuid,
+        NULLIF(m.description, 'no description available') description,
+        m.thumbnail, status.id status_id, status.value status,
+        m.create_at, m.updated_at,
+        CONCAT(p.last_name, ' ', p.first_name) created_by,
+        m.doi, m.doi_svg, m.citation
+      FROM model m
+      INNER JOIN list_item_status status ON m.status = status.id
+      INNER JOIN user ON m.created_by = user.id
+      INNER JOIN person p ON user.person = p.id
+      WHERE m.id = :id"
+    );
+    $stmt->execute([':id' => $id]);
+    $out['model'] = $stmt->fetch();
+
+    $stmt = $this->pdo()->prepare(
+      "SELECT artifact FROM artifact_model WHERE model = :id"
+    );
+    $stmt->execute([':id' => $id]);
+    $artifact_model = $stmt->fetchAll();
+    if (!empty($artifact_model)) {
+      $out['artifact'] = $artifact_model[0]['artifact'];
+    }
+
+    $stmt = $this->pdo()->prepare(
+      "SELECT * FROM model_biblio WHERE model = :id"
+    );
+    $stmt->execute([':id' => $id]);
+    $out['model_biblio'] = $stmt->fetchAll();
+
+    $stmt = $this->pdo()->prepare(
+      "SELECT obj.id, obj.object, obj.thumbnail,
+        status.value status,
+        obj.author author_id,
+        CONCAT(author.first_name, ' ', author.last_name) author,
+        obj.owner owner_id, owner.name owner,
+        obj.license license_id, license.license license,
+        license.acronym license_acronym, license.link license_link,
+        obj.create_at, obj.updated_at,
+        NULLIF(obj.description, 'no object description') description,
+        obj.note, obj.uuid,
+        method.value acquisition_method,
+        param.software, param.points, param.polygons,
+        param.textures, param.scans, param.pictures,
+        param.encumbrance, param.measure_unit
+      FROM model_object obj
+      INNER JOIN list_item_status status ON obj.status = status.id
+      INNER JOIN user ON obj.author = user.id
+      INNER JOIN person author ON user.person = author.id
+      INNER JOIN institution owner ON obj.owner = owner.id
+      INNER JOIN license ON obj.license = license.id
+      INNER JOIN model_param param ON param.object = obj.id
+      INNER JOIN list_model_acquisition method ON param.acquisition_method = method.id
+      WHERE obj.model = :id"
+    );
+    $stmt->execute([':id' => $id]);
+    $out['model_object'] = $stmt->fetchAll();
+
+    $stmt = $this->pdo()->prepare(
+      "SELECT * FROM model_view WHERE model = :id AND default_view = true"
+    );
+    $stmt->execute([':id' => $id]);
+    $out['model_view'] = $stmt->fetch();
+
     return $out;
   }
 

@@ -5,32 +5,32 @@ const instanceOpt = {"nxz" : {
   mesh : "nxz",
   tags: ['Group'],
   color : [0.5, 0.5, 0.5],
-  backfaceColor : [0.5, 0.5, 0.5, 3.0],
-  specularColor : [0.0, 0.0, 0.0, 256.0]
+  backfaceColor : [0.5, 0.5, 0.5, 3],
+  specularColor : [0, 0, 0, 256]
 }}
 const trackBallOpt = {
   type : TurntablePanTrackball,
   trackOptions : {
-    startPhi: 15.0,
-    startTheta: 15.0,
-    startDistance: 2.0,
+    startPhi: 15,
+    startTheta: 15,
+    startDistance: 2,
     minMaxPhi: [-180, 180],
-    minMaxTheta: [-90.0, 90.0],
-    minMaxDist: [0.1, 3.0]
+    minMaxTheta: [-90, 90],
+    minMaxDist: [0.1, 3]
   }
 }
 const spaceOpt = {
   centerMode: "scene",
   radiusMode: "scene",
-  cameraNearFar: [0.01, 5.0],
+  cameraNearFar: [0.1, 5],
 }
 const configOpt = {
-  pickedpointColor    : [1.0, 0.0, 1.0],
-  measurementColor    : [0.5, 1.0, 0.5],
+  pickedpointColor    : [1, 0, 1],
+  measurementColor    : [0.5, 1, 0.5],
   showClippingPlanes  : true,
   showClippingBorder  : true,
   clippingBorderSize  : 0.5,
-  clippingBorderColor : [0.0, 1.0, 1.0]
+  clippingBorderColor : [0, 1, 1]
 }
 
 ////////////////////////////
@@ -66,18 +66,18 @@ function viewFrom(direction){
   let distance = 1.3;
   let view;
   switch(direction) {
-    case "front": view =[0.0, 0.0, 0.0, 0.0, 0.0, distance]; break;
-    case "back": view = [180.0, 0.0, 0.0, 0.0, 0.0], distance; break;
-    case "top": view = [0.0, 90.0, 0.0, 0.0, 0.0, distance]; break;
-    case "bottom": view = [0.0, -90.0, 0.0, 0.0, 0.0, distance]; break;
-    case "left": view = [270.0, 0.0, 0.0, 0.0, 0.0, distance]; break;
-    case "right": view = [90.0, 0.0, 0.0, 0.0, 0.0, distance]; break;
+    case "front": view =[0, 0, 0, 0, 0, distance]; break;
+    case "back": view = [180, 0, 0, 0, 0], distance; break;
+    case "top": view = [0, 90, 0, 0, 0, distance]; break;
+    case "bottom": view = [0, -90, 0, 0, 0, distance]; break;
+    case "left": view = [270, 0, 0, 0, 0, distance]; break;
+    case "right": view = [90, 0, 0, 0, 0, distance]; break;
   }
   presenter.animateToTrackballPosition(view);
 }
 
 function updateSpecular(){
-  let spec = $("[name=specular]").is(':checked') ? [0.3,0.3,0.3,256.0] : [0.0,0.0,0.0,256.0];
+  let spec = $("[name=specular]").is(':checked') ? [0.3,0.3,0.3,256.0] : [0,0,0,256.0];
   for (inst in presenter._scene.modelInstances){
     presenter._scene.modelInstances[inst].specularColor = spec;
   }
@@ -155,13 +155,13 @@ function setupLightController() {
 ////////////////////////////
 function computeEncumbrance() {
   computeSceneBB();
-  var gStep = 1.0;
+  var gStep = 1;
   // if(ARCHIVE.data(OBJCODE,"MEASURE_UNIT") === "mm")
-  //   gStep = 10.0;
+  //   gStep = 10;
   // else if(ARCHIVE.data(OBJCODE,"MEASURE_UNIT") === "m")
-  //   gStep = 0.01;
+  //   gStep = 01;
 
-  var encumbrance = [0.0, 0.0, 0.0];
+  var encumbrance = [0, 0, 0];
   encumbrance[0] = Math.trunc(Math.ceil((sceneBB[0]-sceneBB[3])/gStep)+1);
   encumbrance[1] = Math.trunc(Math.ceil((sceneBB[1]-sceneBB[4])/gStep)+1);
   encumbrance[2] = Math.trunc(Math.ceil((sceneBB[2]-sceneBB[5])/gStep)+1);
@@ -189,7 +189,7 @@ function getBBox(instance) {
   var point,tpoint;
 
   for(var vi=1; vi<(vv.length / 3); vi++){
-    point = [vv[(vi*3)+0], vv[(vi*3)+1], vv[(vi*3)+2], 1.0]
+    point = [vv[(vi*3)+0], vv[(vi*3)+1], vv[(vi*3)+2], 1]
     tpoint = SglMat4.mul4(presenter._scene.modelInstances[instance].transform.matrix, point);
     if(tpoint[0] > bbox[0]) bbox[0] = tpoint[0];
     if(tpoint[1] > bbox[1]) bbox[1] = tpoint[1];
@@ -218,12 +218,12 @@ function startupGrid(){
 
 function addBaseGrid() {
   computeSceneBB();
-  var rad = 1.0 / presenter.sceneRadiusInv;
+  var rad = 1 / presenter.sceneRadiusInv;
   var XC = (sceneBB[0] + sceneBB[3]) / 2.0;
   var YC = sceneBB[4];
   var ZC = (sceneBB[2] + sceneBB[5]) / 2.0;
 
-  var gStep = 10.0;
+  var gStep = 10;
   var numDivMaj = Math.floor(rad/gStep);
   var linesBuffer;
 
@@ -237,8 +237,8 @@ function addBaseGrid() {
     linesBuffer.push([XC + ( gStep*numDivMaj), YC, ZC + (gg*gStep)]);
   }
   gridBase = presenter.createEntity("gridBase", "lines", linesBuffer);
-  gridBase.color = [0.9, 0.9, 0.9, 1.0];
-  gridBase.zOff = 0.0;
+  gridBase.color = [0.9, 0.9, 0.9, 1];
+  gridBase.zOff = 0;
   presenter.repaint();
 }
 
@@ -254,7 +254,7 @@ function changeGrid() {
     addGrid = addBBGrid;
 
   removeGrid();
-  addGrid(0.01);
+  addGrid(0.1);
 }
 
 /////////////////////////////////////////
@@ -266,36 +266,36 @@ function removeAxes(){
 }
 
 function addAxes(){
-  var rad = (1.0 / presenter.sceneRadiusInv)/2.0;
+  var rad = (1 / presenter.sceneRadiusInv)/2;
   var linesBuffer;
   var point, tpoint;
 
-  point = [rad, 0.0, 0.0, 1.0]
+  point = [rad, 0, 0, 1]
   tpoint = SglMat4.mul4(presenter._scene.modelInstances["model_specimen_0"].transform.matrix, point);
   linesBuffer = [];
   linesBuffer.push([0, 0, 0]);
   linesBuffer.push([tpoint[0], tpoint[1], tpoint[2]]);
   var axisX = presenter.createEntity("XXaxis", "lines", linesBuffer);
-  axisX.color = [1.0, 0.2, 0.2, 1.0];
-  axisX.zOff = 0.0;
+  axisX.color = [1, 0.2, 0.2, 1];
+  axisX.zOff = 0;
 
-  point = [0.0, rad, 0.0, 1.0]
+  point = [0, rad, 0, 1]
   tpoint = SglMat4.mul4(presenter._scene.modelInstances["model_specimen_0"].transform.matrix, point);
   linesBuffer = [];
   linesBuffer.push([0, 0, 0]);
   linesBuffer.push([tpoint[0], tpoint[1], tpoint[2]]);
   var axisY = presenter.createEntity("YYaxis", "lines", linesBuffer);
-  axisY.color = [0.2, 1.0, 0.2, 1.0];
-  axisY.zOff = 0.0;
+  axisY.color = [0.2, 1, 0.2, 1];
+  axisY.zOff = 0;
 
-  point = [0.0, 0.0, rad, 1.0]
+  point = [0, 0, rad, 1]
   tpoint = SglMat4.mul4(presenter._scene.modelInstances["model_specimen_0"].transform.matrix, point);
   linesBuffer = [];
   linesBuffer.push([0, 0, 0]);
   linesBuffer.push([tpoint[0], tpoint[1], tpoint[2]]);
   var axisZ = presenter.createEntity("ZZaxis", "lines", linesBuffer);
-  axisZ.color = [0.2, 0.2, 1.0, 1.0];
-  axisZ.zOff = 0.0;
+  axisZ.color = [0.2, 0.2, 1, 1];
+  axisZ.zOff = 0;
 
   presenter.repaint();
 }

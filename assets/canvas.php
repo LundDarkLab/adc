@@ -1,10 +1,7 @@
 <div id="3dhop" class="tdhop animated rounded">
   <canvas id="draw-canvas"></canvas>
-  <div id="wrapAnnotations" class="modelTools rounded invisible">
-    <div id="headerAnnotations" class="d-flex justify-content-end mb-3 border-bottom">
-      <button type="button" id="closeAnnotationsPanel" class="btn-close toggleAnnotations" aria-label="Close"></button>
-    </div>
-    <div id="bodyAnnotations">
+  <div id="wrapAnnotations" class="modelTools rounded d-none">
+    <div id="headerAnnotations" class="d-flex justify-content-between mb-3 border-bottom">
       <div id="annotationsNav" class="btn-group btn-group-sm mb-3" role="tablist" aria-label="Annotations navigation">
         <button class="btn btn-outline-secondary active" id="viewsTab" data-bs-toggle="pill" data-bs-target="#viewsListPane" type="button" role="tab" aria-controls="viewsListPane" aria-selected="true">
           <span class="mdi mdi-cctv"></span> Views
@@ -18,18 +15,21 @@
           <span class="mdi mdi-clipboard-text"></span> Notes
         </button>
       </div>
+      <button type="button" id="closeAnnotationsPanel" class="btn-close toggleAnnotations" aria-label="Close"></button>
+    </div>
+    <div id="bodyAnnotations">
       <div class="tab-content" id="pills-tabContent">
         <div class="tab-pane fade show active annotationPane" id="viewsListPane" role="tabpanel" aria-labelledby="viewsTab" tabindex="0">
-          <div id="viewsListDiv"></div>
-          <div id="viewlistBtn">
+          <div id="viewsListDiv" class="objectContainer"></div>
+          <div id="viewlistBtn" class="p-1 bodyToolbar">
             <button id="btAddView" type="button" class="btn btn-sm btn-secondary w-100" data-bs-toggle="tooltip" title="Save current view">
               <span class="mdi mdi-plus"></span> save current view
             </button>
           </div>
         </div>
         <div class="tab-pane fade annotationPane" id="spotsListPane" role="tabpanel" aria-labelledby="spotsTab" tabindex="0">
-          <div id="spotsListDiv"></div>
-          <div id="spotsListBtn" class="p-1">
+          <div id="spotsListDiv" class="objectContainer"></div>
+          <div id="spotsListBtn" class="p-1 bodyToolbar">
             <button id="btAddSpot" type="button" class="btn btn-sm btn-secondary w-100" data-bs-toggle="tooltip" title="Add new spot">
               <span class="mdi mdi-plus"></span> Add Spot
             </button>
@@ -290,7 +290,7 @@
         </ul>
         <nav id="toolBarModel" class="my-3 pb-2 border-bottom">
           <a href="#" class="btn btn-sm btn-adc-dark" name="editModelBtn">edit</a>
-          <button type="button" class="btn btn-sm btn-adc-dark" name="addObject">add object</button>
+          <!-- <button type="button" class="btn btn-sm btn-adc-dark" name="addObject">add object</button> -->
           <button type="button" class="btn btn-sm" name="modelVisibility">change status</button>
           <button type="button" class="btn btn-sm btn-danger float-end" name="deleteModel">delete</button>
         </nav>

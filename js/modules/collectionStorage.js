@@ -1,4 +1,4 @@
-const COLLECTION_STATE = 'collectionState';
+const COLLECTION_STATE = 'DC_CollectionStorage';
 let stateManagerInstance = null;
 
 export async function collectionState(){
@@ -11,6 +11,7 @@ export async function collectionState(){
         try {
           state = JSON.parse(savedState);
         } catch (e) {
+          console.error('Error loading from localStorage:', e);
           state = getInitialState();
         }
       } else {

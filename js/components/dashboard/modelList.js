@@ -39,8 +39,8 @@ export async function getModels(filters={}){
     cardBody.classList.add('card-body');
     card.appendChild(cardBody);
     const fields = [
-      { label: 'Model ID', value: model.id },
-      { label: 'Model object', value: model.model },
+      { label: 'Model ID', value: model.model },
+      { label: 'Model object', value: model.id },
       { label: 'Model name', value: model.name },
       { label: 'Author', value: model.author },
       { label: 'Institution', value: model.owner },
@@ -85,7 +85,7 @@ export async function getModels(filters={}){
     card.appendChild(cardFooter);
 
     const viewBtn = document.createElement('a');
-    viewBtn.href = `model_view.php?item=${model.id}`;
+    viewBtn.href = `model_view.php?item=${model.model}`;
     viewBtn.classList.add('btn', 'btn-sm', 'btn-adc-blue');
     viewBtn.textContent = 'View';
     cardFooter.appendChild(viewBtn);

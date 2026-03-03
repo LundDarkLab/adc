@@ -1,4 +1,4 @@
-const VIEWS_STORAGE_KEY = 'viewsStorage';
+const VIEWS_STORAGE_KEY = 'DC_ViewsStorage';
 let viewsManagerInstance = null;
 
 /**
