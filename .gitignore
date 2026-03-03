@@ -6,7 +6,7 @@ node_modules/
 *.log
 
 # --- Cartelle di lavoro locali ---
-workfile/ 
+workfile/
 notes/ 
 documentation/site/ 
 docker-compose.override.yml
