@@ -5,22 +5,22 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
   <head>
-    <?php require("assets/meta.php"); ?>
+    <?php require 'assets/meta.php'; ?>
     <link rel="stylesheet" href="css/model_view.css">
     <link rel="stylesheet" href="css/my3dhop.css">
   </head>
   <body>
     <?php 
-      require("assets/header.php"); 
-      require("assets/loadingDiv.html"); 
+      require 'assets/header.php'; 
+      require 'assets/loadingDiv.html'; 
     ?>
     <input type="hidden" name="modelId" value="<?php echo $_GET['item']; ?>">
     <input type="hidden" name="activeUsr" value="<?php echo $_SESSION['id'] ?? 'unregistered'; ?>">
     <input type="hidden" name="role" value="<?php echo $_SESSION['role'] ?? 'unregistered'; ?>">
     <main class="animated mainSection">
       <div id="mainContent">
-        <?php require('assets/canvas.html'); ?>
-      </div> 
+        <?php require 'assets/canvas.php'; ?>
+      </div>
     </main>
 
     <!-- <div class="modal fade" id="mainDataModel" data-bs-backdrop="static" tabindex="-1" aria-labelledby="editMainDataModel" aria-hidden="true">

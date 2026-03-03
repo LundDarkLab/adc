@@ -140,7 +140,7 @@
                       <h6>the model will be displayed after uploading an allowed file</h6>
                     </div>
                   </div>
-                  <?php require('assets/canvas.html'); ?>
+                  <?php require('assets/canvas.php'); ?>
                 </div>
               </div>
             </div>

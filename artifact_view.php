@@ -46,7 +46,7 @@
         </div>
 
         <div id="model">
-          <?php require('assets/canvas.html'); ?>
+          <?php require('assets/canvas.php'); ?>
         </div>
 
         <div id="secondaryInfo">
