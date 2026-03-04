@@ -124,35 +124,20 @@ async function fetchGallery() {
     const currentState = stateManager.getState();
     btn.style.display = 'none';
     const uncollectButton = btn.nextElementSibling;
-    if (uncollectButton && uncollectButton.classList.contains("uncollectItemBtn")) { uncollectButton.style.display = 'inline-block'; }
+    if (uncollectButton?.classList.contains("uncollectItemBtn")) {
+      uncollectButton.style.display = 'inline-block';
+    }
     let key = currentState.activeCollectionKey;
     if (!key) {
       key = await coll.createCollection();
-      const updatedState = stateManager.getState();
-      updatedState.activeCollectionKey = key;
-      updatedState.activeCollection = updatedState.collections[key];
-      stateManager.updateState({ 
-        activeCollectionKey: key,
-        activeCollection: updatedState.activeCollection
-      });
       bsAlert("A new collection named 'My Collection' has been created. You can edit its metadata later.", "info", 4000);
-      if (typeof onShowCollection === 'function') {
-        await onShowCollection();
-      }
+      if (typeof onShowCollection === 'function') await onShowCollection();
       await new Promise(resolve => setTimeout(resolve, 4100));
     }
+
     await coll.addItem(key, item);
-    const postAddState = stateManager.getState();  // Refresh after adding
-    postAddState.activeCollection = postAddState.collections[key];
-    postAddState.collectStatus[item.id] = true;
-    stateManager.updateState({ 
-      activeCollection: postAddState.activeCollection,
-      collectStatus: postAddState.collectStatus
-    });
     getCollectStatusBtn();
-    if (typeof onShowCollection === 'function') {
-      await onShowCollection();
-    }
+    if (typeof onShowCollection === 'function') await onShowCollection();
   }
   
   async function uncollectItemBtnFunction(btn, onShowCollection) {

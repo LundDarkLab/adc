@@ -7,218 +7,231 @@ import { toggleCollectionListBtn } from "../helpers/collectionHelper.js";
 const stateManager = await collectionState();  // Singleton: ora tutti i moduli condividono la stessa istanza di stateManager
 // Nota: nessun stato locale globale qui; tutto passa attraverso il singleton
 
-export async function collection(){
-  // Lettura: ottiene una copia snapshot dello stato centrale per basePath e template
-  const currentState = stateManager.getState();
-  const basePath = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '/');
-  const COLLECTIONTEMPLATE = {
-    metadata:{
-      type: "DC_COLL",
-      version: "2.0",
-      user: getUserId(),
-      time: new Date().toISOString(),
-      email: '',
-      author: '',
-      title: 'My Collection',
-      description: '',
-      color: { // used for UI theming and map cluster color
-        primary: '',     // primary color (e.g., for buttons)
-        gradientStart: '',   // light gradient color
-        gradientEnd: ''      // dark gradient color
-      }
-    },
-    items:[]
-  };
-
-  const ITEMTEMPLATE = {
-    id: '',
-    name: '',
-    institution: '',
-    nation: '',
-    county: '',
+const COLLECTIONTEMPLATE = {
+  metadata:{
+    type: "DC_COLL",
+    version: "2.0",
+    user: '',
+    time: new Date().toISOString(),
+    email: '',
+    author: '',
+    title: 'My Collection',
     description: '',
-    category_id: '',
-    category: '',
-    material: '',
-    start: '',
-    end: '',
-    object: '',
-    thumbnail: ''
+    color: { // used for UI theming and map cluster color
+      primary: '',     // primary color (e.g., for buttons)
+      gradientStart: '',   // light gradient color
+      gradientEnd: ''      // dark gradient color
+    }
+  },
+  items:[]
+};
+
+const ITEMTEMPLATE = {
+  id: '',
+  name: '',
+  institution: '',
+  nation: '',
+  county: '',
+  description: '',
+  category_id: '',
+  category: '',
+  material: '',
+  start: '',
+  end: '',
+  object: '',
+  latitude: null,
+  longitude: null,
+  thumbnail: ''
+};
+
+function getUserId() {
+  const jwt = localStorage.getItem("dyncol-jwt");
+  if (jwt) {
+    try {
+      const payload = JSON.parse(atob(jwt.split('.')[1]));
+      return payload.id || 'unregistered';
+    }catch (e) {
+      console.error("Invalid JWT token", e);
+    }
+  }
+  const activeUsr = document.getElementById('activeUsr');
+  if (activeUsr?.value && activeUsr.value !== '' && activeUsr.value !== 'unregistered' && activeUsr.value !== 'guest') {
+    return activeUsr.value;
+  }else{
+    return 'unregistered';
+  }
+}
+
+function collectionToCSV(items) {
+  if (!items.length) return '';
+  const keys = Object.keys(items[0]);
+  const csvRows = [
+    keys.join(','), // header
+    ...items.map(item => keys.map(k => `"${(item[k] ?? '').toString().replaceAll('"', '""')}"`).join(','))
+  ];
+  return csvRows.join('\n');
+}
+
+function generateCollectionColor() {
+  const hue = Math.floor(Math.random() * 360);
+  const saturation = 70;
+  const lightnessPrimary = 50;
+  const lightnessStart = 60;
+  const lightnessEnd = 35;
+  
+  return {
+    primary: `hsl(${hue}, ${saturation}%, ${lightnessPrimary}%)`,
+    gradientStart: `hsla(${hue}, ${saturation}%, ${lightnessStart}%, 0.6)`,
+    gradientEnd: `hsla(${hue}, ${saturation}%, ${lightnessEnd}%, 0.9)`
   };
+}
 
-  function generateCollectionColor() {
-    const hue = Math.floor(Math.random() * 360);
-    const saturation = 70;
-    const lightnessPrimary = 50;
-    const lightnessStart = 60;
-    const lightnessEnd = 35;
-    
-    return {
-      primary: `hsl(${hue}, ${saturation}%, ${lightnessPrimary}%)`,
-      gradientStart: `hsla(${hue}, ${saturation}%, ${lightnessStart}%, 0.6)`,
-      gradientEnd: `hsla(${hue}, ${saturation}%, ${lightnessEnd}%, 0.9)`
-    };
-  }
-
-  function getCollectionList() {
-    // Lettura: ottiene una copia snapshot dello stato centrale
-    const currentState = stateManager.getState();
-    const obj = currentState.collectionList || {};
-    const list = [];
-    Object.keys(obj).forEach(key => {
-      const collection = currentState.collections[key];
-      if (collection && collection.metadata) {
-        list.push({key, title: collection.metadata.title});
-      }
-    });
-    return list;
-  }
-
- async function setActiveCollection(key){
-    // Lettura: ottiene una copia snapshot dello stato centrale
-    const currentState = stateManager.getState();
-    if (!key || !currentState.collections[key]){
-      bsAlert('Collection not found!', 'danger');
-      return false;
-    }
-    // Modifica: crea un nuovo oggetto per collectionList invece di modificare currentState
-    const newCollectionList = { ...currentState.collectionList };
-    Object.keys(newCollectionList).forEach(k => { newCollectionList[k] = false; });
-    newCollectionList[key] = true;
-    // Aggiornamento: modifica direttamente il singleton e sincronizza con localStorage
-    stateManager.updateState({
-      collectionList: newCollectionList,
-      activeCollectionKey: key,
-      activeCollection: currentState.collections[key]
-    });
-    getCollectStatusBtn();
-    return true;
-  }
-
-  async function addCollection(key) {
-    // Lettura: ottiene una copia snapshot dello stato centrale
-    const currentState = stateManager.getState();
-    if (!key || !currentState.collections[key]) {
-      bsAlert('Collection not found!', 'danger');
-      return false;
-    }
-
-    // Modifica: crea un nuovo oggetto per collectionList
-    const newCollectionList = { ...currentState.collectionList };
-    Object.keys(newCollectionList).forEach(k => { newCollectionList[k] = false; });
-    newCollectionList[key] = true;
-    // Aggiornamento: modifica direttamente il singleton
-    stateManager.updateState({
-      collectionList: newCollectionList,
-      activeCollectionKey: key,
-      activeCollection: currentState.collections[key]
-    });
-
-    return true;
-  }
-
-  async function createCollection(metadata = null, onShowCollection = null){
-    // Lettura: ottiene una copia snapshot dello stato centrale
-    const currentState = stateManager.getState();
-    const key = "dyncoll_" + generateUUID();
-    const collection = structuredClone(COLLECTIONTEMPLATE);
-    if (metadata && typeof metadata === 'object') {
-      collection.metadata = { ...collection.metadata, ...metadata };
-      collection.metadata.color = generateCollectionColor();
-    }
-    // Modifica: aggiorna prima currentState, poi passa a updateState
-    const newCollections = { ...currentState.collections, [key]: collection };
-    // Aggiornamento: modifica direttamente il singleton
-    stateManager.updateState({ collections: newCollections });
-    await addCollection(key);
-    toggleCollectionListBtn(stateManager, onShowCollection, setActiveCollection);
-    return key;
-  }
-
-  async function clearCollection() {
-    // Lettura: ottiene una copia snapshot dello stato centrale
-    const currentState = stateManager.getState();
-    const key = currentState.activeCollectionKey;
-    if (!key) {
-      bsAlert('No active collection to clear!', 'warning'); 
-      return false;
-    }
+function getCollectionList() {
+  // Lettura: ottiene una copia snapshot dello stato centrale
+  const currentState = stateManager.getState();
+  const obj = currentState.collectionList || {};
+  const list = [];
+  Object.keys(obj).forEach(key => {
     const collection = currentState.collections[key];
-    if (!collection) {
-      bsAlert('Active collection not found!', 'danger');
-      return false;
+    if (collection?.metadata) {
+      list.push({key, title: collection.metadata.title});
     }
+  });
+  return list;
+}
 
-    // Modifica: crea nuovi oggetti per aggiornamenti
-    const newCollections = { ...currentState.collections };
-    newCollections[key] = { ...collection, items: [] };
-    // Aggiornamento: modifica direttamente il singleton
-    stateManager.updateState({
-      collections: newCollections,
-      activeCollection: newCollections[key],
-      collectStatus: {}
-    });
+async function setActiveCollection(key){
+  // Lettura: ottiene una copia snapshot dello stato centrale
+  const currentState = stateManager.getState();
+  if (!key || !currentState.collections[key]){
+    bsAlert('Collection not found!', 'danger');
+    return false;
+  }
+  // Modifica: crea un nuovo oggetto per collectionList invece di modificare currentState
+  const newCollectionList = { ...currentState.collectionList };
+  Object.keys(newCollectionList).forEach(k => { newCollectionList[k] = false; });
+  newCollectionList[key] = true;
+  // Aggiornamento: modifica direttamente il singleton e sincronizza con localStorage
+  stateManager.updateState({
+    collectionList: newCollectionList,
+    activeCollectionKey: key,
+    activeCollection: currentState.collections[key]
+  });
+  getCollectStatusBtn();
+  return true;
+}
 
-    // Aggiorna la UI
-    setCounter(key);
-    const collectionEl = document.getElementById('wrapCollection');
-    if (collectionEl) { collectionEl.innerHTML = ''; }
+async function addCollection(key) {
+  // Lettura: ottiene una copia snapshot dello stato centrale
+  const currentState = stateManager.getState();
+  if (!key || !currentState.collections[key]) {
+    bsAlert('Collection not found!', 'danger');
+    return false;
+  }
+
+  // Modifica: crea un nuovo oggetto per collectionList
+  const newCollectionList = { ...currentState.collectionList };
+  Object.keys(newCollectionList).forEach(k => { newCollectionList[k] = false; });
+  newCollectionList[key] = true;
+  // Aggiornamento: modifica direttamente il singleton
+  stateManager.updateState({
+    collectionList: newCollectionList,
+    activeCollectionKey: key,
+    activeCollection: currentState.collections[key]
+  });
+
+  return true;
+}
+
+function setCounter(key){
+   // Lettura: ottiene una copia snapshot dello stato centrale
+   const currentState = stateManager.getState();
+   const counterElem = document.getElementById('countCollection');
+   if (!counterElem) return;
+   if (!key) {
+     counterElem.innerText = '0';
+     return;
+   }
+   const collection = currentState.collections[key];
+   counterElem.innerText = collection ? collection.items.length : '0';
+ } 
+
+async function clearCollection() {
+  // Lettura: ottiene una copia snapshot dello stato centrale
+  const currentState = stateManager.getState();
+  const key = currentState.activeCollectionKey;
+  if (!key) {
+    bsAlert('No active collection to clear!', 'warning'); 
+    return false;
+  }
+  const collection = currentState.collections[key];
+  if (!collection) {
+    bsAlert('Active collection not found!', 'danger');
+    return false;
+  }
+  // Modifica: crea nuovi oggetti per aggiornamenti
+  const newCollections = { ...currentState.collections };
+  newCollections[key] = { ...collection, items: [] };
+  // Aggiornamento: modifica direttamente il singleton
+  stateManager.updateState({
+    collections: newCollections,
+    activeCollection: newCollections[key],
+    collectStatus: {}
+  });
+  // Aggiorna la UI
+  setCounter(key);
+  const collectionEl = document.getElementById('wrapCollection');
+  if (collectionEl) { collectionEl.innerHTML = ''; }
+  document.dispatchEvent(new CustomEvent('collectionUpdated'));
+  bsAlert('Collection cleared!', 'success');
+  return true;
+}
+async function deleteCollection(all = false){
+  // Lettura: ottiene una copia snapshot dello stato centrale
+  const currentState = stateManager.getState();
+  if (all) {
+    stateManager.resetAll();
+    setCounter(null);
     document.dispatchEvent(new CustomEvent('collectionUpdated'));
-    bsAlert('Collection cleared!', 'success');
+    bsAlert('All collections deleted!', 'success');
     return true;
   }
-
-  async function deleteCollection(all = false){
-    // Lettura: ottiene una copia snapshot dello stato centrale
-    const currentState = stateManager.getState();
-    if (all) {
-      stateManager.resetAll();
-      setCounter(null);
-      document.dispatchEvent(new CustomEvent('collectionUpdated'));
-      bsAlert('All collections deleted!', 'success');
-      return true;
-    }
-
-    const key = currentState.activeCollectionKey;
-    if (!key){
-      bsAlert('No active collection to delete!', 'warning'); 
-      return false;
-    }
-
-    // Modifica: crea nuovi oggetti
-    const newCollections = { ...currentState.collections };
-    const newCollectionList = { ...currentState.collectionList };
-    delete newCollections[key];
-    delete newCollectionList[key];
-
-    const keys = Object.keys(newCollectionList);
-    let newActiveKey = null;
-    let newActiveCollection = null;
-    const resetList = { ...newCollectionList };
-    
-    if (keys.length > 0) {
-      // Imposta la prima collezione disponibile come attiva
-      Object.keys(resetList).forEach(k => { resetList[k] = false; });
-      resetList[keys[0]] = true;
-      newActiveKey = keys[0];
-      newActiveCollection = newCollections[keys[0]];
-      getCollectStatusBtn();
-      setCounter(keys[0]);
-    } else {
-      setCounter(null);
-    }
-
-    // Aggiornamento: modifica direttamente il singleton
-    stateManager.updateState({
-      collections: newCollections,
-      collectionList: resetList,
-      activeCollectionKey: newActiveKey,
-      activeCollection: newActiveCollection
-    });
-
-    bsAlert('Collection deleted!', 'success');
-    return true;
+  const key = currentState.activeCollectionKey;
+  if (!key){
+    bsAlert('No active collection to delete!', 'warning'); 
+    return false;
   }
+  // Modifica: crea nuovi oggetti
+  const newCollections = { ...currentState.collections };
+  const newCollectionList = { ...currentState.collectionList };
+  delete newCollections[key];
+  delete newCollectionList[key];
+  const keys = Object.keys(newCollectionList);
+  let newActiveKey = null;
+  let newActiveCollection = null;
+  const resetList = { ...newCollectionList };
+  
+  if (keys.length > 0) {
+    // Imposta la prima collezione disponibile come attiva
+    Object.keys(resetList).forEach(k => { resetList[k] = false; });
+    resetList[keys[0]] = true;
+    newActiveKey = keys[0];
+    newActiveCollection = newCollections[keys[0]];
+    getCollectStatusBtn();
+    setCounter(keys[0]);
+  } else {
+    setCounter(null);
+  }
+  // Aggiornamento: modifica direttamente il singleton
+  stateManager.updateState({
+    collections: newCollections,
+    collectionList: resetList,
+    activeCollectionKey: newActiveKey,
+    activeCollection: newActiveCollection
+  });
+  bsAlert('Collection deleted!', 'success');
+  return true;
+}
   
   async function addItem(key, item){
     // Lettura: ottiene una copia snapshot dello stato centrale
@@ -250,6 +263,141 @@ export async function collection(){
     bsAlert('Item already in collection!', 'info');
     return false;
   }
+async function removeItem(itemId){
+  // Lettura: ottiene una copia snapshot dello stato centrale
+  const currentState = stateManager.getState();
+  const key = currentState.activeCollectionKey;
+  if (!key){
+    bsAlert('No active collection to remove item from!', 'warning');
+    return false;
+  } 
+  let obj = currentState.collections[key];
+  if (!obj){
+    bsAlert('Active collection not found!', 'danger');
+    return false;
+  } 
+  const initialLength = obj.items.length;
+  
+  const newCollections = { ...currentState.collections };
+  const newCollectStatus = { ...currentState.collectStatus };
+  newCollections[key] = { ...obj, items: obj.items.filter(item => String(item.id) !== String(itemId)) };
+  delete newCollectStatus[itemId];
+  stateManager.updateState({
+    collections: newCollections,
+    activeCollection: newCollections[key],
+    collectStatus: newCollectStatus
+  });
+  setCounter(key);
+  if (newCollections[key].items.length < initialLength) {
+    getCollectStatusBtn();
+    document.dispatchEvent(new CustomEvent('collectionUpdated'));
+    bsAlert('Item removed from collection!', 'success');
+    return true;
+  } else {
+    bsAlert('Item not found in collection!', 'info');
+    return false;
+  }
+}
+async function importCollection(file) {
+  // Lettura: ottiene una copia snapshot dello stato centrale
+  const currentState = stateManager.getState();
+  // 1. Controllo che sia un file JSON
+  if (!file?.name.endsWith('.json') || file.type !== 'application/json') {
+    return {status: 'danger', message: 'Please select a valid JSON file.'};
+  }
+  if (file.size > 1 * 1024 * 1024) { // 1 MB
+    return {status: 'danger', message: 'File too large. Maximum allowed size is 1 MB.'};
+  }
+  // 2. Leggi e valida la struttura interna
+  let importedData;
+  try {
+    const text = await file.text();
+    importedData = JSON.parse(text);      
+  } catch (e) {
+    return {status: 'danger', message: `Invalid JSON format: ${e.message}`};
+  }
+  // 2b. Controllo struttura
+  if (
+    !importedData ||
+    typeof importedData !== 'object' ||
+    !importedData.metadata ||
+    typeof importedData.metadata.title !== 'string' ||
+    !Array.isArray(importedData.items)
+  ) {
+    return {status: 'danger', message: 'JSON structure is not valid for a collection.'};
+  }
+  const templateMetadataKeys = Object.keys(COLLECTIONTEMPLATE.metadata);
+  const importedMetadataKeys = Object.keys(importedData.metadata);
+  console.log([
+    templateMetadataKeys,
+    importedMetadataKeys
+  ]);
+  
+  if (
+    importedMetadataKeys.length !== templateMetadataKeys.length ||
+    !templateMetadataKeys.every(k => importedMetadataKeys.includes(k))
+  ) {
+    return { status: 'danger', message: 'Metadata structure does not match template. Import aborted.' };
+  }
+  const itemTemplateKeys = Object.keys(ITEMTEMPLATE);
+  for (const item of importedData.items) {
+    const itemKeys = Object.keys(item);
+    // Controlla che le chiavi siano esattamente quelle del template
+    if (
+      itemKeys.length !== itemTemplateKeys.length ||
+      !itemTemplateKeys.every(k => itemKeys.includes(k))
+    ) {
+    return { status: 'danger', message: 'Item structure does not match template. Import aborted.' };
+    }
+  }
+  // 3. Controllo duplicato su metadata.title
+  const title = importedData.metadata.title.trim();
+  const duplicate = Object.values(currentState.collections).find(
+    c => c.metadata?.title?.trim().toLowerCase() === title.toLowerCase()
+  );
+  if (duplicate) {
+    return { status: 'duplicate', title, importedData, duplicate };
+  } else {
+    // 7. Nuova collezione
+    const key = "dyncoll_" + generateUUID();
+    // Modifica: aggiorna il singleton invece di usare localStorage diretto
+    const newCollections = { ...currentState.collections, [key]: importedData };
+    stateManager.updateState({ collections: newCollections });
+    await addCollection(key);
+    return { status: 'success', title, key };
+  }
+}
+
+export async function collection(){
+  const basePath = window.location.origin + window.location.pathname.replace(/\/[^/]*$/, '/');
+
+
+
+  async function createCollection(metadata = null, onShowCollection = null){
+    console.log('TEMPLATE:', JSON.stringify(COLLECTIONTEMPLATE.metadata));
+    console.log('metadata ricevuto:', JSON.stringify(metadata));
+
+    // Lettura: ottiene una copia snapshot dello stato centrale
+    const currentState = stateManager.getState();
+    const key = "dyncoll_" + generateUUID();
+    const collection = structuredClone(COLLECTIONTEMPLATE);
+    
+    collection.metadata.user = getUserId();
+    console.log('dopo clone e user:', JSON.stringify(collection.metadata));
+
+    if (metadata && typeof metadata === 'object') {
+      collection.metadata = { ...collection.metadata, ...metadata };
+      collection.metadata.color = generateCollectionColor();
+      console.log('dopo merge:', JSON.stringify(collection.metadata));
+    }
+    // Modifica: aggiorna prima currentState, poi passa a updateState
+    const newCollections = { ...currentState.collections, [key]: collection };
+    console.log('collection salvata:', JSON.stringify(collection.metadata));
+    stateManager.updateState({ collections: newCollections });
+    await addCollection(key);
+    toggleCollectionListBtn(stateManager, onShowCollection, setActiveCollection);
+    return key;
+  }
 
   // Aggiunge più elementi a una collezione
   async function addItems(key, items) {
@@ -261,74 +409,7 @@ export async function collection(){
     return addedCount;
   }
 
-  async function removeItem(itemId){
-    // Lettura: ottiene una copia snapshot dello stato centrale
-    const currentState = stateManager.getState();
-    const key = currentState.activeCollectionKey;
-    if (!key){
-      bsAlert('No active collection to remove item from!', 'warning');
-      return false;
-    } 
-    let obj = currentState.collections[key];
-    if (!obj){
-      bsAlert('Active collection not found!', 'danger');
-      return false;
-    } 
-    const initialLength = obj.items.length;
-    
-    const newCollections = { ...currentState.collections };
-    const newCollectStatus = { ...currentState.collectStatus };
-    newCollections[key] = { ...obj, items: obj.items.filter(item => String(item.id) !== String(itemId)) };
-    delete newCollectStatus[itemId];
-    stateManager.updateState({
-      collections: newCollections,
-      activeCollection: newCollections[key],
-      collectStatus: newCollectStatus
-    });
 
-    setCounter(key);
-    if (newCollections[key].items.length < initialLength) {
-      getCollectStatusBtn();
-      document.dispatchEvent(new CustomEvent('collectionUpdated'));
-      bsAlert('Item removed from collection!', 'success');
-      return true;
-    } else {
-      bsAlert('Item not found in collection!', 'info');
-      return false;
-    }
-  }
-
-  function setCounter(key){
-    // Lettura: ottiene una copia snapshot dello stato centrale
-    const currentState = stateManager.getState();
-    const counterElem = document.getElementById('countCollection');
-    if (!counterElem) return;
-    if (!key) {
-      counterElem.innerText = '0';
-      return;
-    }
-    const collection = currentState.collections[key];
-    counterElem.innerText = collection ? collection.items.length : '0';
-  } 
-
-  function getUserId() {
-    const jwt = localStorage.getItem("dyncol-jwt");
-    if (jwt) {
-      try {
-        const payload = JSON.parse(atob(jwt.split('.')[1]));
-        return payload.id || 'unregistered';
-      }catch (e) {
-        console.error("Invalid JWT token", e);
-      }
-    }
-
-    const activeUsr = document.getElementById('activeUsr');
-    if (activeUsr && activeUsr.value && activeUsr.value !== '' && activeUsr.value !== 'unregistered' && activeUsr.value !== 'guest') {
-      return activeUsr.value;
-    }else{
-      return 'unregistered';
-    }
-  }
 
   function isTitleDuplicate(title, excludeKey = null) {
     const list = getCollectionList();
@@ -368,7 +449,7 @@ export async function collection(){
         collectionsToExport = [currentState.activeCollection];
       }
     } else {
-      collectionsToExport = Object.values(currentState.collections).filter(c => c);
+      collectionsToExport = Object.values(currentState.collections).filter(Boolean);
     }
 
     collectionsToExport = collectionsToExport.filter(c => Array.isArray(c.items) && c.items.length > 0);
@@ -379,6 +460,7 @@ export async function collection(){
     }
 
     for (const coll of collectionsToExport) {
+      console.log('metadata esportato:', JSON.stringify(coll.metadata));
       const title = sanitizeString(coll.metadata?.title || 'Untitled_Collection');
       const csvName = `${dateString}_${title}.csv`;
       const jsonName = `${dateString}_${title}.json`;
@@ -401,92 +483,9 @@ export async function collection(){
     document.body.appendChild(a);
     a.click();
     URL.revokeObjectURL(url);
-    document.body.removeChild(a);
+    a.remove();
     return true;
   }
-
-  function collectionToCSV(items) {
-    if (!items.length) return '';
-    const keys = Object.keys(items[0]);
-    const csvRows = [
-      keys.join(','), // header
-      ...items.map(item => keys.map(k => `"${(item[k] ?? '').toString().replace(/"/g, '""')}"`).join(','))
-    ];
-    return csvRows.join('\n');
-  }
-
-  async function importCollection(file) {
-    // Lettura: ottiene una copia snapshot dello stato centrale
-    const currentState = stateManager.getState();
-    // 1. Controllo che sia un file JSON
-    if (!file || !file.name.endsWith('.json') || file.type !== 'application/json') {
-      return {status: 'danger', message: 'Please select a valid JSON file.'};
-    }
-
-    if (file.size > 1 * 1024 * 1024) { // 1 MB
-      return {status: 'danger', message: 'File too large. Maximum allowed size is 1 MB.'};
-    }
-
-    // 2. Leggi e valida la struttura interna
-    let importedData;
-    try {
-      const text = await file.text();
-      importedData = JSON.parse(text);
-    } catch (e) {
-      return {status: 'danger', message: 'Invalid JSON format.'};
-    }
-
-    // 2b. Controllo struttura
-    if (
-      !importedData ||
-      typeof importedData !== 'object' ||
-      !importedData.metadata ||
-      typeof importedData.metadata.title !== 'string' ||
-      !Array.isArray(importedData.items)
-    ) {
-      return {status: 'danger', message: 'JSON structure is not valid for a collection.'};
-    }
-
-    const metadataTemplateKeys = Object.keys(COLLECTIONTEMPLATE.metadata);
-    const importedMetadataKeys = Object.keys(importedData.metadata);
-    if (
-      importedMetadataKeys.length !== metadataTemplateKeys.length ||
-      !metadataTemplateKeys.every(k => importedMetadataKeys.includes(k))
-    ) {
-      return { status: 'danger', message: 'Metadata structure does not match template. Import aborted.' };
-    }
-
-    const itemTemplateKeys = Object.keys(ITEMTEMPLATE);
-    for (const item of importedData.items) {
-      const itemKeys = Object.keys(item);
-      // Controlla che le chiavi siano esattamente quelle del template
-      if (
-        itemKeys.length !== itemTemplateKeys.length ||
-        !itemTemplateKeys.every(k => itemKeys.includes(k))
-      ) {
-      return { status: 'danger', message: 'Item structure does not match template. Import aborted.' };
-      }
-    }
-
-    // 3. Controllo duplicato su metadata.title
-    const title = importedData.metadata.title.trim();
-    const duplicate = Object.values(currentState.collections).find(
-      c => c.metadata?.title?.trim().toLowerCase() === title.toLowerCase()
-    );
-
-    if (duplicate) {
-      return { status: 'duplicate', title, importedData, duplicate };
-    } else {
-      // 7. Nuova collezione
-      const key = "dyncoll_" + generateUUID();
-      // Modifica: aggiorna il singleton invece di usare localStorage diretto
-      const newCollections = { ...currentState.collections, [key]: importedData };
-      stateManager.updateState({ collections: newCollections });
-      await addCollection(key);
-      return { status: 'success', title, key };
-    }
-  }
-
 
   return { 
     getCollectionList,

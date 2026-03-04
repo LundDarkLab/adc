@@ -1,7 +1,7 @@
 import { initGallery as gallery } from "./modules/gallery.js";
 import { collection } from "./modules/collection.js";
 import { createGalleryItem, getCollectStatusBtn } from "./components/galleryCard.js";
-import { bsAlert, bsConfirm } from "./components/bsComponents.js";
+import { bsAlert } from "./components/bsComponents.js";
 import { confirmAction } from "./helpers/helper.js";
 import { collectionState } from "./modules/collectionStorage.js";
 import { toggleCollectionListBtn } from "./helpers/collectionHelper.js";
@@ -90,8 +90,6 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 async function stateInit() {
-  // Lettura: ottiene una copia snapshot dello stato centrale
-  const currentState = stateManager.getState();
   getCollectStatusBtn();
 }
 
@@ -151,10 +149,10 @@ export async function showCollection() {
   }
   
   // Se metadata completi, mostra la collezione
-  if (!hasItems) {
-    domEl.noItemsInCollection.style.display = 'block';
-  } else {
+  if (hasItems) {
     domEl.noItemsInCollection.style.display = 'none';
+  } else {
+    domEl.noItemsInCollection.style.display = 'block';
   }
   
   collectionBtnGroup(true);
@@ -207,7 +205,7 @@ async function onUpdateCollection() {
     return;
   }
   const collectionObj = currentState.collections[activeCollection];
-  if (!collectionObj || !collectionObj.metadata) {
+  if (!collectionObj?.metadata) {
     bsAlert('Collection not found!', 'danger');
     return;
   }
@@ -258,7 +256,6 @@ function updateMetadataFormVisibility(display = true, activeCollection=null, met
   domEl.collectionForm.style.display = display ? 'block' : 'none';
   if (activeCollection && metadata) {
     collectionMetadata(metadata);
-    return;
   }
 }
 
@@ -329,21 +326,27 @@ function validateMetadata(metadata, currentState) {
   return true;
 }
 
-async function handleCreateCollection(metadata, currentState) {
-  const key = await coll.createCollection(metadata, showCollection);
+// async function handleCreateCollection(metadata, currentState) {
+//   const key = await coll.createCollection(metadata, showCollection);
   
-  const updatedState = stateManager.getState();
+//   const updatedState = stateManager.getState();
 
-  updatedState.collectionList[key] = true;
-  updatedState.activeCollectionKey = key;
-  updatedState.activeCollection = updatedState.collections[key];
+//   updatedState.collectionList[key] = true;
+//   updatedState.activeCollectionKey = key;
+//   updatedState.activeCollection = updatedState.collections[key];
   
-  stateManager.updateState({
-    collectionList: { ...updatedState.collectionList },
-    activeCollectionKey: updatedState.activeCollectionKey,
-    activeCollection: updatedState.activeCollection
-  });
+//   stateManager.updateState({
+//     collectionList: { ...updatedState.collectionList },
+//     activeCollectionKey: updatedState.activeCollectionKey,
+//     activeCollection: updatedState.activeCollection
+//   });
   
+//   bsAlert('Collection successfully created!', 'success');
+//   updateMetadataFormVisibility(false, key, metadata);
+// }
+
+async function handleCreateCollection(metadata) {
+  const key = await coll.createCollection(metadata, showCollection);
   bsAlert('Collection successfully created!', 'success');
   updateMetadataFormVisibility(false, key, metadata);
 }

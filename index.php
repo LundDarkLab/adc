@@ -4,7 +4,8 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
   <head>
-    <?php require("assets/meta.php"); ?>
+    <title>Dynamic Collection - Home</title>
+    <?php require "assets/meta.php"; ?>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin="" media="screen"/>
     <link href="https://cdn.maptiler.com/maptiler-sdk-js/v1.2.0/maptiler-sdk.css" rel="preconnect" />
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -12,10 +13,10 @@
     <link rel="stylesheet" href="css/index.css">
   </head>
   <body>
-    <?php 
-      require("assets/header.php");
-      require("assets/loadingDiv.html"); 
-      require("assets/itemtool.html"); 
+    <?php
+      require "assets/header.php";
+      require "assets/loadingDiv.html";
+      require "assets/itemtool.html";
     ?>
     <div id="statToggle" class="">
       <button type="button" class="btn btn-lg btn-dark" id="statToggleBtn">
@@ -33,20 +34,20 @@
       <div id="itemsCount" class="">
         <div class="statSection text-center" id="institutionTot" >
           <h5 class="m-0 pt-2 fw-bold">Institutions</h5>
-          <h2 class="fs-1 fw-bold"></h2>
-        </div> 
+          <h2 class="fs-1 fw-bold"><span class="visually-hidden">Institution count: </span><span id="institutionCount"></span></h2>
+        </div>
         <div class="statSection text-center" id="artifactTot" >
           <h5 class="m-0 pt-2 fw-bold">Artifacts</h5>
-          <h2 class="fs-1 fw-bold"></h2>
+          <h2 class="fs-1 fw-bold"><span class="visually-hidden">Artifact count: </span><span id="artifactCount"></span></h2>
         </div>
         <div class="statSection text-center" id="modelTot" >
           <h5 class="m-0 pt-2 fw-bold">Models</h5>
-          <h2 class="fs-1 fw-bold"></h2>
+          <h2 class="fs-1 fw-bold"><span class="visually-hidden">Model count: </span><span id="modelCount"></span></h2>
         </div>
         <div class="statSection text-center" id="filesTot" >
           <h5 class="m-0 pt-2 fw-bold">Media</h5>
-          <h2 class="fs-1 fw-bold"></h2>
-        </div> 
+          <h2 class="fs-1 fw-bold"><span class="visually-hidden">Media count: </span><span id="mediaCount"></span></h2>
+        </div>
       </div>
       
       <div id="institution_chart" class="statSection"></div>
@@ -61,7 +62,7 @@
         </div>
       </div>
       
-      <div id="crono_chart" class="statSection"></div> 
+      <div id="crono_chart" class="statSection"></div>
      
     </div>
 
@@ -97,9 +98,10 @@
         </div>
         <div id="collectionContainer">
           <div id="collectionTitleWrap">
-            <h2 id="collectionTitle" class="txt-adc-dark border-bottom p-3 m-0 collectionTitle"></h2>
+            <h2 id="collectionTitle" class="txt-adc-dark border-bottom p-3 m-0 collectionTitle"><span class="visually-hidden">Collection Title</span></h2>
             <div id="collectionBtnWrap" class="bg-light border-bottom">
-              <div class="btn-group" role="group" aria-label="First group">
+              <fieldset class="btn-group">
+                <legend class="visually-hidden">Collection actions</legend>
                 <div class="dropdown">
                   <button type="button" class="btn btn-light rounded-0 dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
                     <span class="mdi mdi-code-json"></span> json file
@@ -116,7 +118,7 @@
                 </button>
                 <button type="button" class="btn btn-light" id="btUpdateMetadata">
                   <span class="mdi mdi-information-outline"></span> metadata
-                </button>          
+                </button>
                 <div class="dropdown" id="changeCollectionDropdown">
                   <button type="button" class="btn btn-light rounded-0 dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
                     <span class="mdi mdi-swap-horizontal"></span> collections
@@ -133,7 +135,7 @@
                     <button class="dropdown-item" id="btDeleteAllCollections"><span class="mdi mdi-delete-alert"></span> delete all collections</button>
                   </ul>
                 </div>
-              </div>
+              </fieldset>
             </div>
           </div>
           <div id="collectionFormContainer">
@@ -151,7 +153,7 @@
                 <div class="mb-3 col-6">
                   <label for="collAuthor" class="form-label">Author</label>
                   <input type="text" class="form-control form-control-sm" id="collAuthor" required>
-                </div>                
+                </div>
               </div>
               <div class="row">
                 <div class="col mb-3">
@@ -181,13 +183,12 @@
             </div>
           </div>
           <div id="wrapCollection" class="card-wrap"></div>
-        </div>  
+        </div>
       </div>
     </main>
     <?php
-      require("assets/menu.php");
-      // require("assets/footer.php");
-      require("assets/js.html"); 
+      require "assets/menu.php";
+      require "assets/js.html";
     ?>
   </body>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -197,6 +198,5 @@
   <script src="https://www.gstatic.com/charts/loader.js"></script>
   <script src="js/maps/geo_config.js?v=<?php echo filemtime('js/maps/geo_config.js'); ?>" charset="utf-8"></script>
   <script src="js/maps/geo_function.js?v=<?php echo filemtime('js/maps/geo_function.js'); ?>" charset="utf-8"></script>
-  <!-- <script src="js/charts.js" charset="utf-8"></script> -->
   <script src="js/index.js?v=<?php echo filemtime('js/index.js'); ?>" charset="utf-8" type="module"></script>
 </html>
