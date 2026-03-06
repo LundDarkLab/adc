@@ -95,57 +95,53 @@ const pageRoutes = {
 
 // === INIZIALIZZAZIONE PRINCIPALE ===
 
-(async () => {
-  try {
-    showLoading(true);
+try {
+  showLoading(true);
+  
+  // 1. Carica risorse base (comuni a tutte le pagine)
+  await Promise.all([
+    loadCSS(bootstrap.cssHref, bootstrap.cssIntegrity, bootstrap.cssCrossOrigin),
+    loadCSS(mdi.cssHref, mdi.cssIntegrity, mdi.cssCrossOrigin),
+    loadCSS('css/main.css', '', ''),
+    loadScript(jQuery.jsSrc, jQuery.jsIntegrity, jQuery.jsCrossOrigin),
+    loadScript(bootstrap.jsSrc, bootstrap.jsIntegrity, bootstrap.jsCrossOrigin)
+  ]);
+  
+  // 2. Setup globale (header, menu, footer, tooltips)
+  const [initHeader, initSideMenu, initFooter, bsModule] = await Promise.all([
+    import('./shared/components/headerMenu/initHeaderMenu.js'),
+    import('./shared/components/sideMenu/initSideMenu.js'),
+    import('./shared/components/footer/initFooter.js'),
+    import('./shared/components/bsComponents/initBsComponents.js')
+  ]);
+  
+  await Promise.all([
+    initSideMenu.initSideMenu(),
+    initHeader.initHeaderMenu(),
+    initFooter.initFooter()
+  ]);
+  bsModule.bsTooltips();
+  // 3. Routing: carica pagina specifica
+  const route = pageRoutes[window.pageType];
+  
+  if (route) {
+    // Carica CSS specifici della pagina
+    const cssPromises = route.css.map(href => loadCSS(href, '', ''));
     
-    // 1. Carica risorse base (comuni a tutte le pagine)
-    await Promise.all([
-      loadCSS(bootstrap.cssHref, bootstrap.cssIntegrity, bootstrap.cssCrossOrigin),
-      loadCSS(mdi.cssHref, mdi.cssIntegrity, mdi.cssCrossOrigin),
-      loadCSS('css/main.css', '', ''),
-      loadScript(jQuery.jsSrc, jQuery.jsIntegrity, jQuery.jsCrossOrigin),
-      loadScript(bootstrap.jsSrc, bootstrap.jsIntegrity, bootstrap.jsCrossOrigin)
-    ]);
+    // Carica dipendenze (Leaflet, 3DHop, Chart.js, etc.)
+    const depPromises = (route.dependencies || []).map(fn => fn());
     
-    // 2. Setup globale (header, menu, footer, tooltips)
-    const [initHeader, initSideMenu, initFooter, bsModule] = await Promise.all([
-      import('./shared/components/headerMenu/initHeaderMenu.js'),
-      import('./shared/components/sideMenu/initSideMenu.js'),
-      import('./shared/components/footer/initFooter.js'),
-      import('./shared/components/bsComponents/initBsComponents.js')
-    ]);
+    // Esegui in parallelo
+    await Promise.all([...cssPromises, ...depPromises]);
     
-    await Promise.all([
-      initSideMenu.initSideMenu(),
-      initHeader.initHeaderMenu(),
-      initFooter.initFooter()
-    ]);
-
-    bsModule.bsTooltips();
-
-    // 3. Routing: carica pagina specifica
-    const route = pageRoutes[window.pageType];
-    
-    if (route) {
-      // Carica CSS specifici della pagina
-      const cssPromises = route.css.map(href => loadCSS(href, '', ''));
-      
-      // Carica dipendenze (Leaflet, 3DHop, Chart.js, etc.)
-      const depPromises = route.dependencies.map(fn => fn());
-      
-      // Esegui in parallelo
-      await Promise.all([...cssPromises, ...depPromises]);
-      
-      // Inizializza la pagina
-      await route.init();
-    } else {
-      console.warn(`Nessuna route definita per pageType: ${window.pageType}`);
-    }
-    
-    showLoading(false);
-  } catch (error) {
-    console.error('Errore caricamento:', error);
-    showLoading(false);
+    // Inizializza la pagina
+    await route.init();
+  } else {
+    console.warn(`Nessuna route definita per pageType: ${window.pageType}`);
   }
-})();
+  
+  showLoading(false);
+} catch (error) {
+  console.error('Errore caricamento:', error);
+  showLoading(false);
+}

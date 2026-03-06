@@ -6,10 +6,10 @@
 <html lang="en" dir="ltr">
   <head>
     <title>Create New Model</title>
-    <?php require_once "assets/meta.php"; ?>
+    <?php require "assets/meta.php"; ?>
   </head>
   <body>
-    <?php require_once "assets/configuration/logged.php"; ?>
+    <?php require "assets/configuration/logged.php"; ?>
     <header id="header"></header>
     <div id="sideMenu"></div>
     <main>
@@ -179,7 +179,7 @@
                       <h6>the model will be displayed after uploading an allowed file</h6>
                     </div>
                   </div>
-                  <?php require 'assets/canvas.html'; ?>
+                  <?php require 'assets/canvas.php'; ?>
                 </div>
               </div>
             </div>

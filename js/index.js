@@ -287,7 +287,7 @@ async function handleCollectionFormSubmit(e) {
   
   try {
     if (currentState.collectionFormMode === 'create') {
-      await handleCreateCollection(metadata, currentState);
+      await handleCreateCollection(metadata);
     } else if (currentState.collectionFormMode === 'update') {
       await handleUpdateCollection(metadata, currentState);
     }
@@ -325,25 +325,6 @@ function validateMetadata(metadata, currentState) {
   }
   return true;
 }
-
-// async function handleCreateCollection(metadata, currentState) {
-//   const key = await coll.createCollection(metadata, showCollection);
-  
-//   const updatedState = stateManager.getState();
-
-//   updatedState.collectionList[key] = true;
-//   updatedState.activeCollectionKey = key;
-//   updatedState.activeCollection = updatedState.collections[key];
-  
-//   stateManager.updateState({
-//     collectionList: { ...updatedState.collectionList },
-//     activeCollectionKey: updatedState.activeCollectionKey,
-//     activeCollection: updatedState.activeCollection
-//   });
-  
-//   bsAlert('Collection successfully created!', 'success');
-//   updateMetadataFormVisibility(false, key, metadata);
-// }
 
 async function handleCreateCollection(metadata) {
   const key = await coll.createCollection(metadata, showCollection);

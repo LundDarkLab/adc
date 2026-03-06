@@ -1,5 +1,7 @@
 <div id="3dhop" class="tdhop animated rounded">
   <canvas id="draw-canvas"></canvas>
+
+  <!-----ANNOTATIONS-------->
   <div id="wrapAnnotations" class="modelTools rounded d-none">
     <div id="headerAnnotations" class="d-flex justify-content-between mb-3 border-bottom">
       <div id="annotationsNav" class="btn-group btn-group-sm mb-3" role="tablist" aria-label="Annotations navigation">
@@ -19,7 +21,7 @@
     </div>
     <div id="bodyAnnotations">
       <div class="tab-content" id="pills-tabContent">
-        <div class="tab-pane fade show active annotationPane" id="viewsListPane" role="tabpanel" aria-labelledby="viewsTab" tabindex="0">
+        <div class="tab-pane fade show active annotationPane" id="viewsListPane" role="tabpanel" aria-labelledby="viewsTab">
           <div id="viewsListDiv" class="objectContainer"></div>
           <div id="viewlistBtn" class="p-1 bodyToolbar">
             <button id="btAddView" type="button" class="btn btn-sm btn-secondary w-100" data-bs-toggle="tooltip" title="Save current view">
@@ -27,7 +29,7 @@
             </button>
           </div>
         </div>
-        <div class="tab-pane fade annotationPane" id="spotsListPane" role="tabpanel" aria-labelledby="spotsTab" tabindex="0">
+        <div class="tab-pane fade annotationPane" id="spotsListPane" role="tabpanel" aria-labelledby="spotsTab">
           <div id="spotsListDiv" class="objectContainer"></div>
           <div id="spotsListBtn" class="p-1 bodyToolbar">
             <button id="btAddSpot" type="button" class="btn btn-sm btn-secondary w-100" data-bs-toggle="tooltip" title="Add new spot">
@@ -38,7 +40,7 @@
             </button>
           </div>
         </div>
-        <div class="tab-pane fade annotationPane" id="notesPane" role="tabpanel" aria-labelledby="notesTab" tabindex="0">
+        <div class="tab-pane fade annotationPane" id="notesPane" role="tabpanel" aria-labelledby="notesTab">
           <div id="noteDiv" class="annotationsBody">
             <textarea id="annNotes" name="notes" class="form-control h-100" placeholder="add notes"></textarea>
           </div>
@@ -64,9 +66,9 @@
 
   </div>
   
-  <!-----HORIZONTAL TOOLBAR ON TOP-------->  
+  <!-----HORIZONTAL TOOLBAR ON TOP-------->
   <div id="modelToolsH" class="modelTools rounded">
-    <div class="btn-group" role="group">
+    <fieldset class="btn-group" role="group">
       <button type="button" id="btHome" class="btn btn-adc-blue" data-bs-toggle="tooltip" title="restore initial view">
         <span class="mdi mdi-home"></span>
       </button>
@@ -82,16 +84,10 @@
       <button type="button" id="btParadata" class="btn btn-adc-blue btParadataToggle" data-bs-toggle="tooltip" title="view model and objects paradata">
         <span class="mdi mdi-newspaper"></span>
       </button>
-      <!-- <button type="button" id="btHelp" class="btn btn-adc-blue" data-bs-toggle="tooltip" title="viewer help">
-        <span class="mdi mdi-help"></span>
-      </button> -->
-      <!-- <button type="button" class="btn btn-success" id="saveModelParam" data-bs-toggle="tooltip" title="Save parameters and active tools in the database, they will be used the next time the model is loaded">
-        <span class="mdi mdi-content-save"></span>
-      </button> -->
-    </div>
+    </fieldset>
   </div>
 
-  <!-----VERTICAL COMMAND PANEL-------->    
+  <!-----VERTICAL COMMAND PANEL-------->
   <div id="modelToolsV" class="rounded modelTools">
 
     <div id="trackballControlsWrap" class="m-1">
@@ -113,36 +109,36 @@
         <button type="button" class="btn btn-sm btn-outline-secondary btView" value="bottom" data-bs-toggle="tooltip" title="From Below">
           <span class="mdi mdi-arrow-up-bold"></span>
         </button>
-    </div> 
+    </div>
 
     <div class="m-1">
       <canvas id="lightcontroller"></canvas>
-      <div class="btn-group" role="group">
-      <button type="button" id="btLight" class="btn btn-outline-secondary" data-bs-toggle="tooltip" title="Lighting Direction</br>(click and drag)">
-        <span class="mdi mdi-spotlight-beam"></span>
-      </button>
-      <button type="button" id="btLighting" class="btn btn-adc-blue" data-bs-toggle="tooltip" title="Lighting on/off">
-        <span class="mdi mdi-lightbulb"></span>
-      </button>      
-    </div>
-    </div>
-
-    <div class="m-1">
-      <div class="btn-group" role="group">
-      <button type="button" id="btTexture" class="btn btn-adc-blue" data-bs-toggle="tooltip" title="Texture / Solid Color">
-        <span class="mdi mdi-palette"></span>
-      </button>
-      <button type="button" id="btTransparency" class="btn btn-outline-secondary" data-bs-toggle="tooltip" title="Transparency on/off">
-        <span class="mdi mdi-contrast-circle"></span>
-      </button>
-      <button type="button" id="btSpecular" class="btn btn-outline-secondary" data-bs-toggle="tooltip" title="Specularity on/off">
-        <span class="mdi mdi-bowling"></span>
-      </button>
-    </div>
+      <fieldset class="btn-group" role="group">
+        <button type="button" id="btLight" class="btn btn-outline-secondary" data-bs-toggle="tooltip" title="Lighting Direction</br>(click and drag)">
+          <span class="mdi mdi-spotlight-beam"></span>
+        </button>
+        <button type="button" id="btLighting" class="btn btn-adc-blue" data-bs-toggle="tooltip" title="Lighting on/off">
+          <span class="mdi mdi-lightbulb"></span>
+        </button>
+      </fieldset>
     </div>
 
     <div class="m-1">
-      <div class="btn-group" role="group">
+      <fieldset class="btn-group" role="group">
+        <button type="button" id="btTexture" class="btn btn-adc-blue" data-bs-toggle="tooltip" title="Texture / Solid Color">
+          <span class="mdi mdi-palette"></span>
+        </button>
+        <button type="button" id="btTransparency" class="btn btn-outline-secondary" data-bs-toggle="tooltip" title="Transparency on/off">
+          <span class="mdi mdi-contrast-circle"></span>
+        </button>
+        <button type="button" id="btSpecular" class="btn btn-outline-secondary" data-bs-toggle="tooltip" title="Specularity on/off">
+          <span class="mdi mdi-bowling"></span>
+        </button>
+      </fieldset>
+    </div>
+
+    <div class="m-1">
+      <fieldset class="btn-group" role="group">
       <button type="button" id="btGrid" class="btn btn-adc-blue" data-bs-toggle="tooltip" title="Reference grid">
         <span class="mdi mdi-border-all"></span>
       </button>
@@ -152,42 +148,49 @@
       <button type="button" id="btOrtho" class="btn btn-outline-secondary" data-bs-toggle="tooltip" title="Orthographic view">
         <span class="mdi mdi-cube-outline"></span>
       </button>
-      </div>
+      </fieldset>
     </div>
 
     <hr/>
 
-    <div class="m-1">
-      <div class="btn-group" role="group" id="measureTools">
+    <div class="my-1">
+      <fieldset class="btn-group w-100" role="group" id="measureTools">
         <input type="checkbox" name="measureTool" class="btn-check measureTools" value="distance" id="distanceTool" autocomplete="off">
-        <label class="toolBtn btn btn-outline-secondary" title="point-to-point measure" for="distanceTool"><span class="mdi mdi-ruler"></span></label>
+        <label class="toolBtn btn btn-outline-secondary" title="point-to-point measure" for="distanceTool">
+          <span class="mdi mdi-ruler"></span>
+          <span class="visually-hidden">point-to-point measure</span>
+        </label>
+
         <input type="checkbox" name="measureTool" class="btn-check measureTools" value="pick" id="pickTool" autocomplete="off">
-        <label class="toolBtn btn btn-outline-secondary" title="XYZ point picking" for="pickTool"><span class="mdi mdi-map-marker"></span></label>
+        <label class="toolBtn btn btn-outline-secondary" title="XYZ point picking" for="pickTool">
+          <span class="mdi mdi-map-marker"></span>
+          <span class="visually-hidden">XYZ point picking</span>
+        </label>
+        
         <input type="checkbox" name="measureTool" class="btn-check measureTools" value="angle" id="angleTool" autocomplete="off">
-        <label class="toolBtn btn btn-outline-secondary" title="angle measure" for="angleTool"><span class="mdi mdi-math-compass"></span></label>
-      </div>
-      <div class="my-1" role="group">
+        <label class="toolBtn btn btn-outline-secondary" title="angle measure" for="angleTool">
+          <span class="mdi mdi-math-compass"></span>
+          <span class="visually-hidden">angle measure</span>
+        </label>
+      </fieldset>
+      <fieldset class="my-1" role="group">
         <input type="checkbox" class="btn-check sectionTool" id="btSection" autocomplete="off">
-        <label class="toolBtn btn btn-sm btn-outline-secondary w-100" title="enable section tool" for="btSection">sections</label> 
-      </div>      
+        <label class="toolBtn btn btn-sm btn-outline-secondary w-100" title="enable section tool" for="btSection">sections</label>
+      </fieldset>
     </div>
-    
   </div>
-
-  <!-----VERTICAL COMMAND PANEL-------->
-
 
   <!-----OBJECT CONTROL-------->
-  <div id="object-control" class="rounded invisible"></div>
+  <div id="object-control" class="rounded modelTools d-none"></div>
   
-  <!-----MEASUREMENT OUTPUT PANEL-------->  
-  <div id="measure-box" class="rounded invisible text-center">
+  <!-----MEASUREMENT OUTPUT PANEL--------->
+  <div id="measure-box" class="rounded invisible text-center modelTools">
     <div id="panel_instructions" class="mb-2 fw-bold"></div>
     <p id="measure-box-title" class="m-0 border-bottom border-secondary"></p>
-    <h6 id="measure-output" class="m-0"></h6>
+    <h6 id="measure-output" class="m-0"><span class="visually-hidden">Measure output</span></h6>
   </div>
 
-  <!-----SECTIONS PANEL-------->  
+  <!-----SECTIONS PANEL-------->
   <div id="sections-box" class="container-fluid text-bg-dark rounded d-none">
     <div class="row">
       <div class="col-4">
@@ -208,7 +211,7 @@
     </div>
     <div class="row">
       <div class="col-2">
-        <img id="xPlaneToggle" class="img-fluid planeToggle" src="img/ico/sectionX_off.png">
+        <img id="xPlaneToggle" alt="section X" class="img-fluid planeToggle" src="img/ico/sectionX_off.png">
       </div>
       <div class="col-8 p-0">
         <input type="range" id="xPlaneRange" class="w-100 planeRange" min="0" max="1" step="0.01" value="0.5">
@@ -221,7 +224,7 @@
     </div>
     <div class="row">
       <div class="col-2">
-        <img id="yPlaneToggle" class="img-fluid planeToggle" src="img/ico/sectionY_off.png">
+        <img id="yPlaneToggle" alt="section Y" class="img-fluid planeToggle" src="img/ico/sectionY_off.png">
       </div>
       <div class="col-8 p-0">
         <input type="range" id="yPlaneRange" class="w-100 planeRange" min="0" max="1" step="0.01" value="0.5">
@@ -234,7 +237,7 @@
     </div>
     <div class="row">
       <div class="col-2">
-        <img id="zPlaneToggle" class="img-fluid planeToggle" src="img/ico/sectionZ_off.png">
+        <img id="zPlaneToggle" alt="section Z" class="img-fluid planeToggle" src="img/ico/sectionZ_off.png">
       </div>
       <div class="col-8 p-0">
         <input type="range" id="zPlaneRange" class="w-100 planeRange" min="0" max="1" step="0.01" value="0.5">
@@ -266,42 +269,39 @@
     </div>
   </div>
 
+  <!-----MODEL METADATA MODAL-------->
   <div id="paradata-modal" class="d-none">
     <div class="paradata-header border-bottom d-flex justify-content-between align-items-center mb-3">
-      <h5>Model paradata</h5>
+      <h5>Model metadata</h5>
       <button type="button" class="btn-close btParadataToggle" aria-label="Close" id="dismiss-paradata-modal"></button>
     </div>
     <div class="paradata-body">
       <div id="model-metadata" class="mb-3">
-        <!-- Il div deve comparire solo in artifact_view, aggiungilo dinamicamente -->
-        <!-- <div class="alert alert-light p-1 d-flex justify-content-between align-items-center" id="alertArtifactModelConnection">
-          <p id="modelConnectedText" class="w-auto m-0"></p>
-          <a href="#" class="btn btn-sm btn-adc-dark w-auto" id="modelConnectedBtn"></a>
-        </div> -->
-        <!-- <div class="alert p-1 text-center" id="model-status"></div> -->
         <ul class="list-group list-group-flush">
           <li class="list-group-item"><span>Status</span><span id="model-status" class="alert p-1 text-center"></span></li>
           <li class="list-group-item"><span>Name</span><span id="model-name"></span></li>
           <li class="list-group-item"><span>Description</span><span id="model-description"></span></li>
           <li class="list-group-item"><span>Note</span><span id="model-note"></span></li>
           <li class="list-group-item"><span>UUID</span><span id="model-uuid" data-bs-toggle="tooltip" data-bs-title="copy to clipboard"></span></li>
-          <li class="list-group-item" id="doiItem"><span>DOI</span><span><a href="" target="_blank" id="model-doi"></a></span></li>
+          <li class="list-group-item" id="doiItem">
+            <span>DOI</span>
+            <span>
+              <a href="" target="_blank" id="model-doi"><span class="visually-hidden">DOI link</span></a>
+            </span>
+          </li>
           <li class="list-group-item"><span>Citation</span><span id="model-citation"></span></li>
         </ul>
         <nav id="toolBarModel" class="my-3 pb-2 border-bottom">
-          <a href="#" class="btn btn-sm btn-adc-dark" name="editModelBtn">edit</a>
-          <!-- <button type="button" class="btn btn-sm btn-adc-dark" name="addObject">add object</button> -->
-          <button type="button" class="btn btn-sm" name="modelVisibility">change status</button>
-          <button type="button" class="btn btn-sm btn-danger float-end" name="deleteModel">delete</button>
+          <a href="#" class="btn btn-sm btn-adc-dark" id="editModelBtn">edit</a>
+          <button type="button" class="btn btn-sm" id="modelVisibility">change status</button>
+          <button type="button" class="btn btn-sm btn-danger float-end" id="deleteModel">delete</button>
         </nav>
       </div>
       <div id="objects-metadata">
-        <h5>Objects metadata</h5>
-        <div id="listWrap"></div>
+        <h5>Objects</h5>
+        <div id="thumbList"></div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- experimental -->
-<canvas id="dynamicLight" width="150" height="150" style="display:none;"></canvas>

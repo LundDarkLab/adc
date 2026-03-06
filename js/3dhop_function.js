@@ -1,3 +1,4 @@
+import { bsModal } from "./components/bsComponents.js";
 import { viewsStorage } from "./modules/viewsStorage.js";
 import { init3dhop } from "./components/viewer/initViewer.js";
 import { initGrid } from "./components/viewer/grid.js";
@@ -93,6 +94,8 @@ async function initModel(modelOrObject, onReady) {
   if (!isUpload) {
     handleUserPermissions(mainData);
     renderModelMetadata(mainData);
+    initObjectToggleToolbar(object);
+    initObjectMetadata(object);
     await syncAnnotations(modelId);
   }
   initListeners();
@@ -118,7 +121,7 @@ function handleUserPermissions(mainData) {
   const modelStatus = document.querySelector("#model-status");
   modelStatus.classList.add(statusAlert);
   if(isLoggedUser){
-    const btn = document.querySelector("button[name=modelVisibility");
+    const btn = document.getElementById('modelVisibility');
     btn.classList.add(statusBtnClass);
     btn.value = statusBtnValue;
     btn.addEventListener('click', () => changeModelStatus(modelId));
@@ -134,6 +137,8 @@ function handleUserPermissions(mainData) {
  * @param {Object} mainData - Dati principali del modello.
  */
 function renderModelMetadata(mainData) {
+  console.log(mainData);
+  
   const isEmpty = (value) => value === null || value === undefined || value === '';
   Object.keys(mainData).forEach(key => {    
     if(!isEmpty(mainData[key])) {
@@ -158,6 +163,110 @@ function renderModelMetadata(mainData) {
       if(key == 'doi'){ document.querySelector("#doiItem")?.remove(); }
       document.querySelector(`#model-${key}`)?.parentElement?.remove();
     }
+  });
+}
+
+function initObjectToggleToolbar(data){
+  if(data.length <= 1){ return; }
+  const toolbar = document.getElementById('object-control');
+  toolbar.classList.remove('d-none');
+  const fragment = document.createDocumentFragment();
+  data.forEach((obj, index) => {
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-sm btn-outline-secondary active';
+    btn.type = 'button';
+    btn.setAttribute('aria-label', `Object ${index}`);
+
+    const img = document.createElement('img');
+    const thumbUrl = obj.thumbnail ? `/archive/thumb/${obj.thumbnail}` : 'https://via.placeholder.com/150?text=No+Thumbnail';
+    img.src = thumbUrl;
+    img.alt = '';
+
+    btn.appendChild(img);
+    btn.addEventListener('click', () => toggleObject(obj,btn));
+
+    fragment.appendChild(btn);
+  });
+  
+  toolbar.innerHTML = '';
+  toolbar.appendChild(fragment);
+}
+
+function toggleObject(obj, btn){  
+  const instanceName = 'mesh_' + obj.id;
+  const isHidden = btn.classList.contains('hidden');
+  presenter.setInstanceVisibilityByName(instanceName, isHidden, isHidden);
+  btn.classList.toggle('hidden');
+}
+
+function initObjectMetadata(data){
+  const thumbList = document.getElementById('thumbList');
+  data.forEach((obj, index) => {
+    const thumbUrl = obj.thumbnail ? `/archive/thumb/${obj.thumbnail}` : 'https://via.placeholder.com/150?text=No+Thumbnail';
+    const img = document.createElement('img');
+    img.src = thumbUrl;
+    img.alt = `Object ${index}`;
+    img.classList.add('img-thumbnail', 'm-2');
+    img.style.width = '150px';
+    img.style.height = '150px';
+    img.style.objectFit = 'cover';
+    img.addEventListener('click', () => showObjectMetadata(obj));
+    thumbList.appendChild(img);
+  });
+}
+
+function showObjectMetadata(data){
+  const fieldsList = new Set(['id', 'thumbnail', 'author', 'owner', 'license', 'license_acronym', 'license_link', 'description', 'note', 'acquisition_method', 'software', 'points', 'polygons', 'textures', 'scans', 'pictures', 'encumbrance', 'measure_unit']);
+
+  const thumbRow = `
+  <tr>
+    <td colspan="2" style="padding:0">
+      <img 
+        src="${data.thumbnail ? `/archive/thumb/${data.thumbnail}` : 'https://via.placeholder.com/150?text=No+Thumbnail'}" 
+        alt="Thumbnail" 
+        class="img-thumbnail" 
+        style="width:100%; height:200px; object-fit:cover; display:block;">
+    </td>
+  </tr>
+`;
+
+  const rows = Object.entries(data)
+    .filter(([key]) => fieldsList.has(key))
+    .reduce((acc, [key, value]) => {
+      if (['license_acronym', 'license_link', 'thumbnail'].includes(key)) return acc; // skip, già gestiti
+      if (key === 'license') {
+        const link = data.license_link
+          ? `<a href="${data.license_link}" target="_blank">${value} (${data.license_acronym ?? ''})</a>`
+          : `${value} (${data.license_acronym ?? 'N/A'})`;
+        acc.push(['license', link]);
+      } else {
+        acc.push([key, value]);
+      }
+      return acc;
+    }, [])
+    .map(([key, value]) => `
+      <tr>
+        <th scope="row" class="text-capitalize">${key.replaceAll('_', ' ')}</th>
+        <td>${value ?? 'N/A'}</td>
+      </tr>`)
+    .join('');
+
+  const body = `
+    <table class="table table-sm table-striped">
+      <tbody>
+        ${thumbRow}
+        ${rows}
+      </tbody>
+    </table>`;
+
+  bsModal({
+    title: 'Object details',
+    body: body,
+    size: 'modal-lg',
+    buttons: [
+      { text: 'Close', class: 'btn-secondary', action: 'close' },
+      { text: 'View in archive', class: 'btn-primary', action: () => window.open(`model_edit.php?id=${data.id}`) }
+    ]
   });
 }
 
@@ -244,6 +353,7 @@ function startupViewer(object, onReady) {
   init3dhop(isLoggedUser);
   const myScene = createViewerScene(object);
   presenter.setScene(myScene);
+    
   setupViewerState();
   setupViewerComponents();
   applyInitialViewerState();
@@ -281,10 +391,10 @@ function createViewerScene(object) {
     "cube": { url: "archive/models/cube.ply" }
   };
   const modelInstances = {};
-  object.forEach((element, index) => {
-    meshes['mesh_' + index] = { url: 'archive/models/' + element.object };
-    modelInstances['mesh_' + index] = {
-      mesh: 'mesh_' + index,
+  object.forEach((element) => {
+    meshes['mesh_' + element.id] = { url: 'archive/models/' + element.object };
+    modelInstances['mesh_' + element.id] = {
+      mesh: 'mesh_' + element.id,
       tags: ['Group'],
       color: [0.5, 0.5, 0.5],
       backfaceColor: [0.5, 0.5, 0.5, 3],

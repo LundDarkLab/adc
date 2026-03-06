@@ -96,16 +96,17 @@ export function bsConfirm(message/*, onConfirm, onCancel = null*/) {
  * @param {string} [selector='[data-bs-toggle="tooltip"]'] - The CSS selector for tooltip elements.
  */
 export function bsTooltips(selector = '[data-bs-toggle="tooltip"]') {
-  const tooltipTriggerList = [].slice.call(document.querySelectorAll(selector));
-  tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+  const tooltipTriggerList = Array.prototype.slice.call(document.querySelectorAll(selector));
+  const tooltips = tooltipTriggerList.map(function (tooltipTriggerEl) {
     const trigger = tooltipTriggerEl.tagName === 'BUTTON' ? 'hover' : 'hover focus';
-    new bootstrap.Tooltip(tooltipTriggerEl, {
+    return new bootstrap.Tooltip(tooltipTriggerEl, {
       trigger: trigger,
       html: true,
       container: 'body',
       zIndex: 9999
     });
   });
+  return tooltips;
 }
 
 
@@ -114,15 +115,16 @@ export function bsTooltips(selector = '[data-bs-toggle="tooltip"]') {
  * @param {string} [selector='[data-bs-toggle="popover"]'] - The CSS selector for popover elements.
  */
 export function bsPopovers(selector = '[data-bs-toggle="popover"]') {
-  const popoverTriggerList = [].slice.call(document.querySelectorAll(selector));
-  popoverTriggerList.forEach(function (popoverTriggerEl) {
-    new bootstrap.Popover(popoverTriggerEl, {
+  const popoverTriggerList = Array.prototype.slice.call(document.querySelectorAll(selector));
+  const popovers = popoverTriggerList.map(function (popoverTriggerEl) {
+    return new bootstrap.Popover(popoverTriggerEl, {
       trigger: 'focus',
       html: true,
       container: 'body',
       zIndex: 9999
     });
   });
+  return popovers;
 }
 
 
@@ -160,7 +162,16 @@ export function bsModal(options = {}) {
 
     const modalId = `modal-${Date.now()}`;
     const sizeClass = size ? ` ${size}` : '';
-    const backdropAttr = backdrop === 'static' ? 'data-bs-backdrop="static"' : backdrop ? '' : 'data-bs-backdrop="false"';
+    
+    let backdropAttr;
+    if (backdrop === 'static') {
+      backdropAttr = 'data-bs-backdrop="static"';
+    } else if (backdrop) {
+      backdropAttr = '';
+    } else {
+      backdropAttr = 'data-bs-backdrop="false"';
+    }
+    
     const keyboardAttr = keyboard ? '' : 'data-bs-keyboard="false"';
 
     const buttonsHTML = buttons.map((btn, index) => {
@@ -170,7 +181,7 @@ export function bsModal(options = {}) {
 
     const modalHTML = `
       <div class="modal fade" id="${modalId}" ${backdropAttr} ${keyboardAttr} tabindex="-1" aria-labelledby="${modalId}-label" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered${sizeClass}">
+        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered${sizeClass}">
           <div class="modal-content">
             <div class="modal-header">
               <h5 class="modal-title" id="${modalId}-label">${title}</h5>
@@ -200,7 +211,11 @@ export function bsModal(options = {}) {
       const btnElement = document.getElementById(`${modalId}-btn-${index}`);
       btnElement.addEventListener("click", () => {
         modalInstance.hide();
-        resolve(btn.action || btn.text);
+        if (typeof btn.action === 'function') {
+          btn.action();
+        } else {
+          resolve(btn.action || btn.text);
+        }
       });
     });
   });
