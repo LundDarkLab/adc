@@ -1,0 +1,37 @@
+#licenseInfo{
+  position: relative;
+  width: 100%;
+  height: auto;
+  display: flex;
+  gap: 15px;
+  flex-direction: row;
+  justify-content: space-between;
+  align-content: center;
+  flex-wrap: wrap;
+}
+#licenseInfo > div{
+  text-align: left;
+  width:100%;
+}
+#licenseInfo > div > h5{font-weight: bold;}
+#licenseInfo > div > a{
+  color: var(--blue);
+  text-decoration: none;
+}
+
+/* Large tablets in landscape mode */
+@media (min-width: 1024px) and (max-width: 1366px) and (orientation: landscape) {
+  #licenseInfo > div{
+    text-align: center;
+    width:30%;
+  }
+}
+
+
+/* Large devices (desktops, 992px and up) */
+@media (min-width: 992px) {
+  #licenseInfo > div{
+    text-align: center;
+    width:30%;
+  }
+}

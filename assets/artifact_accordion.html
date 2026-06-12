@@ -1,0 +1,206 @@
+<div class="accordion-item" id="artifactSection">
+  <h2 class="accordion-header" id="main-section">
+    <button class="accordion-button collapsed  rounded-top" type="button" data-bs-toggle="collapse" data-bs-target="#mainSection" aria-expanded="false" aria-controls="mainSection">Main data</button>
+  </h2>
+  <div id="mainSection" class="accordion-collapse collapse" aria-labelledby="main-section" data-bs-parent="#accordionArtifact">
+    <div class="accordion-body border">
+      <ul class="list-group list-group-flush">
+        <li class="list-group-item">
+          <span>Name</span>
+          <span id="name"></span>
+        </li>
+        <li class="list-group-item">
+          <span>Category class</span>
+          <span id="category_class"></span>
+        </li>
+        <li class="list-group-item">
+          <span>Category specification</span>
+          <span id="category_specs"></span>
+        </li>
+        <li class="list-group-item">
+          <span>Typology</span>
+          <span id="type"></span>
+        </li>
+        <li class="list-group-item">
+          <span>Material / technique</span>
+          <span id="material">
+            <ol id="materialTechList" class="list-group list-group-numbered list-group-flush"></ol>
+          </span>
+        </li>
+        <li class="list-group-item">
+          <span>Description</span>
+          <span id="description"></span>
+        </li>
+        <li class="list-group-item">
+          <span>Notes</span>
+          <span id="notes"></span>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+<div class="accordion-item" id="cronoSection">
+  <h2 class="accordion-header" id="chronology-data">
+    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#chronologySection">Chronological definition</button>
+  </h2>
+  <div id="chronologySection" class="accordion-collapse collapse" aria-labelledby="chronology-data" data-bs-parent="#accordionArtifact">
+    <div class="accordion-body border">
+      <ul class="list-group list-group-flush">
+        <li class="list-group-item txt-adc-dark fw-bold">Specific chronology</li>
+        <li class="list-group-item">
+          <span>start</span>
+          <span id="start"></span>
+        </li>
+        <li class="list-group-item">
+          <span>end</span>
+          <span id="end"></span>
+        </li>
+        <li class="list-group-item txt-adc-dark fw-bold" id="timeline_serie"></li>
+        <li class="list-group-item">
+          <table class="table table-sm table-responsive">
+            <thead>
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col">Macro</th>
+                <th scope="col">Generic</th>
+                <th scope="col">Specific</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr id="fromPeriod">
+                <th scope="row">From</th>
+                <td id="fromPeriodMacro"></td>
+                <td id="fromPeriodGeneric"></td>
+                <td id="fromPeriodSpecific"></td>
+              </tr>
+              <tr id="toPeriod">
+                <th scope="row">To</th>
+                <td id="toPeriodMacro"></td>
+                <td id="toPeriodGeneric"></td>
+                <td id="toPeriodSpecific"></td>
+              </tr>
+            </tbody>
+          </table>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+<div class="accordion-item" id="storagePlaceSection">
+  <h2 class="accordion-header" id="conservation-data">
+    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#conservationInfo">Conservation info</button>
+  </h2>
+  <div id="conservationInfo" class="accordion-collapse collapse show" aria-labelledby="conservation-data" data-bs-parent="#accordionArtifact">
+    <div class="accordion-body border">
+      <ul class="list-group list-group-flush">
+        <li class="list-group-item">
+          <h4 id="storage_name" class="m-1"><span class="visually-hidden">Storage Name:</span></h4>
+          <div id="institutionLogo">
+            <img src="" id="institutionImg" class="img-fluid rounded" alt="">
+          </div>
+          <div id="institutionInfo">
+            <a href="" class="d-block" target="_blank" id="gMapLink" data-bs-toggle="tooltip" data-bs-title="view on Google Maps <br /> [link open a new tab or page]"><i class="mdi mdi-map-marker"></i><span id="storage_address"></span></a>
+
+            <a href="" class="d-block my-2" target="_blank" id="institutionLink" data-bs-toggle="tooltip" data-bs-title="go to official website <br /> [link open a new tab or page]"><span class="mdi mdi-link-variant"></span><span id="storage_link"></span></a>
+          </div>
+        </li>
+        <li class="list-group-item"><span>Inventory</span><span id="inventory"></span></li>
+        <li class="list-group-item"><span>Conservation state</span><span id="conservation_state"></span></li>
+        <li class="list-group-item"><span>Object condition</span><span id="object_condition"></span></li>
+        <li class="list-group-item"><span>Is a museum copy</span><span id="is_museum_copy"></span></li>
+        <li class="list-group-item">
+          <button type="button" class="btn btn-sm btn-adc-blue w-100 text-center" id="btInstitutionFilter">view institution collection</button>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+<div class="accordion-item" id="findplaceSection">
+  <h2 class="accordion-header" id="findplace-data">
+    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#findplaceInfo">Find place</button>
+  </h2>
+  <div id="findplaceInfo" class="accordion-collapse collapse" aria-labelledby="findplace-data" data-bs-parent="#accordionArtifact">
+    <div class="accordion-body border">
+      <table class="table table-sm">
+        <tbody>
+          <tr id="findplace_gid0">
+            <th scope="row">Nation</th>
+            <td id="fpgid0"></td>
+          </tr>
+          <tr id="findplace_gid1">
+            <th scope="row">County, Provinces, Communes</th>
+            <td id="fpgid1"></td>
+          </tr>
+          <tr id="findplace_gid2">
+            <th scope="row">City, Districts and equivalent</th>
+            <td id="fpgid2"></td>
+          </tr>
+          <tr id="findplace_gid3">
+            <th scope="row">Communes, Municipalities</th>
+            <td id="fpgid3"></td>
+          </tr>
+          <tr id="findplace_gid4">
+            <th scope="row">Sub-national administrative</th>
+            <td id="fpgid4"></td>
+          </tr>
+          <tr id="findplace_gid5">
+            <th scope="row">Sub-national administrative</th>
+            <td id="fpgid5"></td>
+          </tr>
+          <tr id="findplace_parish">
+            <th scope="row">Parish</th>
+            <td id="fpparish"></td>
+          </tr>
+          <tr id="findplace_toponym">
+            <th scope="row">Toponym</th>
+            <td id="fptoponym"></td>
+          </tr>
+          <tr id="findplace_coordinates">
+            <th scope="row">Latitude / Longitude</th>
+            <td id="fpcoordinates"></td>
+          </tr>
+          <tr id="findplace_notes">
+            <th scope="row">Notes</th>
+            <td id="fpnotes"></td>
+          </tr>
+        </tbody>
+      </table>
+
+    </div>
+  </div>
+</div>
+<div class="accordion-item" id="metadataSection">
+  <h2 class="accordion-header" id="artifactMetadata-data">
+    <button class="accordion-button collapsed rounded-bottom" type="button" data-bs-toggle="collapse" data-bs-target="#artifactMetadataSection">Artifact metadata</button>
+  </h2>
+  <div id="artifactMetadataSection" class="accordion-collapse collapse" aria-labelledby="artifactMetadata-data" data-bs-parent="#accordionArtifact">
+    <div class="accordion-body border">
+      <table class="table tables-sm">
+        <tbody>
+          <tr>
+            <th scope="row">Author</th>
+            <td id="artifact_author"></td>
+          </tr>
+          <tr>
+            <th scope="row">Owner</th>
+            <td id="artifact_owner"></td>
+          </tr>
+          <tr>
+            <th scope="row">License</th>
+            <td id="artifact_license">
+              <a href="" id="artifactLicenseLink" target="_blank" data-bs-toggle="tooltip" title="read license summary<br />[link open a new tab]"></a>
+            </td>
+          </tr>
+          <tr>
+            <th scope="row">Created at</th>
+            <td id="created_at"></td>
+          </tr>
+          <tr>
+            <th scope="row">Last update</th>
+            <td id="last_update"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

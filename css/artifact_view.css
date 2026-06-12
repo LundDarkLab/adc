@@ -1,0 +1,470 @@
+:root {
+  --width-full: 100%;
+  --gap-main: 10px;
+  --border-radius: 0.375rem;
+  --height-row: calc(85dvh - 115px);
+  --height-geographic: 50%;
+  --font-size-small: 0.85rem;
+}
+
+/* TOUCH LANDSCAPE */
+@media (hover: none) and (pointer: coarse) and (orientation: landscape) {
+  :root { --height-row: calc(80dvh - 60px); }
+}
+
+/* MOUSE PORTRAIT — small screens only (laptops/hybrids ≤ 900px) */
+@media (hover: hover) and (orientation: portrait) and (max-width: 900px) {
+  :root { --height-row: calc(90dvh - 115px - 100px); }
+}
+
+/* MOUSE LANDSCAPE */
+@media (hover: hover) and (orientation: landscape) {
+  :root { --height-row: calc(100dvh - 115px - 100px); }
+}
+
+/* MOUSE PORTRAIT — desktop (> 900px): vmin = lato corto dello schermo,
+   costante al ruotare, produce la stessa altezza del landscape */
+@media (hover: hover) and (orientation: portrait) and (min-width: 901px) {
+  :root { --height-row: calc(100vmin - 115px - 100px); }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body > main {
+  width: var(--width-full);
+  margin: 115px 0 80px;
+  padding: var(--gap-main);
+  container-type: inline-size;
+  container-name: main-content;
+}
+
+/* ─── MAIN GRID ──────────────────────────────────────────────────────────── */
+
+#mainContent {
+  position: relative;
+  width: var(--width-full);
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  grid-template-rows: var(--height-row) auto;
+  grid-template-areas:
+    "artifact model"
+    "secondaryInfo secondaryInfo";
+  gap: var(--gap-main);
+}
+
+#mainContent.expanded {
+  grid-template-columns: 1fr;
+  grid-template-rows: var(--height-row) auto auto;
+  grid-template-areas:
+    "model"
+    "artifact"
+    "secondaryInfo";
+}
+
+/* ─── ARTIFACT ───────────────────────────────────────────────────────────── */
+
+#artifact {
+  grid-area: artifact;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--gap-main);
+}
+
+#mainContent.expanded #artifact {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  grid-template-rows: auto auto;
+}
+
+/* ─── MODEL ──────────────────────────────────────────────────────────────── */
+
+#model {
+  grid-area: model;
+  overflow: hidden;   /* impedisce a #3dhop di allargare il grid item        */
+  min-width: 0;       /* i grid item hanno min-width:auto di default:         */
+                      /* con 0 rispettano rigidamente la larghezza di colonna */
+}
+
+/* ─── SECONDARY INFO ─────────────────────────────────────────────────────── */
+
+#secondaryInfo {
+  grid-area: secondaryInfo;
+  display: flex;
+  gap: var(--gap-main);
+}
+
+#secondaryInfo > #media,
+#secondaryInfo > #stats {
+  flex: 1 1 0;  /* flex-basis: 0 → spazio distribuito equamente              */
+  min-width: 0; /* previene overflow da contenuto largo                       */
+}
+
+/* ─── STATS ──────────────────────────────────────────────────────────────── */
+
+#statsContent {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: var(--gap-main);
+  height: 100%; /* si adatta al parent flex item, non impone dimensioni proprie */
+}
+
+#statsTitle {
+  font-weight: bold;
+  font-size: 1rem;
+  padding: 0.5rem 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.chart-container.noData {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: var(--font-size-small);
+  color: var(--bs-secondary-text);
+}
+
+/* ─── ARTIFACT INTERNALS ─────────────────────────────────────────────────── */
+
+#artifact #status,
+#artifact #geographic {
+  width: var(--width-full);
+}
+
+#artifact #accordionArtifact {
+  height: calc(100% - 50px);
+  overflow: auto;
+}
+
+#artifact #geographic {
+  height: var(--height-geographic);
+}
+
+.artifact-left {
+  position: relative;
+  width: var(--width-full);
+  height: calc(70% - 1rem);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+}
+
+#mainContent.expanded #artifact .artifact-left {
+  height: 100%;
+}
+
+#mainContent.expanded #artifact #status,
+#mainContent.expanded #artifact #accordionArtifact {
+  grid-column: 1;
+}
+
+#mainContent.expanded #artifact #geographic {
+  grid-column: 2;
+  height: 100%;
+}
+
+
+.list-group-item h6,
+.videoCard-text {
+  white-space: pre-wrap;
+}
+
+/* ─── NARROW PORTRAIT — @container ──────────────────────────────────────── */
+/*
+  Sotto 700px di content-width di body>main (≈ viewport ≤ 720px, telefoni):
+  ogni sezione occupa una riga a piena larghezza.
+  Tablet, laptop touch e desktop in portrait restano a 2 colonne per riga.
+*/
+
+@container main-content (max-width: 700px) {
+
+  /* Riga 1: il grid principale già usa 1fr 2fr → in portrait stretto
+     conviene invece impilare model sopra artifact */
+  #mainContent:not(.expanded) {
+    grid-template-columns: 1fr;
+    grid-template-rows: var(--height-row) auto auto;
+    grid-template-areas:
+      "model"
+      "artifact"
+      "secondaryInfo";
+  }
+
+  /* Riga 2: artifact a colonna singola (non 2 colonne) */
+  #mainContent:not(.expanded) #artifact {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Riga 3: media e stats impilati verticalmente */
+  #secondaryInfo {
+    flex-direction: column;
+  }
+
+  /* Stats: altezza esplicita in colonna singola perché
+     height:100% non ha più un parent flex con altezza definita */
+  #statsContent {
+    height: 50vh;
+  }
+
+  /* Expanded su container stretto: artifact torna a colonna singola */
+  #mainContent.expanded #artifact {
+    display: flex;
+    flex-direction: column;
+  }
+
+  #mainContent.expanded #artifact .artifact-left {
+    height: auto;
+  }
+
+  #mainContent.expanded #artifact #geographic {
+    grid-column: unset;
+    height: var(--height-geographic);
+  }
+}
+
+/* ─── ACCORDION ──────────────────────────────────────────────────────────── */
+
+.accordion-body {
+  padding: 0;
+}
+
+.accordion .list-group-item div:first-child,
+.accordion .list-group-item span:first-child {
+  font-weight: bold;
+}
+
+.accordionArtifact span,
+.accordionArtifact table {
+  font-size: var(--font-size-small);
+}
+
+#artifactSection .list-group-item,
+#cronoSection .list-group-item,
+#storagePlaceSection .list-group-item:not(:first-child),
+#findplaceSection .list-group-item,
+#measureSection .list-group-item,
+#metadataSection .list-group-item {
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+}
+
+#artifactSection .list-group-item span,
+#cronoSection .list-group-item span,
+#storagePlaceSection .list-group-item:not(:first-child) span,
+#findplaceSection .list-group-item span,
+#measureSection .list-group-item span,
+#metadataSection .list-group-item span {
+  flex: 1;
+}
+
+/* ─── MEDIA GRIDS ────────────────────────────────────────────────────────── */
+
+#imgDiv, #otherArtifactImages, #videoDiv {
+  display: grid;
+  gap: var(--gap-main);
+  align-items: start;
+  padding: 10px 0;
+}
+
+#imgDiv, #otherArtifactImages {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+#videoDiv {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.imgCard, .videoCard {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: rgba(0,0,0,0.3) 0px 4px 8px 0px;
+  transition: box-shadow 0.3s ease;
+}
+
+.imgCard {
+  aspect-ratio: 1 / 1;
+  gap: 5px;
+}
+
+.videoCard {
+  gap: 1px;
+}
+
+.imgCard:hover, .videoCard:hover {
+  box-shadow: none;
+}
+
+.imgCard > div, .videoCard > div {
+  flex-basis: 0;
+}
+
+.imgCard-img, .videoCard-video {
+  width: 100%;
+  flex-grow: 7;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+.videoCard-video {
+  aspect-ratio: 16 / 9;
+}
+
+.imgCard-text, .videoCard-text {
+  flex-grow: 2;
+  padding: 5px 0;
+  overflow: auto;
+  font-size: var(--font-size-small);
+}
+
+.imgCard-btn, .document-btn, .video-btn {
+  display: flex;
+  flex-direction: row;
+  flex-grow: 1;
+  align-items: center;
+  justify-content: end;
+}
+
+.imgCard-btn, .document-btn {
+  padding-right: 20px;
+}
+
+.video-btn {
+  padding-right: 5px;
+}
+
+/* ─── FULLSCREEN IMAGE MODAL ─────────────────────────────────────────────── */
+
+#fullScreenImg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+
+  transition: opacity 0.3s ease, visibility 0.3s;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+}
+
+#fullScreenImg.is-active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+#fullScreenContent {
+  position: relative;
+  width: 95%;
+  height: 95%;
+  background-color: #fff;
+  border-radius: var(--bs-border-radius);
+  border: var(--bs-border-width) var(--bs-border-style) var(--bs-border-color);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#fullScreenContent > div { width: 100%; }
+
+#fullScreenHeader {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 5px 20px;
+  border-bottom: var(--bs-border-width) var(--bs-border-style) var(--bs-border-color) !important;
+}
+
+#fullScreenBody {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+
+#fullImageContainer {
+  flex: 7;
+  height: 100%;
+  padding: 20px;
+  text-align: center;
+}
+
+#fullImageDescription {
+  flex: 3;
+  height: 100%;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 0.5fr 0.5fr 6fr 0.6fr 0.5fr 3fr;
+  overflow: hidden;
+}
+
+#fullImageDescription > div,
+#fullImageDescription > h4 {
+  min-height: 0;
+}
+
+#modalMetadataList > div {
+  background-color: transparent;
+}
+
+#modalImg {
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* ─── DOCUMENT LIST ──────────────────────────────────────────────────────── */
+
+#docList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#docList li {
+  padding: 0.5rem 0;
+}
+
+#docList li:nth-child(odd) {
+  background-color: #f8f9fa;
+}
+
+.docItem {
+  display: flex;
+  flex-direction: column;
+}
+
+.docSection {
+  display: flex;
+  width: 100%;
+}
+
+#docList .divLabel {
+  flex: 1;
+  min-width: 120px;
+}
+
+#docList .divLink {
+  flex: 2;
+}
+
+#docList a {
+  text-decoration: none;
+  color: #007bff;
+}

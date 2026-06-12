@@ -1,0 +1,35 @@
+#editor{height:300px;}
+#recipient,#sendToList{height:auto;}
+#editor, #recipient,#sendToList{max-height:500px; overflow-y:auto;}
+.errorDiv{display: none;}
+#filterWrap{position: relative; display: flex; flex-direction: row; align-items: center; justify-content: start;}
+
+button#selectAll{display: inline-block;}
+button#unselectAll{display: none;}
+
+#mailContainer{
+  position:relative;
+  width:100%;
+  height:auto;
+  overflow: hidden;
+}
+
+#mailWrapper{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: start;
+  width:auto;
+  gap: 10px;
+}
+
+#mailWrapper > .card{
+  flex: 0 0 250px; /* Larghezza fissa delle card */
+  height:270px !important;
+}
+
+#selectEmailWrap{
+  display:grid;
+  grid-template-columns:repeat(2, 1fr);
+  grid-column-gap:5px;
+}

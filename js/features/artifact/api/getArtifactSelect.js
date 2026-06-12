@@ -1,0 +1,102 @@
+import { fetchApi } from "../../../shared/utils/fetch.js";
+
+import { usersList } from "../../../modules/user.js";
+import { institutionsList } from "../../../modules/institution.js";
+import { bsAlert } from "../../../components/bsComponents.js";
+
+export async function buildSelectOptions() {
+  const usr = document.getElementById('userId').value || null;
+  const lists = await artifactSelect();
+  lists.forEach(item=>{
+    const key = Object.keys(item)[0];
+    const selectEl = document.getElementById(key);
+    if(selectEl){
+      item[key].forEach(optionData=>{
+        const option = document.createElement("option");
+        option.value = optionData.id || optionData.gid;
+        option.textContent = optionData.value || optionData.name || optionData.definition || `${optionData.acronym} - ${optionData.license}`;
+        if(key==='author' && usr){
+          if(optionData.id == Number(usr)){ option.selected = true; } 
+        }
+        selectEl.appendChild(option);
+      });
+    }
+  });
+  return true;
+}
+
+async function artifactSelect(){
+  const output = [];
+  const selectList = [
+    {id:'category_class', list:'list_category_class' },
+    {id:'matClass', list:'list_material_class' },
+    {id:'matSpecs', list:'list_material_specs' },
+    {id:'conservation_state', list:'list_conservation_state' },
+    {id:'object_condition', list:'list_object_condition' },
+    {id:'license', list:'license' },
+  ]
+
+  for(const item of selectList){
+    try {
+      const payload = {
+        class: 'Artifact',
+        action: 'getList',
+        table: item.list
+      };
+      const response = await fetchApi({ body: payload });
+      if (response.error === 1) throw new Error(`Error fetching Artifact select list: ${item.list}`);
+      output.push({[item.id]:response.data});
+    } catch (error) {
+      console.error(`artifactSelect error for list ${item.list}:`, error);
+      output.push({[item.id]:[]});
+      bsAlert(`artifactSelect error for list ${item.list}:`, error, 'danger', 3000)
+    }
+  }
+
+  
+  const author = await usersList();
+  const storage_place = await institutionsList();
+  const adminLevels = await adminLevelOptions(0, {}, null);
+  
+  // output.push({timeline:timeline});
+  output.push({author:author});
+  output.push({storage_place:storage_place});
+  output.push({owner:storage_place});
+  output.push({gid_0:adminLevels});
+  return output;
+
+}
+
+export async function handleCategorySpecOptions(cat){
+  try {
+    const payload = {
+      class: 'Artifact',
+      action: 'getList',
+      table: 'list_category_specs',
+      filters: {category_class: cat}
+    };
+    const response = await fetchApi({ body: payload });
+    if (response.error === 1) throw new Error(`Error fetching category list`);
+      return response.data;
+    } catch (error) {
+      bsAlert(error, 'danger', 3000);
+      return false;
+    }
+}
+
+export async function adminLevelOptions(gid, filter, selected=false){
+  try {
+    const payload = {
+      class:'Geom',
+      action:'getAdminList',
+      gid: gid,
+      filter: filter || {}
+    }
+    const response = await fetchApi({ body: payload });
+    if (response.error === 1) throw new Error(`Error fetching admin level ${gid} options`);
+    return response.data || [];
+  } catch (error) {
+    bsAlert(error, 'danger', 3000);
+    return false;
+  }
+}

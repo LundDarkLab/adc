@@ -1,0 +1,162 @@
+:root {
+  --grid: grid;
+  --fs-small: 0.8rem;
+}
+
+#dashboardWrap {
+  display: var(--grid);
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  padding: 20px;
+}
+
+#issuesSection,
+#mapWrap {
+  grid-column: 1 / -1;
+  overflow-y: hidden;
+}
+
+#issuesSection {
+  height: auto;
+  max-height: 500px;
+}
+
+#issuesBody {
+  display: var(--grid);
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+#mapWrap {
+  height: 500px;
+}
+
+#artifactList,
+#modelList,
+#institutionList,
+#personList {
+  display: flex;
+  flex-direction: column;
+  height: 600px;
+  overflow-y: hidden;
+}
+
+#artifactDataWrap,
+#institutionDataWrap,
+#personDataWrap {
+  height: 100%;
+  overflow-y: auto;
+  font-size: var(--fs-small);
+}
+
+#mapWrap #map {
+  height: 100%;
+  width: 100%;
+}
+
+.dashboardSection {
+  border: 1px solid #dee2e6;
+  border-radius: 0.375rem;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  padding: 1rem;
+}
+
+.issuesElement {
+  display: flex;
+  flex-direction: column;
+  max-height: 430px;
+}
+
+.table-wrapper {
+  overflow-y: auto;
+  flex: 1;
+}
+
+.table-wrapper table {
+  margin-bottom: 0;
+  font-size: var(--fs-small);
+}
+
+.table-wrapper thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bs-light);
+}
+
+.mainDataTable .table {
+  width: 100%;
+}
+
+#modelDataWrap, #personDataWrap {
+  display: var(--grid);
+  gap: 0.5rem;
+  flex: 1;
+  font-size: var(--fs-small);
+}
+#modelDataWrap{
+  grid-template-columns: repeat(2, 1fr);
+}
+#modelDataWrap .card-header{
+  background: rgba(222, 226, 230,0.5);
+  background: -moz-linear-gradient(180deg, rgba(222, 226, 230,0.5) 0%, #2b3035 100%);
+  background: -webkit-linear-gradient(180deg, rgba(222, 226, 230,0.5) 0%, #2b3035 100%);
+  background: linear-gradient(180deg, rgba(222,226,230,0.5) 0%, #2b3035 100%);
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr="#ffffff",endColorstr="#797979",GradientType=1);
+}
+#personDataWrap{
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.empty-models-message {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.toolbarDiv {
+  display: flex;
+  flex-direction: row;
+  gap: 0.3rem;
+  justify-content: start;
+  padding:15px 0;
+}
+
+.toolbarDiv > div {
+  flex: 1;
+}
+
+.popover {
+  max-width: 50vw;
+  width: auto;
+  word-wrap: break-word;
+  white-space: normal;
+}
+
+.cardLogo {
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+/* Responsive: mobile = 1 colonna */
+@media (max-width: 768px) {
+  #dashboardWrap {
+    grid-template-columns: 1fr;
+  }
+
+  #issuesSection,
+  #artifactList,
+  #modelList,
+  #mapWrap,
+  #institutionList,
+  #personList {
+    grid-column: 1;
+  }
+}
+
+/* X-Large devices (large desktops, 1200px and up) */
+@media (min-width: 1400px) {
+  #modelDataWrap{
+    grid-template-columns: repeat(3, 1fr);
+  }
+}

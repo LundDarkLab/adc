@@ -1,0 +1,12 @@
+LicenseRef-BetterScale
+
+The files js/maps/mapScale/mapScale.js and js/maps/mapScale/mapScale.css are
+derived from the "leaflet-betterscale" plugin (L.Control.BetterScale):
+
+    https://github.com/daniellsu/leaflet-betterscale
+
+The upstream repository does not declare any license. The code is therefore
+formally "all rights reserved" by its author and is redistributed here only
+as part of this application, pending clarification with the upstream author
+or replacement with the equivalent built-in Leaflet scale control
+(L.control.scale).

@@ -1,0 +1,84 @@
+# REUSE.toml — machine-readable licensing for the whole repository
+# Spec: https://reuse.software/spec/
+# When multiple annotations match a file, the LAST matching entry wins.
+
+version = 1
+SPDX-PackageName = "Dynamic Collections Plus"
+SPDX-PackageSupplier = "DARKLab, Lund University"
+SPDX-PackageDownloadLocation = "https://github.com/LundDarkLab/adc"
+
+# ------------------------------------------------------------------------------
+# Default: project source code
+# ------------------------------------------------------------------------------
+[[annotations]]
+path = "**"
+SPDX-FileCopyrightText = "2022 - 2026 DARKLab, Lund University"
+SPDX-License-Identifier = "AGPL-3.0-or-later"
+
+# ------------------------------------------------------------------------------
+# Documentation and images
+# ------------------------------------------------------------------------------
+[[annotations]]
+path = ["docs/**", "*.md", "mkdocs.yml", "img/**"]
+SPDX-FileCopyrightText = "2022 - 2026 DARKLab, Lund University"
+SPDX-License-Identifier = "CC-BY-4.0"
+
+# Logos of the partner institutions: all rights reserved by their owners
+[[annotations]]
+path = "img/logo/**"
+SPDX-FileCopyrightText = "the respective institutions of the Dynamic Collections network"
+SPDX-License-Identifier = "LicenseRef-InstitutionalLogos"
+
+# ------------------------------------------------------------------------------
+# Database schema and base data (see the application footer: CC0)
+# ------------------------------------------------------------------------------
+[[annotations]]
+path = "db-init/**"
+SPDX-FileCopyrightText = "2022 - 2026 DARKLab, Lund University"
+SPDX-License-Identifier = "CC0-1.0"
+
+# ------------------------------------------------------------------------------
+# Bundled third-party: 3DHOP viewer (Visual Computing Lab, ISTI-CNR)
+# License headers inside the files themselves are authoritative
+# ------------------------------------------------------------------------------
+[[annotations]]
+path = ["assets/3dhop/presenter.js", "assets/3dhop/ply.js", "assets/3dhop/init.js", "assets/3dhop/trackball_pantilt.js", "assets/3dhop/trackball_sphere.js", "assets/3dhop/trackball_turntable.js", "assets/3dhop/trackball_turntable_pan.js"]
+SPDX-FileCopyrightText = "2014 - 2023 Visual Computing Lab, ISTI-CNR"
+SPDX-License-Identifier = "GPL-3.0-or-later"
+
+[[annotations]]
+path = ["assets/3dhop/nexus.js", "assets/3dhop/meco.js", "assets/3dhop/corto.em.js"]
+SPDX-FileCopyrightText = "2012 - 2020 Visual Computing Lab, ISTI-CNR"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = "assets/3dhop/spidergl.js"
+SPDX-FileCopyrightText = "2010 Marco Di Benedetto - Visual Computing Lab, ISTI-CNR"
+SPDX-License-Identifier = "BSD-3-Clause"
+
+# ------------------------------------------------------------------------------
+# Bundled third-party: Leaflet plugins
+# ------------------------------------------------------------------------------
+[[annotations]]
+path = "js/maps/mousePosition/**"
+SPDX-FileCopyrightText = "2012 Ardhi Lukianto"
+SPDX-License-Identifier = "MIT"
+
+# Upstream declares no license — see LICENSES/LicenseRef-BetterScale.txt
+[[annotations]]
+path = "js/maps/mapScale/**"
+SPDX-FileCopyrightText = "daniellsu and contributors"
+SPDX-License-Identifier = "LicenseRef-BetterScale"
+
+# ------------------------------------------------------------------------------
+# Bundled web fonts
+# ------------------------------------------------------------------------------
+[[annotations]]
+path = "assets/fonts/titillium-web-*"
+SPDX-FileCopyrightText = "2009 Accademia di Belle Arti di Urbino and students of MA course of Visual design"
+SPDX-License-Identifier = "OFL-1.1"
+
+[[annotations]]
+path = "assets/fonts/roboto-*"
+SPDX-FileCopyrightText = "The Roboto Project Authors"
+SPDX-License-Identifier = "OFL-1.1"

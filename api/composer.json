@@ -1,0 +1,17 @@
+{
+    "name": "lund/adc",
+    "type": "project",
+    "description": "The Archaological Dynamic Collections management system. A local network of independently curated exhibits sharing a collaboratively built pool of items and their metadata.",
+    "license": "AGPL-3.0-or-later",
+    "require": {
+      "phpmailer/phpmailer": "^6.1",
+      "ramsey/uuid": "^4.7",
+      "vlucas/phpdotenv": "^5.6"
+    },
+    "autoload": {
+      "psr-4": {
+        "Adc\\":"src/",
+        "Adc\\Traits\\": "src/Traits/"
+      }
+    }
+}

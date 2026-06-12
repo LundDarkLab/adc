@@ -1,0 +1,78 @@
+# ==============================================================================
+# docker-compose.ghcr.yml — Run from the prebuilt image (no local build)
+#
+# Same stack as docker-compose.yml, but the web container is pulled from the
+# GitHub Container Registry instead of being built from source. Use this if
+# you don't need to modify the code:
+#
+#     docker compose -f docker-compose.ghcr.yml up -d
+#
+# You still need the repository content (db-init/, archive/, .env): clone it
+# or download a release archive. Configuration is identical: copy .env.example
+# to .env and fill in your values.
+# ==============================================================================
+
+services:
+
+  web:
+    image: ghcr.io/lunddarklab/adc:latest
+    container_name: lund-web-app
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "127.0.0.1:8081:80"    # Loopback only: a reverse proxy handles public traffic
+    volumes:
+      - ${ARCHIVE_DIR:-./archive}:/var/www/html/archive
+      - ${IMG_DIR:-./img}:/var/www/html/img
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - internal
+
+  db:
+    image: mysql:8.4.7
+    container_name: lund-db
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "127.0.0.1:${DB_PORT}:3306"
+    command:
+      - --max_allowed_packet=1G              # Le righe GADM possono essere molto grandi
+      - --net_buffer_length=1M
+      - --innodb_buffer_pool_size=2G         # Riduci su server con poca RAM
+      - --innodb_buffer_pool_instances=2
+      - --innodb_log_file_size=512M
+      - --innodb_flush_method=O_DIRECT
+      - --net_read_timeout=3600
+      - --net_write_timeout=3600
+      - --wait_timeout=28800
+      - --interactive_timeout=28800
+      - --lock_wait_timeout=300
+      - --bulk_insert_buffer_size=256M
+      - --key_buffer_size=256M
+      - --optimizer_switch=derived_merge=off
+    volumes:
+      - lund_db_data:/var/lib/mysql
+      - ./db-init:/docker-entrypoint-initdb.d   # Importato solo al primo avvio
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "${DB_USER}", "--password=${DB_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - internal
+
+volumes:
+  lund_db_data:
+    name: lund_db_data
+
+networks:
+  internal:
+    driver: bridge
+    name: lund_internal

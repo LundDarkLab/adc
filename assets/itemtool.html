@@ -1,0 +1,79 @@
+<div id="itemTool" class="animated mainSection bg-light border-bottom">
+  <div class="itemToolBlock">
+    <button type="button" class="btn btn-light toggleFilter" name="toggleFilter">
+      <small class="badge rounded bg-secondary" id="activeFilter"></small>
+      filters
+      <span class="mdi mdi-chevron-down"></span>
+    </button>
+    <button class="btn btn-light" type="button" id="createFromFiltered" data-bs-toggle="tooltip" data-bs-title="add filtered items to the active collection or create a new collection">add all items</button>
+    <button class="btn bg-light me-1" type="button" id="resetCollection" data-bs-toggle="tooltip" data-bs-title="clear collection">clear collection</button>
+  </div>
+
+  <div id="tabPane" class="itemToolBlock">
+    <div class="nav nav-pills nav-fill">
+      <button id="viewGallery" class="nav-item active btn btn-light me-1" aria-current="page" data-bs-toggle="tab" data-bs-target="#gallery-pane">
+        gallery 
+        <span id="countItems" class="badge rounded bg-secondary"></span>
+      </button>
+      <button id="viewCollection" class="nav-item btn btn-light" data-bs-toggle="tab" data-bs-target="#collection-pane">
+        <span id="collectionTitleBtn" class="collectionTitle"></span>
+        <span id="countCollection" class="badge rounded bg-danger"></span>
+      </button>
+    </div>
+  </div>
+
+  <div class="itemToolBlock text-end">
+    <div class="dropdown me-3">
+      <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown" id="sortByBtn"><span class="mdi mdi-sort-reverse-variant"></span></button>
+      <div id="sortBy" class="dropdown-menu">
+        <button class="dropdown-item sortBy" data-sort="id" data-order="asc">oldest first</button>
+        <button class="dropdown-item sortBy" data-sort="id" data-order="desc">newest first</button>
+        <button class="dropdown-item sortBy" data-sort="category" data-order="asc">name</button>
+        <button class="dropdown-item sortBy" data-sort="material" data-order="asc">material</button>
+        <button class="dropdown-item sortBy" data-sort="start" data-order="asc">chronology</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="filterWrap" class="d-none filterSmall">
+    <form id="filterForm">
+      <div class="d-block mb-1">
+        <select class="form-select form-select-sm buildGallery" id="byCounty" name="byCounty">
+          <option selected value="" disabled>County</option>
+        </select>
+      </div>
+      <div class="d-block mb-1">
+        <select class="form-select form-select-sm buildGallery" id="byInstitution" name="byInstitution">
+          <option selected value="" disabled>Institution</option>
+        </select>
+      </div>
+      <div class="d-block mb-1">
+        <select class="form-select form-select-sm buildGallery" id="byCategory" name="byCategory">
+          <option selected value="" disabled>category</option>
+        </select>
+      </div>
+      <div class="d-block mb-1">
+        <select class="form-select form-select-sm buildGallery" id="byMaterial" name="byMaterial">
+          <option selected value="" disabled>material</option>
+        </select>
+      </div>
+      <div class="d-block mb-1">
+        <input type="number" id="byStart" name="byStart" class="form-control form-select-sm" placeholder="from year" value="">
+      </div>
+      <div class="d-block mb-1">
+        <input type="number" id="byEnd" name="byEnd" class="form-control form-select-sm" placeholder="to year" value="">
+      </div>
+      
+      <div class="d-block mb-2">
+        <input type="search" id="byDescription" name="byDescription" class="form-control form-select-sm" value="" placeholder="description">
+      </div>
+      <div class="d-block ">
+        <button class="btn btn-light btn-sm d-inline-block" type="submit" id="search" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-container="body" data-bs-title="search artifacts"><span class="mdi mdi-magnify"> search</span></button>
+
+        <button class="btn btn-light btn-sm d-inline-block" type="button" id="resetGallery" data-bs-toggle="tooltip" data-bs-title="reset filters"><span class="mdi mdi-reload"> reset</span></button>
+
+        <button class="btn btn-light btn-sm float-end d-inline-block toggleFilter" type="button" id="closeFilterDiv"><span class="mdi mdi-chevron-up"> close</span></button>
+      </div>
+    </form>
+  </div>
+</div>

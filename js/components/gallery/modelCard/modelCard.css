@@ -1,0 +1,35 @@
+/* modelCard.css — stili della card, NON del layout griglia/flex */
+
+.model-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.model-card .card-img-top {
+  width: 100%;
+  height: 160px;
+  object-fit: contain;    /* o cover, dipende dal tipo di immagine */
+  background: rgba(222, 226, 230,0.5);
+  background: linear-gradient(180deg, rgba(222,226,230,0.5) 0%, #2b3035 100%);
+}
+
+.model-card .card-img-top.no-thumb {
+  object-fit: none;
+  background-image:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='rgb(255,255,255)' d='M13.3 21H5C3.9 21 3 20.1 3 19V5C3 3.9 3.9 3 5 3H19C20.1 3 21 3.9 21 5V13.3C20.4 13.1 19.7 13 19 13C17.9 13 16.8 13.3 15.9 13.9L14.5 12L11 16.5L8.5 13.5L5 18H13.1C13 18.3 13 18.7 13 19C13 19.7 13.1 20.4 13.3 21M20.4 19L22.5 21.1L21.1 22.5L19 20.4L16.9 22.5L15.5 21.1L17.6 19L15.5 16.9L16.9 15.5L19 17.6L21.1 15.5L22.5 16.9L20.4 19Z'/></svg>"),
+    linear-gradient(180deg, rgba(222,226,230,0.5) 0%, #2b3035 100%);
+  background-repeat: no-repeat, no-repeat;
+  background-position: center, center;
+  background-size: 72px 72px, 100% 100%;
+}
+
+.model-card .card-body {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: .75rem; /*12px*/
+}
+
+.model-card .card-footer {
+  margin-top: auto;
+}

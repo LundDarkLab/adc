@@ -1,0 +1,32 @@
+# --- Dipendenze e System files ---
+api/vendor/ 
+node_modules/
+.vscode/ 
+.env
+*.log
+
+# --- Cartelle di lavoro locali ---
+workfile/
+notes/ 
+documentation/site/ 
+docker-compose.override.yml
+site/
+tests/
+old_files/
+
+# --- Gestione Dati Persistenti (Strategia .gitkeep) ---
+# Versionata solo la struttura delle cartelle: i contenuti caricati restano fuori
+archive/**
+!archive/**/
+!archive/**/.gitkeep
+
+# --- Database init ---
+# Committati: schema, dati di base, primo admin.
+# Esclusi: il pacchetto geografico (troppo grande per git, distribuito
+# come asset di release) e i dump locali in _local/
+db-init/*
+!db-init/00-schema.sql
+!db-init/01-seed-data.sql
+!db-init/02-first-admin.sql
+# archive/*.zip 
+# archive/*.sql

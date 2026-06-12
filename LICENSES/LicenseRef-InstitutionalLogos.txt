@@ -1,0 +1,10 @@
+LicenseRef-InstitutionalLogos
+
+The logo image files in img/logo/ are the property of the respective
+institutions participating in the Dynamic Collections network (museums,
+universities and laboratories). They are reproduced in this repository with
+the permission of their owners, solely for use within this application.
+
+They are NOT covered by the licenses of this project: all rights remain with
+the respective institutions. If you deploy your own instance, replace them
+with the logos of your own institutions.
