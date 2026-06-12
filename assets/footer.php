@@ -28,20 +28,28 @@
       <div class="mt-3">
         <ul class="list-unstyled small">
           <li>
-            <i class="mdi mdi-github"></i>
-            <a href="https://github.com/LundDarkLab/adc" class="animated" target="_blank" title="source code repository [external link]">Source code on GitHub</a>
+            <a href="https://github.com/LundDarkLab/adc" class="animated" target="_blank" title="source code repository [external link]">
+              <i class="mdi mdi-github"></i>
+              Source code on GitHub
+            </a>
           </li>
           <li>
-            <i class="mdi mdi-source-repository"></i>
-            <a href="https://codeberg.org/LundDarkLab/adc" class="animated" target="_blank" title="source code mirror on Codeberg [external link]">Mirror on Codeberg</a>
+            <a href="https://codeberg.org/LundDarkLab/adc" class="animated" target="_blank" title="source code mirror on Codeberg [external link]">
+              <i class="mdi mdi-source-repository"></i>
+              Mirror on Codeberg
+            </a>
           </li>
           <li>
-            <i class="mdi mdi-book-open-variant"></i>
-            <a href="https://lunddarklab.github.io/adc/" class="animated" target="_blank" title="platform documentation [external link]">Documentation</a>
+            <a href="https://lunddarklab.github.io/adc/" class="animated" target="_blank" title="platform documentation [external link]">
+              <i class="mdi mdi-book-open-variant"></i>
+              Documentation
+            </a>
           </li>
           <li>
-            <i class="mdi mdi-archive-outline"></i>
-            <a href="https://doi.org/10.5281/zenodo.20669650" class="animated" target="_blank" title="citable software archive on Zenodo [external link]">Zenodo — DOI 10.5281/zenodo.20669650</a>
+            <a href="https://doi.org/10.5281/zenodo.20669650" class="animated" target="_blank" title="citable software archive on Zenodo [external link]">
+              <i class="mdi mdi-archive-outline"></i>
+              Zenodo — DOI 10.5281/zenodo.20669650
+            </a>
           </li>
         </ul>
       </div>
@@ -49,7 +57,7 @@
       <p>© 2022 - <?php echo date("Y"); ?> DARKLab</p>
     </div>
     <div id="footerMenu">
-      <?php require("assets/mainMenu.php"); ?>
+      <?php require "assets/mainMenu.php"; ?>
     </div>
   </div>
 </footer>
