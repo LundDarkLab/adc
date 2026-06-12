@@ -1,0 +1,36 @@
+# Mirrors the repository to Codeberg on every push (branches and tags).
+#
+# One-time setup:
+#   1. Create the empty repository on Codeberg (codeberg.org/LundDarkLab/adc)
+#   2. On Codeberg: Settings → Applications → generate an access token
+#      with "repository: read and write" permission
+#   3. On GitHub: repo Settings → Secrets and variables → Actions →
+#      new secret CODEBERG_TOKEN with that token
+#   4. If the Codeberg owner/name differs, adjust MIRROR_URL below
+name: mirror to codeberg
+
+on:
+  push:
+    branches: ["**"]
+    tags: ["**"]
+  workflow_dispatch:
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # storia completa, serve per il mirror
+
+      - name: Push branches and tags to Codeberg
+        env:
+          MIRROR_URL: codeberg.org/LundDarkLab/adc.git
+          CODEBERG_TOKEN: ${{ secrets.CODEBERG_TOKEN }}
+        run: |
+          if [ -z "$CODEBERG_TOKEN" ]; then
+            echo "::notice::CODEBERG_TOKEN not configured — mirror skipped"
+            exit 0
+          fi
+          git push --force "https://oauth2:${CODEBERG_TOKEN}@${MIRROR_URL}" \
+            'refs/remotes/origin/*:refs/heads/*' 'refs/tags/*:refs/tags/*'
