@@ -206,6 +206,7 @@ The project documentation in `docs/` is built with [MkDocs](https://www.mkdocs.o
 ## License
 
 [![REUSE status](https://api.reuse.software/badge/github.com/LundDarkLab/adc)](https://api.reuse.software/info/github.com/LundDarkLab/adc)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20669650.svg)](https://doi.org/10.5281/zenodo.20669650)
 
 The project source code is released under the **GNU Affero General Public License v3.0 or later** — see [LICENSE](LICENSE). Documentation is **CC BY 4.0**, the database schema and base data are **CC0 1.0**.
 
