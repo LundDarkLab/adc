@@ -39,6 +39,10 @@
             <i class="mdi mdi-book-open-variant"></i>
             <a href="https://lunddarklab.github.io/adc/" class="animated" target="_blank" title="platform documentation [external link]">Documentation</a>
           </li>
+          <li>
+            <i class="mdi mdi-archive-outline"></i>
+            <a href="https://doi.org/10.5281/zenodo.20669650" class="animated" target="_blank" title="citable software archive on Zenodo [external link]">Zenodo — DOI 10.5281/zenodo.20669650</a>
+          </li>
         </ul>
       </div>
 
