@@ -1,0 +1,37 @@
+{
+  "title": "Dynamic Collections Plus",
+  "description": "A web platform for building and curating digital collections of archaeological artefacts: a local network of independently curated exhibits sharing a collaboratively built pool of items, 3D models, media and their metadata and paradata. Developed by the DARKLab, Digital Archaeology Laboratory, Lund University.",
+  "upload_type": "software",
+  "license": "AGPL-3.0-or-later",
+  "creators": [
+    {
+      "name": "Naponiello, Giuseppe",
+      "affiliation": "DARKLab, Lund University",
+      "orcid": "0009-0006-2258-6032"
+    }
+  ],
+  "communities": [
+    {
+      "identifier": "darklab_lu"
+    }
+  ],
+  "keywords": [
+    "archaeology",
+    "digital collections",
+    "3D models",
+    "cultural heritage",
+    "museum collections"
+  ],
+  "related_identifiers": [
+    {
+      "relation": "isSupplementTo",
+      "identifier": "https://github.com/LundDarkLab/adc",
+      "resource_type": "software"
+    },
+    {
+      "relation": "isDocumentedBy",
+      "identifier": "https://lunddarklab.github.io/adc/",
+      "resource_type": "publication-softwaredocumentation"
+    }
+  ]
+}

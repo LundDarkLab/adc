@@ -32,6 +32,10 @@
             <a href="https://github.com/LundDarkLab/adc" class="animated" target="_blank" title="source code repository [external link]">Source code on GitHub</a>
           </li>
           <li>
+            <i class="mdi mdi-source-repository"></i>
+            <a href="https://codeberg.org/LundDarkLab/adc" class="animated" target="_blank" title="source code mirror on Codeberg [external link]">Mirror on Codeberg</a>
+          </li>
+          <li>
             <i class="mdi mdi-book-open-variant"></i>
             <a href="https://lunddarklab.github.io/adc/" class="animated" target="_blank" title="platform documentation [external link]">Documentation</a>
           </li>

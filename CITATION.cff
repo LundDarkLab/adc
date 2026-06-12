@@ -1,0 +1,27 @@
+# Citation metadata — shown by GitHub ("Cite this repository") and read by
+# Zenodo when archiving releases. Review authors and ORCIDs before tagging
+# the next release.
+cff-version: 1.2.0
+message: "If you use this software, please cite it using these metadata."
+title: "Dynamic Collections Plus"
+abstract: >-
+  A web platform for building and curating digital collections of
+  archaeological artefacts: a local network of independently curated
+  exhibits sharing a collaboratively built pool of items, 3D models,
+  media and their metadata and paradata.
+type: software
+authors:
+  - family-names: Naponiello
+    given-names: Giuseppe
+    orcid: "https://orcid.org/0009-0006-2258-6032"
+  - name: "DARKLab — Digital Archaeology Laboratory, Lund University"
+    website: "https://www.darklab.lu.se/"
+repository-code: "https://github.com/LundDarkLab/adc"
+url: "https://lunddarklab.github.io/adc/"
+license: AGPL-3.0-or-later
+keywords:
+  - archaeology
+  - digital collections
+  - 3D models
+  - cultural heritage
+  - museum collections
