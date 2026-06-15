@@ -17,3 +17,28 @@ documentation/
 *.log
 *.zip
 *.sql
+
+# Build / CI / docs / metadati: non servono a runtime e non devono finire
+# nella web root servita da Apache (evita information disclosure).
+# NB: docker-entrypoint.sh, php-custom.ini e api/composer.* NON vanno qui,
+#     perché servono al build context (COPY espliciti nel Dockerfile);
+#     sono comunque bloccati lato Apache dal .htaccess.
+.github/
+.gitignore
+.gitattributes
+.dockerignore
+Dockerfile
+docker-compose.yml
+docker-compose.ghcr.yml
+.env.example
+mkdocs.yml
+docs/
+db-init/
+scripts/
+README.md
+NOTE.md
+TODO.md
+CITATION.cff
+.zenodo.json
+REUSE.toml
+.sonarcloud.properties

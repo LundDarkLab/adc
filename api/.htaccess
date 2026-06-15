@@ -1,4 +1,11 @@
 RewriteEngine On
+
+# Deny direct web access to config files (mail templates, local config) and
+# any dot-path under api/. The root .htaccess RewriteRule is per-directory and
+# is NOT inherited into subdirectories, so it is replicated here.
+RewriteRule "(?:^|/)\." - [F]
+RewriteRule "^config(/|$)" - [F]
+
 RewriteRule ^endpoint/(.*)$ endpoint.php/$1 [L,QSA]
 ## ###################### ####
 

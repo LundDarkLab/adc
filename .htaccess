@@ -1,12 +1,27 @@
 # Disable directory browsing 
 Options -Indexes
 
-<Files .htaccess>
+# --- Information-disclosure hardening -------------------------------------
+# Prevent build / CI / config / metadata files from being served.
+# OWASP A05 Security Misconfiguration; MITRE CWE-538 / CWE-552.
+
+# 1) Any URL path containing a dot-segment: .env, .env.example, .git/, .github/ ...
+#    (FilesMatch only matches the final filename, so it can't catch dot-folders)
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule "(?:^|/)\." - [F]
+</IfModule>
+
+# 2) Fallback by filename, for servers without mod_rewrite
+<FilesMatch "^\.">
   Order allow,deny
   Deny from all
-</Files>
+</FilesMatch>
 
-<FilesMatch "\.(ini|sql|log|sh)$">
+# 3) Build / config / metadata files, composer manifest, and editor/backup
+#    artefacts with no leading dot (Dockerfile, php-custom.ini, *.yml,
+#    composer.json/lock, foo.php.bak, foo.php~, ...)
+<FilesMatch "(\.(ini|sql|log|sh|ya?ml|lock|toml|cff|properties|md|bak|old|orig|save|swp|swo|tmp|dist|sample|inc)$|~$|^Dockerfile$|^composer\.json$)">
   Order allow,deny
   Deny from all
 </FilesMatch>

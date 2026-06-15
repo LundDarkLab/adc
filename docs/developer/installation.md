@@ -177,6 +177,25 @@ IMG_DIR=/srv/dyncoll/img
 
 The container entrypoint automatically aligns file-ownership UIDs between the host directories and the Apache user.
 
+## 8. Repository files are not web-exposed
+
+The repository ships build, CI, documentation and configuration files (`Dockerfile`, `docker-compose*.yml`, `.github/`, `db-init/`, `.env.example`, …) that have no business being reachable over HTTP: exposing them is an information-disclosure issue (OWASP A05 *Security Misconfiguration*; MITRE [CWE-538](https://cwe.mitre.org/data/definitions/538.html) / [CWE-552](https://cwe.mitre.org/data/definitions/552.html)). Two layers, both shipped with the project, keep them out of reach on every installation:
+
+- **`.dockerignore`** — these files are never copied into the image, so in a production (image-based) deployment they are not in the web root at all (HTTP 404).
+- **`.htaccess`** — Apache additionally denies (HTTP 403) dot-files and dot-folders (`.env`, `.git/`, `.github/`), config/build artefacts (`*.ini`, `*.yml`, `*.sql`, `*.sh`, `Dockerfile`, `composer.json`/`composer.lock`), the `api/config/` directory, and editor/backup leftovers (`*.bak`, `*~`, …). This also covers the few files that must stay in the build context (`docker-entrypoint.sh`, `php-custom.ini`).
+
+The real `.env` is never in the web root: Compose reads it on the host and injects it as environment variables (`env_file`), and it is listed in `.dockerignore` as well.
+
+!!! note "Verify after deployment"
+    Both files take effect after a `docker compose up -d --build`. From outside the server, every sensitive path must answer `403` or `404`, never `200`:
+
+    ```bash
+    for f in .env .env.example Dockerfile docker-compose.yml \
+             .github/workflows/docker.yml api/composer.json; do
+      printf '%-32s ' "$f"; curl -sko /dev/null -w '%{http_code}\n' "https://your-domain/$f"
+    done
+    ```
+
 ## Development setup
 
 For local development, create a `docker-compose.override.yml` (ignored by git) that mounts the source code into the container, so changes are visible without rebuilding:
@@ -191,5 +210,8 @@ services:
 ```
 
 Compose picks the override up automatically with `docker compose up`.
+
+!!! warning "Local use only"
+    This override bind-mounts the **whole repository** into the web root, which bypasses the `.dockerignore` protection described in [section 8](#8-repository-files-are-not-web-exposed): build, CI and config files become reachable over HTTP. Use it only on a local, non-public instance — never on a server exposed to the internet.
 
 Next: [Architecture](architecture.md) · [Maintenance](maintenance.md)
