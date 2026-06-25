@@ -29,7 +29,7 @@ export async function initPersonEditPage(){
     return;
   }
   const person = personData.data[0];
-  console.log(person);
+  // console.log(person);
 
   fillForm(person);
 }
@@ -41,6 +41,27 @@ function fillForm(person){
   document.getElementById('email').value = person.email;
   document.getElementById('institution').value = person.institution_id;
   document.getElementById('position').value = person.position_id;
+  toggleUserFields(person);
+}
+
+function toggleUserFields(person){
+  console.log(person.role_id);
+  
+  const hasAccount = person.role_id !== null;
+  const roleSelect = document.getElementById('role');
+  const isActive = document.getElementById('is_active');
+
+  document.getElementById('createAccountWrap').classList.toggle('d-none', hasAccount);
+
+  roleSelect.disabled = !hasAccount;
+  roleSelect.required = hasAccount;
+  isActive.disabled = !hasAccount;
+  isActive.required = hasAccount;
+
+  if(hasAccount){
+    roleSelect.value = person.role_id;
+    isActive.value = person.active;
+  }
 }
 
 function buildList(list){
@@ -76,15 +97,15 @@ function saveForm(){
   const form = document.getElementById('personForm');
   handleFormSubmit(form, {
     class: 'Person',
-    action: 'savePerson',
+    action: 'updatePerson',
     resetOnSuccess: false,
     beforeSubmit: async (data) => {
-      console.log(data);
-      return false;
+      data.person.id = personId;
+      return data;
     },
     onSuccess: (result) => {
-      console.log('Person created:', result);
-      const bsClass = result.data.error === 0 ? 'success' : 'danger';
+      console.log('Person updated:', result);
+      const bsClass = result.data.res === 0 ? 'success' : 'danger';
       bsAlert(result.data.output, bsClass, 3000, () => {window.location.href = 'dashboard.php'});
     },
     onError: (error) => {

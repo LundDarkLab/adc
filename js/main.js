@@ -99,7 +99,7 @@ const pageRoutes = {
     init: () => import('./features/person/pages/personView.js').then(m => m.initPersonViewPage())
   },
   'person_edit': {
-    css: ['css/person_add.css'],
+    css: ['css/person_edit.css'],
     dependencies: [],
     init: () => import('./features/person/pages/personEdit.js').then(m => m.initPersonEditPage())
   },

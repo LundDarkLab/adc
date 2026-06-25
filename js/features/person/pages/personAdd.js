@@ -37,7 +37,7 @@ function initListener(){
 
   createAccountBtn.addEventListener('click', () => {
     const createAccount = createAccountBtn.checked;
-    const label = !createAccount ? 'create Account' : 'do not create account';
+    const label = createAccount ? 'do not create account' : 'create Account';
     createAccountLabel.textContent = label;
     roleSelect.disabled = !createAccount;
     roleSelect.required = createAccount;
@@ -50,15 +50,11 @@ function saveForm(){
   const form = document.getElementById('personForm');
   handleFormSubmit(form, {
     class: 'Person',
-    action: 'savePerson',
+    action: 'addPerson',
     resetOnSuccess: false,
-    beforeSubmit: async (data) => {
-      console.log(data);
-      return false;
-    },
     onSuccess: (result) => {
       console.log('Person created:', result);
-      const bsClass = result.data.error === 0 ? 'success' : 'danger';
+      const bsClass = result.data.res === 0 ? 'success' : 'danger';
       bsAlert(result.data.output, bsClass, 3000, () => {window.location.href = 'dashboard.php'});
     },
     onError: (error) => {

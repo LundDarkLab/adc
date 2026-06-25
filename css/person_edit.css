@@ -16,7 +16,7 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: 3rem;
-}
+ }
 
 @media (min-width: 992px) {
   #inputContainer{

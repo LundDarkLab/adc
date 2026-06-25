@@ -3,7 +3,7 @@ namespace Adc;
 if (session_status() === PHP_SESSION_NONE) { session_start();}
 use \PHPMailer\PHPMailer\PHPMailer;
 class Person extends Conn{
-  public $mail;
+  public PHPMailer $mail;
   public function __construct(){
     $this->mail = new PHPMailer(true);
   }
@@ -35,7 +35,7 @@ class Person extends Conn{
     $sql = $this->buildInsert("user", $dati['user']);
     $this->prepared($sql, $dati['user']);
 
-    $token = md5($dati['person']['email']).rand(10,9999);
+    $token = hash('sha256', $dati['person']['email'] . random_bytes(16)) . random_int(10, 9999);
     $tokenData = array("email"=>$dati['person']['email'], "token"=>$token);
     $tokenSql = $this->buildInsert("reset_password", $tokenData);
     $this->prepared($tokenSql, $tokenData);
@@ -89,7 +89,7 @@ class Person extends Conn{
     return true;
   }
 
-  private function htmlToPlainText($str){
+  private function htmlToPlainText(string $str){
     $str = str_replace('&nbsp;', ' ', $str);
     $str = html_entity_decode($str, ENT_QUOTES | ENT_COMPAT , 'UTF-8');
     $str = html_entity_decode($str, ENT_HTML5, 'UTF-8');
@@ -150,16 +150,18 @@ class Person extends Conn{
   public function updatePerson(array $data){
     try {
       $this->pdo()->beginTransaction();
-      $personId = $data['person']['id'];
+      $personId = (int)($data['person']['id'] ?? 0);
+      if ($personId <= 0) { throw new \Exception('Invalid person id'); }
       unset($data['person']['id']);
       $filter = array("id"=>$personId);
       $sql = $this->buildUpdate("person",$filter, $data['person']);
       $this->prepared($sql, $data['person']);
 
       if(isset($data['user'])){
-        if(isset($data['user']['id'])){
-          $filterUser = array("id"=>$data['user']['id']);
-          unset($data['user']['id']);
+        unset($data['user']['id']);
+        $existingUser = $this->simple("select id from user where person = ".$personId.";");
+        if(!empty($existingUser)){
+          $filterUser = array("id"=>(int)$existingUser[0]['id']);
           $sql = $this->buildUpdate("user",$filterUser, $data['user']);
           $this->prepared($sql, $data['user']);
         }else{
