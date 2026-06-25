@@ -13,7 +13,7 @@
     <header id="header"></header>
     <div id="sideMenu"></div>
     <main>
-      <div class="continer">
+      <div class="container w-100">
         <form name="personForm" id="personForm" class="form" method="post">
           <div class="row">
             <div class="col">
