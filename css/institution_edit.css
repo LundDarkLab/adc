@@ -1,0 +1,9 @@
+#map-container{
+  width:100%;
+  height: 500px;
+}
+
+#color{
+  flex-grow: 0;
+  width:3rem;
+}

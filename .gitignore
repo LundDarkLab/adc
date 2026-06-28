@@ -5,7 +5,7 @@ node_modules/
 .env
 *.log
 
-# --- Cartelle di lavoro locali ---
+# --- Cartelle e file di lavoro locali ---
 workfile/
 notes/ 
 documentation/site/ 
@@ -13,6 +13,9 @@ docker-compose.override.yml
 site/
 tests/
 old_files/
+*.bak
+*.bak.*
+*.orig
 
 # --- Gestione Dati Persistenti (Strategia .gitkeep) ---
 # Versionata solo la struttura delle cartelle: i contenuti caricati restano fuori

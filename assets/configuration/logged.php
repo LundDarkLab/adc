@@ -6,4 +6,4 @@
     echo '<input type="hidden" id="userInstitution" value="' . $_SESSION['institution'] . '">';
     echo '<input type="hidden" id="userEmail" value="' . $_SESSION['email'] . '">';
   }
-?>
+

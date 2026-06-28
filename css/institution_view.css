@@ -1,0 +1,55 @@
+main{
+  margin-top:70px;
+}
+
+#map-container{
+  min-height: 300px;
+}
+
+#logo-banner {
+  position:relative;
+  overflow: hidden;
+  width: 100%;
+  height: 70dvh;
+}
+
+#logo-banner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--banner-logo);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  margin-bottom:50px;
+  filter: blur(1.5px);
+  scale:1.05;
+}
+
+#banner-title{
+  background-color: rgb(0,0,0);
+  background-color: rgba(0,0,0, 0.4);
+  color: white;
+  font-weight: bold;
+  border-top: 1px solid #f1f1f1;
+  border-bottom: 1px solid #f1f1f1;
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  z-index: 2;
+  width: 100%;
+  padding: 20px;
+  text-align: center;
+  font-size: 4rem;
+}
+
+.list-group-item{
+  display: grid;
+  grid-template-columns: 30% 70%;
+  gap:3px;
+}
+
+.list-group-item > span.label {
+  font-weight: bold;
+}

@@ -37,20 +37,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   if (isset($input['class']) && isset($input['action'])) {
     $className = $input['class'];
     $action = $input['action'];
-    unset($input['class']);
-    unset($input['action']);
+    $dryRun = filter_var($input['dry_run'] ?? false, FILTER_VALIDATE_BOOLEAN);
+    unset($input['class'], $input['action'], $input['dry_run']);
     if (array_key_exists($className, $availableClasses)) {
       $class = $availableClasses[$className];
       $obj = new $class();
       if (method_exists($obj, $action)) {
         try {
           if (empty($input)) {$input = [];}
+          if ($dryRun) { $obj->pdo()->beginTransaction(); }
           $reflection = new ReflectionMethod($obj, $action);
           $numParams = $reflection->getNumberOfParameters();
           if ($numParams === 2) {
-            $response = $obj->$action($input, $_FILES);
+            $files = $dryRun ? [] : $_FILES;
+            $response = $obj->$action($input, $files);
           } else {
             $response = $obj->$action($input);
+          }
+          if ($dryRun) {
+            $obj->pdo()->rollBack();
+            if (is_array($response)) { $response['dry_run'] = true; }
           }
           //echo json_encode(['error' => 0, 'data' => $response]);
           $json = json_encode(['error' => 0, 'data' => $response], JSON_UNESCAPED_UNICODE);
@@ -68,6 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           header('Content-Type: application/json; charset=utf-8');
           echo $json;
         } catch (Exception $e) {
+          if ($dryRun && $obj->pdo()->inTransaction()) { $obj->pdo()->rollBack(); }
           http_response_code(500);
           echo json_encode(['error' => 1, 'message' => $e->getMessage()]);
         }

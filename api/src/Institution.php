@@ -44,7 +44,7 @@ class Institution extends Conn{
     if (!empty($filters)) {
       $where = "WHERE " . join(" AND ", $filters);
     }
-    $sql = "SELECT i.id, i.name, i.abbreviation, cat.id as category_id, cat.value AS category, i.city, i.address, i.lat, i.lon, i.url, i.logo, COALESCE(b.tot, 0) AS artifact_count FROM institution i INNER JOIN list_institution_category cat ON i.category = cat.id LEFT JOIN (SELECT owner, COUNT(*) AS tot FROM artifact GROUP BY owner) b ON b.owner = i.id ".$where." ORDER BY i.id ASC;";
+    $sql = "SELECT i.id, i.name, i.abbreviation, cat.id as category_id, cat.value AS category, i.city, i.address, i.lat, i.lon, i.url, i.logo, i.is_storage_place, i.color, COALESCE(b.tot, 0) AS artifact_count FROM institution i INNER JOIN list_institution_category cat ON i.category = cat.id LEFT JOIN (SELECT owner, COUNT(*) AS tot FROM artifact GROUP BY owner) b ON b.owner = i.id ".$where." ORDER BY i.id ASC;";
     return $this->simple($sql);
   }
 

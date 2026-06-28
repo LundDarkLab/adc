@@ -51,26 +51,32 @@ function setChronology(crono) {
 }
 
 function setStoragePlace(storagePlace) {
-    if (storagePlace?.id) {
+  
+  if (storagePlace?.id) {
     document.getElementById('btInstitutionFilter')?.setAttribute('data-institution-id', storagePlace.id);
   }
-
+  
   if (storagePlace?.name) {
     addField('storage_name', storagePlace.name);
     const gMapLink = `http://maps.google.com/maps?q=${storagePlace.name.replaceAll(' ', "+")}`;
     const gMap = document.getElementById('gMapLink');
     if (gMap) gMap.href = gMapLink;
   }
-
+  
   if (storagePlace?.city && storagePlace?.address) {
     fieldMap.storage_address = `${storagePlace.city}, ${storagePlace.address}`;
   }
-
+  
+  const institutionLink = document.getElementById('institutionLink');
+  if(!institutionLink){
+    console.error('institutionLink not present');
+    return;
+  }
   if (storagePlace?.url) {
-    addField('storage_link', storagePlace?.url);
+    addField('storage_link', storagePlace.url);
+    institutionLink.href = storagePlace.url;
   }else {
-    const institutionLink = document.getElementById('institutionLink');
-    if (institutionLink) institutionLink.remove();
+    institutionLink.remove();
   }
   
   if (storagePlace?.logo) {
@@ -124,7 +130,6 @@ export function artifactViewAccordion(data){
     artifact_metadata: metadata,
   } = data;
   
-  console.log("artifactViewAccordion",artifact);
   // Artifact fields
   setArtifactField(artifact);
 

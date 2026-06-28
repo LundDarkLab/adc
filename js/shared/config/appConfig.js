@@ -1,8 +1,3 @@
-export const jQuery = {
-  jsSrc: 'https://code.jquery.com/jquery-3.6.0.min.js',
-  jsIntegrity: 'sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=',
-  jsCrossOrigin: 'anonymous'
-}
 export const bootstrap = {
   jsSrc: 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js',
   jsIntegrity: 'sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz',
@@ -37,6 +32,22 @@ export const leafletMousePosition = {
   jsIntegrity: '',
   jsCrossOrigin: '',
   cssHref: '/js/maps/mousePosition/mousePosition.css',
+  cssIntegrity: '',
+  cssCrossOrigin: ''
+}
+export const leafletMarkerCluster = {
+  jsSrc: 'https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js',
+  jsIntegrity: '',
+  jsCrossOrigin: '',
+  cssHref: 'https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css',
+  cssIntegrity: '',
+  cssCrossOrigin: ''
+}
+export const leafletMarkerClusterDefaultCss = {
+  jsSrc: '',
+  jsIntegrity: '',
+  jsCrossOrigin: '',
+  cssHref: 'https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css',
   cssIntegrity: '',
   cssCrossOrigin: ''
 }

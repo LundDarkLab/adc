@@ -2,12 +2,13 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
   <head>
-    <?php require("assets/meta.php"); ?>
+    <?php require "assets/meta.php"; ?>
     <link rel="stylesheet" href="css/login.css">
+    <title>Dynamic Collection - login page</title>
   </head>
   <body>
-    <?php require("assets/header.php"); ?>
-    <?php require("assets/menu.php"); ?>
+    <?php require "assets/header.php"; ?>
+    <?php require "assets/menu.php"; ?>
     <main>
       <div class="container my-5">
         <div class="row">
@@ -50,7 +51,7 @@
                 </form>
               </div>
             </div>
-          </div>  
+          </div>
           <div class="col col-md-6">
             <div id="disclaimer">
               <div class="alert alert-light rounded-0" role="alert">
@@ -85,14 +86,14 @@
                     
                     <div class="border-top pt-3 mt-3">
                       <p class="mb-2">
-                        <i class="mdi mdi-lock"></i> <strong>Your rights:</strong> 
-                        You can access, update, or delete your account at any time. 
+                        <i class="mdi mdi-lock"></i> <strong>Your rights:</strong>
+                        You can access, update, or delete your account at any time.
                         If deleted, contributions remain public but attributed to your institution.
                       </p>
                       <p class="mb-0">
-                        <strong>Contact:</strong> 
-                        <a href="mailto:nicolo.dellunto@ark.lu.se" class="alert-link" data-bs-toggle="tooltip" title="click to open your mail client">nicolo.dellunto@ark.lu.se</a> • 
-                        <a href="policy.php" class="alert-link" title="platform policy" data-bs-toggle="tooltip">Platform Policy</a> • 
+                        <strong>Contact:</strong>
+                        <a href="mailto:nicolo.dellunto@ark.lu.se" class="alert-link" data-bs-toggle="tooltip" title="click to open your mail client">nicolo.dellunto@ark.lu.se</a> •
+                        <a href="policy.php" class="alert-link" title="platform policy" data-bs-toggle="tooltip">Platform Policy</a> •
                         <a href="https://www.lunduniversity.lu.se/about-university/contact-us/privacy-policy" target="_blank" class="alert-link" title="external link" data-bs-toggle="tooltip">
                           Lund University Privacy Policy <i class="mdi mdi-open-in-new"></i>
                         </a>
@@ -107,9 +108,9 @@
         
 
     </main>
-    <?php 
-      require("assets/footer.php");
-      require("assets/js.html"); 
+    <?php
+      require "assets/footer.php";
+      require "assets/js.html";
     ?>
     <script src="js/login.js" charset="utf-8"></script>
   </body>

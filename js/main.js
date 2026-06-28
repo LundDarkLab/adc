@@ -1,4 +1,4 @@
-import { bootstrap, mdi, leaflet, leafletMapScale, leafletMousePosition} from './shared/config/appConfig.js';
+import { bootstrap, mdi, leaflet, leafletMapScale, leafletMousePosition, leafletMarkerCluster, leafletMarkerClusterDefaultCss } from './shared/config/appConfig.js';
 import { showLoading } from './shared/utils/showLoadingUtils.js';
 
 const loadScript = (src, integrity, crossOrigin) => {
@@ -29,14 +29,17 @@ const loadCSS = (href, integrity, crossOrigin) => {
 async function loadLeafletDependencies() {
   await Promise.all([
     loadScript(leaflet.jsSrc, leaflet.jsIntegrity, leaflet.jsCrossOrigin),
-    loadCSS(leaflet.cssHref, leaflet.cssIntegrity, leaflet.cssCrossOrigin)
+    loadCSS(leaflet.cssHref, leaflet.cssIntegrity, leaflet.cssCrossOrigin),
+    loadCSS(leafletMapScale.cssHref, leafletMapScale.cssIntegrity, leafletMapScale.cssCrossOrigin),
+    loadCSS(leafletMousePosition.cssHref, leafletMousePosition.cssIntegrity, leafletMousePosition.cssCrossOrigin),
+    loadCSS(leafletMarkerCluster.cssHref, leafletMarkerCluster.cssIntegrity, leafletMarkerCluster.cssCrossOrigin),
+    loadCSS(leafletMarkerClusterDefaultCss.cssHref, leafletMarkerClusterDefaultCss.cssIntegrity, leafletMarkerClusterDefaultCss.cssCrossOrigin),
+    loadCSS('js/shared/components/map/map.css', '', '')
   ]);
   await Promise.all([
     loadScript(leafletMapScale.jsSrc, leafletMapScale.jsIntegrity, leafletMapScale.jsCrossOrigin),
     loadScript(leafletMousePosition.jsSrc, leafletMousePosition.jsIntegrity, leafletMousePosition.jsCrossOrigin),
-    loadCSS(leafletMapScale.cssHref, leafletMapScale.cssIntegrity, leafletMapScale.cssCrossOrigin),
-    loadCSS(leafletMousePosition.cssHref, leafletMousePosition.cssIntegrity, leafletMousePosition.cssCrossOrigin),
-    loadCSS('js/shared/components/map/map.css', '', '')
+    loadScript(leafletMarkerCluster.jsSrc, leafletMarkerCluster.jsIntegrity, leafletMarkerCluster.jsCrossOrigin),
   ]);
 }
 
@@ -54,6 +57,22 @@ async function load3DHopDependencies() {
 }
 
 const pageRoutes = {
+  // INSTITUTION
+  'institution_add': {
+    css: ['css/institution_add.css'],
+    dependencies: [loadLeafletDependencies],
+    init: () => import('./features/institution/pages/institution_add.js').then(m => m.initPage())
+  },
+  'institution_edit': {
+    css: ['css/institution_edit.css'],
+    dependencies: [loadLeafletDependencies],
+    init: () => import('./features/institution/pages/institution_edit.js').then(m => m.initPage())
+  },
+  'institution_view': {
+    css: ['css/institution_view.css'],
+    dependencies: [loadLeafletDependencies],
+    init: () => import('./features/institution/pages/institution_view.js').then(m => m.initPage())
+  },
   // DASHBOARD
   'dashboard': {
     css: ['css/dashboard.css'],
@@ -133,8 +152,7 @@ try {
     loadCSS(bootstrap.cssHref, bootstrap.cssIntegrity, bootstrap.cssCrossOrigin),
     loadCSS(mdi.cssHref, mdi.cssIntegrity, mdi.cssCrossOrigin),
     loadCSS('css/main.css', '', ''),
-    // loadScript(jQuery.jsSrc, jQuery.jsIntegrity, jQuery.jsCrossOrigin),
-    loadScript(bootstrap.jsSrc, bootstrap.jsIntegrity, bootstrap.jsCrossOrigin)
+loadScript(bootstrap.jsSrc, bootstrap.jsIntegrity, bootstrap.jsCrossOrigin)
   ]);
   const [initHeader, initSideMenu, initFooter, bsModule] = await Promise.all([
     import('./shared/components/headerMenu/initHeaderMenu.js'),
