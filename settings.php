@@ -13,9 +13,13 @@
     <header id="header"></header>
     <div id="sideMenu"></div>
     <div id="main">
-      <div id="titleDiv" class="mb-3">
-        <h3 class="border-bottom" id="title">Edit <span id="personName"></span> profile</h3>
-        <div class="form-text">all fields are mandatory</div>
+      <div id="titleDiv" class="container-fluid mb-3">
+        <div class="row">
+          <div class="col">
+            <h3 class="border-bottom" id="title">Edit <span id="personName"></span> profile</h3>
+            <div class="form-text">all fields are mandatory</div>
+          </div>
+        </div>
       </div>
       <div id="content" class="container-fluid">
         <div class="row row-cols-1 row-cols-md-3 g-4 align-items-stretch">
@@ -25,15 +29,15 @@
               <div class="card-body">
                 <div class="mb-3">
                   <label for="first_name">First Name</label>
-                  <input type="text" name="first_name" id="first_name" class="form-control" required>
+                  <input type="text" name="first_name" id="first_name" class="form-control form-control-sm" required>
                 </div>
                 <div class="mb-3">
                   <label for="last_name">Last Name</label>
-                  <input type="text" name="last_name" id="last_name" class="form-control" required>
+                  <input type="text" name="last_name" id="last_name" class="form-control form-control-sm" required>
                 </div>
                 <div class="mb-3">
                   <label for="email">Email</label>
-                  <input type="email" name="email" id="email" class="form-control" required>
+                  <input type="email" name="email" id="email" class="form-control form-control-sm" required>
                 </div>
               </div>
               <div class="card-footer">
@@ -48,11 +52,11 @@
               <div class="card-body">
                 <div class="mb-3">
                   <label for="institution">Institution</label>
-                  <select name="institution" id="institution" class="form-select" required></select>
+                  <select name="institution" id="institution" class="form-select form-select-sm" required></select>
                 </div>
                 <div class="mb-3">
                   <label for="position">Position</label>
-                  <select name="position" id="position" class="form-select" required></select>
+                  <select name="position" id="position" class="form-select form-select-sm" required></select>
                 </div>
               </div>
               <div class="card-footer">
@@ -73,22 +77,24 @@
                 </div>
                 <div class="mb-3">
                   <label for="current_password">Current Password</label>
-                  <input type="password" name="current_password" id="current_password" class="form-control pwd" autocomplete="current-password" required>
+                  <input type="password" name="current_password" id="current_password" class="form-control form-control-sm pwd" autocomplete="current-password" required>
                 </div>
                 <div class="mb-3">
                   <label for="new_password">New Password</label>
-                  <input type="password" name="new_password" id="new_password" class="form-control pwd" autocomplete="new-password" required>
+                  <input type="password" name="new_password" id="new_password" class="form-control form-control-sm pwd" autocomplete="new-password" required>
                   <progress id="password-strength" class="progress mt-3 w-100" value="0" max="100" aria-label="Password strength"></progress>
+                  <p id="score-text" class="fw-bold my-2"></p>
                   <ul class="list-unstyled form-text mt-2 mb-0" id="pwd-rules">
                     <li id="rule-length">At least 10 characters</li>
                     <li id="rule-upper">At least one uppercase letter</li>
                     <li id="rule-number">At least one number</li>
                     <li id="rule-special">At least one special character</li>
                   </ul>
+                  <small class="form-text text-muted">Spaces are not allowed</small>
                 </div>
                 <div class="mb-3">
                   <label for="confirm_password">Confirm Password</label>
-                  <input type="password" name="confirm_password" id="confirm_password" class="form-control pwd" autocomplete="new-password" required>
+                  <input type="password" name="confirm_password" id="confirm_password" class="form-control form-control-sm pwd" autocomplete="new-password" required>
                 </div>
               </div>
               <div class="card-footer">

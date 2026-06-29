@@ -56,11 +56,15 @@ async function load3DHopDependencies() {
   await loadScript('assets/3dhop/init.js');
 }
 
+async function loadZxcvbn(){
+  await loadScript('assets/zxcvbn/zxcvbn.js');
+}
+
 const pageRoutes = {
   // SETTINGS
   'settings': {
     css: ['css/settings.css'],
-    dependencies: [],
+    dependencies: [loadZxcvbn],
     init: () => import('./features/person/pages/settings.js').then(m => m.initPage())
   },
   // INSTITUTION

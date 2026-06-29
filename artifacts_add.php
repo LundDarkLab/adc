@@ -6,7 +6,7 @@
 <html lang="en" dir="ltr">
   <head>
     <title>Add New Artifact</title>
-    <?php require "assets/meta.html"; ?>
+    <?php require "assets/meta.php"; ?>
   </head>
   <body>
     <?php require "assets/configuration/logged.php"; ?>
