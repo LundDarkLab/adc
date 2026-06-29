@@ -1,33 +1,49 @@
+#main{
+  margin-top: 100px;
+  padding:0 2rem 2rem;
+  min-height: 70dvh;
+}
+
 #password-strength {
-  height: 5px;
-  width: 100%;
-  display: block;
-  background-color: #ccc;
-  margin: 5px 0;
+  appearance: none;
+  -webkit-appearance: none;
+  height: 6px;
+  border: none;
+  border-radius: 3px;
 }
-#password-strength span {
-  display: block;
-  height: 5px;
-  border-radius: 2px;
-  transition: all 500ms ease;
+
+#password-strength::-webkit-progress-bar {
+  background-color: #e9ecef;
+  border-radius: 3px;
 }
-.strength-0 span {
-  background-color: red;
-  width: 5%;
+
+#password-strength::-webkit-progress-value {
+  border-radius: 3px;
+  transition: background-color 0.3s ease;
 }
-.strength-1 span {
-  background-color: orangered;
-  width: 25%;
+
+#password-strength::-moz-progress-bar {
+  border-radius: 3px;
+  transition: background-color 0.3s ease;
 }
-.strength-2 span {
-  background-color: orange;
-  width: 50%;
+
+#pwd-rules li {
+  color: #6c757d;
+  transition: color 0.2s ease;
 }
-.strength-3 span {
-  background-color: yellowgreen;
-  width: 75%;
+
+#pwd-rules li.rule-ok {
+  color: #198754;
 }
-.strength-4 span {
-  background-color: green;
-  width: 100%;
-}
+
+#password-strength.strength-0::-webkit-progress-value { background-color: #dc3545; }
+#password-strength.strength-1::-webkit-progress-value { background-color: #fd7e14; }
+#password-strength.strength-2::-webkit-progress-value { background-color: #ffc107; }
+#password-strength.strength-3::-webkit-progress-value { background-color: #20c997; }
+#password-strength.strength-4::-webkit-progress-value { background-color: #198754; }
+
+#password-strength.strength-0::-moz-progress-bar { background-color: #dc3545; }
+#password-strength.strength-1::-moz-progress-bar { background-color: #fd7e14; }
+#password-strength.strength-2::-moz-progress-bar { background-color: #ffc107; }
+#password-strength.strength-3::-moz-progress-bar { background-color: #20c997; }
+#password-strength.strength-4::-moz-progress-bar { background-color: #198754; }

@@ -5,7 +5,7 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
   <head>
-    <title>Edit Person</title>
+    <title>Dynamic Collection - Edit Person</title>
     <?php require "assets/meta.php"; ?>
   </head>
   <body>

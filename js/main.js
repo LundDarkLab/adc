@@ -57,6 +57,12 @@ async function load3DHopDependencies() {
 }
 
 const pageRoutes = {
+  // SETTINGS
+  'settings': {
+    css: ['css/settings.css'],
+    dependencies: [],
+    init: () => import('./features/person/pages/settings.js').then(m => m.initPage())
+  },
   // INSTITUTION
   'institution_add': {
     css: ['css/institution_add.css'],

@@ -99,6 +99,15 @@ class Person extends Conn{
     return $str;
   }
 
+  public function getPersonFromUser(array $payload = []): array {
+    $userId = isset($payload['userId']) ? (int)$payload['userId'] : 0;
+    if ($userId <= 0) {
+      throw new \Exception("Error Processing Request", 1);
+    }
+
+    return $this->getPersons(['filters' => ['userId' => $userId]]);
+  }
+
   public function getPersons(array $payload = []): array {
     [$conditions, $params] = $this->buildPersonFilters($payload['filters'] ?? []);
 
@@ -116,6 +125,7 @@ class Person extends Conn{
     $params = [];
 
     $this->applyNumericFilter($filters, 'id', 'p.id = :id', $conditions, $params);
+    $this->applyNumericFilter($filters, 'userId', 'u.id = :userId', $conditions, $params);
     $this->applyNumericFilter($filters, 'role', 'u.role = :role', $conditions, $params);
     $this->applyNumericFilter($filters, 'institution', 'p.institution = :institution', $conditions, $params);
     $this->applyStatusFilter($filters, $conditions, $params);
