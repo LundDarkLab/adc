@@ -408,7 +408,7 @@ async function artifactByCounty() {
     });
     domEl.byCounty.appendChild(countyFragment);
 
-    countyDataCache = data;
+    let countyDataCache = data;
     cacheTimestamp = Date.now();
     mapStat(data);
     
@@ -954,8 +954,8 @@ function toggleStats(event) {
 
 async function showGallery() {
   await getFilter();
-  if (galleryInstance && typeof galleryInstance.reset === 'function') { galleryInstance.reset();}
-  galleryInstance = gallery(showCollection);
+  if (galleryInstance && typeof galleryInstance.reset === 'function') { galleryInstance.reset(); }
+  galleryInstance = await gallery(showCollection);
 }
 
 /******************/
@@ -1090,9 +1090,9 @@ function getInstitutionIdByName(name) {
 /*****************/
 /*****  MAP ******/
 function mapStat(countyData){
-  map2 = L.map('mapChart').fitBounds(mapExt)
+  let map2 = L.map('mapChart').fitBounds(mapExt)
   L.maptilerLayer({apiKey: mapTilerKey, style: "dataviz-light"}).addTo(map2)
-  countyGroup = L.featureGroup().addTo(map2);
+  let countyGroup = L.featureGroup().addTo(map2);
   let countyJson = {"type":"FeatureCollection", "features": []}
   countyData.forEach(el => {
     countyJson.features.push({
@@ -1102,7 +1102,7 @@ function mapStat(countyData){
     })
   });
   
-  county = L.geoJson(countyJson, {
+  let county = L.geoJson(countyJson, {
     style: styleByGroup,
     onEachFeature: onEachFeature
   }).addTo(countyGroup);
@@ -1117,8 +1117,8 @@ function mapStat(countyData){
       btnHome.href = '#';
       btnHome.title = 'max zoom';
       btnHome.id = 'maxZoomBtn';
-      btnHome.setAttribute('data-bs-toggle', 'tooltip');
-      btnHome.setAttribute('data-bs-placement', 'right');
+      btnHome.dataset.bsToggle = 'tooltip';
+      btnHome.dataset.bsPlacement = 'right';
       
       let icon = document.createElement('i');
       icon.className = 'mdi mdi-home';
@@ -1145,7 +1145,7 @@ function mapStat(countyData){
     let div = L.DomUtil.create('div', 'info legend border rounded')
     let grades = [0, 10, 20, 50, 100, 200, 500, 1000]
 
-    for (var i = 0; i < grades.length; i++) {
+    for (let i = 0; i < grades.length; i++) {
       let row = document.createElement('div');
       div.appendChild(row);
 

@@ -53,7 +53,9 @@ function setChronology(crono) {
 function setStoragePlace(storagePlace) {
   
   if (storagePlace?.id) {
-    document.getElementById('btInstitutionFilter')?.setAttribute('data-institution-id', storagePlace.id);
+    const linkBtn = document.getElementById('btInstitutionFilter');
+    if(!linkBtn) return;
+    linkBtn.href = `institution_view.php?item=${storagePlace.id}`;
   }
   
   if (storagePlace?.name) {

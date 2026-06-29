@@ -69,7 +69,7 @@ const pageRoutes = {
     init: () => import('./features/institution/pages/institution_edit.js').then(m => m.initPage())
   },
   'institution_view': {
-    css: ['css/institution_view.css'],
+    css: ['css/institution_view.css', 'css/gallery.css'],
     dependencies: [loadLeafletDependencies],
     init: () => import('./features/institution/pages/institution_view.js').then(m => m.initPage())
   },

@@ -63,6 +63,9 @@
           </div>
         </div>
       </div>
+      <div class="" id="cardContainerWrap">
+        <div id="cardContainer" class=""></div>
+      </div>
     </main>
     <footer id="footer"></footer>
     <script>window.pageType = "institution_view";</script>

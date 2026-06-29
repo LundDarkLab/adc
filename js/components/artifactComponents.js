@@ -1,6 +1,6 @@
 import { bsAlert } from "../components/bsComponents.js";
 import { initMap } from "../modules/initMaps.js";
-import { domEl, layerControl } from "./mapsComponent.js";
+import { layerControl } from "./mapsComponent.js";
 import { toggleBaseLayer,fetchAdminBoundaries,createGeoJsonLayer, calculateMaxBoundsAndZoom } from "../helpers/mapHelper.js";
 import { groupBy, basePath, cutString } from "../helpers/utils.js";
 import { fullImage, deleteMedia } from "../helpers/artifactHelper.js";
@@ -30,239 +30,213 @@ export function setStatusAlert(el, status,status_id){
   el.classList.add(status_id === 1 ? 'alert-danger' : 'alert-success');
 }
 
-export function createAccordionItem(data){
-  const artifact = data.artifact;
-  const crono = data.crono;
-  const storagePlace = data.storage_place;
-  const findplace = data.artifact_findplace;
-  const measure = data.artifact_measure;
-  const metadata = data.artifact_metadata;
-  const materialTech = data.artifact_material_technique;
+function fillArtifactFields(artifact, fieldMap, hasUser) {
+  if (!Object.keys(artifact).length && !hasUser) return;
+  ['name', 'category_class', 'category_specs', 'type', 'description', 'notes', 'inventory', 'object_condition', 'conservation_state']
+    .forEach(k => { if (isValidValue(artifact[k])) fieldMap[k] = artifact[k]; });
+  if (isValidValue(artifact.start)) fieldMap.start = parseInt(artifact.start);
+  if (isValidValue(artifact.end)) fieldMap.end = parseInt(artifact.end);
+  if (isValidValue(artifact.is_museum_copy)) fieldMap.is_museum_copy = artifact.is_museum_copy == 0 ? 'false' : 'true';
+  if (isValidValue(artifact.created_at)) fieldMap.created_at = artifact.created_at.split(' ')[0];
+  if (isValidValue(artifact.last_update)) fieldMap.last_update = artifact.last_update.split(' ')[0];
+}
+
+function fillMaterialTech(materialTech, hasUser) {
+  if (!Object.keys(materialTech).length && !hasUser) return;
+  const list = document.getElementById('materialTechList');
+  materialTech.forEach(item => {
+    const li = document.createElement('li');
+    li.classList.add('list-group-item', 'ps-0', 'pt-0');
+    li.textContent = item.technique?.trim() ? `${item.material} / ${item.technique}` : item.material;
+    list.appendChild(li);
+  });
+}
+
+function fillCronoFields(crono, fieldMap, hasUser) {
+  if (!Object.keys(crono).length && !hasUser) return;
+  if (crono.start?.macro) fieldMap.fromPeriodMacro = crono.start.macro;
+  if (crono.start?.generic) fieldMap.fromPeriodGeneric = crono.start.generic;
+  if (crono.start?.specific) fieldMap.fromPeriodSpecific = crono.start.specific;
+  if (crono.end?.macro) fieldMap.toPeriodMacro = crono.end.macro;
+  if (crono.end?.generic) fieldMap.toPeriodGeneric = crono.end.generic;
+  if (crono.end?.specific) fieldMap.toPeriodSpecific = crono.end.specific;
+  if (crono.timeline) fieldMap.timeline_serie = `Reference timeline: ${crono.timeline}`;
+}
+
+function fillStoragePlaceFields(storagePlace, fieldMap, hasUser) {
+  if (!Object.keys(storagePlace).length && !hasUser) return;
+  if (storagePlace.id) document.getElementById('btInstitutionFilter').dataset.institutionId = storagePlace.id;
+  if (storagePlace.name) {
+    fieldMap.storage_name = storagePlace.name;
+    document.getElementById('gMapLink').href = 'http://maps.google.com/maps?q=' + storagePlace.name.replaceAll(' ', '+');
+  }
+  if (storagePlace.city) fieldMap.storage_address = `${storagePlace.city}, ${storagePlace.address}`;
+  if (storagePlace.url) fieldMap.storage_link = storagePlace.url;
+  if (storagePlace.logo) document.getElementById('institutionImg').src = `img/logo/${storagePlace.logo}`;
+}
+
+function fillFindplaceFields(findplace, fieldMap, hasUser) {
+  if (!Object.keys(findplace).length && !hasUser) return;
+  if (isValidValue(findplace.parish)) fieldMap.fpparish = findplace.parish;
+  if (isValidValue(findplace.toponym)) fieldMap.fptoponym = findplace.toponym;
+  if (isValidValue(findplace.notes)) fieldMap.fpnotes = findplace.notes;
+  for (let i = 0; i <= 5; i++) {
+    const el = document.getElementById('fpgid' + i);
+    if (isValidValue(el) && findplace['gid' + i] !== undefined) el.textContent = findplace['gid' + i];
+  }
+  let coo = 'not defined';
+  if (isValidValue(findplace.latitude) && isValidValue(findplace.longitude)) {
+    coo = `${parseFloat(findplace.latitude).toFixed(4)} / ${parseFloat(findplace.longitude).toFixed(4)}`;
+  }
+  document.getElementById('fpcoordinates').innerText = coo;
+}
+
+function fillMeasureFields(measure, fieldMap, hasUser) {
+  if (!Object.keys(measure).length && !hasUser) {
+    document.getElementById('measureSection')?.remove();
+    return;
+  }
+  ['length', 'width', 'depth', 'diameter', 'weight'].forEach(k => {
+    if (isValidValue(measure[k])) fieldMap[k] = measure[k];
+  });
+  if (isValidValue(measure.notes)) fieldMap.measures_notes = measure.notes;
+}
+
+function fillMetadataFields(metadata, fieldMap, hasUser) {
+  if (!Object.keys(metadata).length && !hasUser) return;
+  if (metadata.author) fieldMap.artifact_author = `${metadata.author.first_name} ${metadata.author.last_name}`;
+  if (metadata.owner) fieldMap.artifact_owner = metadata.owner.name;
+  if (metadata.license) {
+    const link = document.getElementById('artifactLicenseLink');
+    link.href = metadata.license.link;
+    link.textContent = `${metadata.license.license} (${metadata.license.acronym})`;
+  }
+}
+
+export function createAccordionItem(data) {
+  const hasUser = !!data.user;
   const fieldMap = {};
-
-  if(Object.keys(artifact).length > 0 || data.user){
-    if(isValidValue(artifact.name)) {fieldMap.name = artifact.name;}
-    if(isValidValue(artifact.category_class)) {fieldMap.category_class = artifact.category_class;}
-    if(isValidValue(artifact.category_specs)) {fieldMap.category_specs = artifact.category_specs;}
-    if(isValidValue(artifact.type)) {fieldMap.type = artifact.type;}
-    if(isValidValue(artifact.description)) {fieldMap.description = artifact.description;}
-    if(isValidValue(artifact.notes)) {fieldMap.notes = artifact.notes;}
-    if(isValidValue(artifact.start) !== undefined && artifact.start !== null) {fieldMap.start = parseInt(artifact.start);}
-    if(isValidValue(artifact.end) !== undefined && artifact.end !== null) {fieldMap.end = parseInt(artifact.end);}
-    if(isValidValue(artifact.inventory)) {fieldMap.inventory = artifact.inventory;}
-    if(isValidValue(artifact.object_condition)) {fieldMap.object_condition = artifact.object_condition;}
-    if(isValidValue(artifact.conservation_state)) {fieldMap.conservation_state = artifact.conservation_state;}
-    if(isValidValue(artifact.is_museum_copy)) {fieldMap.is_museum_copy = artifact.is_museum_copy == 0 ? 'false' : 'true';}
-    if(isValidValue(artifact.created_at)) {fieldMap.created_at = artifact.created_at.split(' ')[0];}
-    if(isValidValue(artifact.last_update)) {fieldMap.last_update = artifact.last_update.split(' ')[0];}
-  }
-
-  if(Object.keys(materialTech).length > 0 || data.user){
-    materialTech.forEach(item => {
-      document.createElement('li');
-      const li = document.createElement('li');
-      li.classList.add('list-group-item', 'ps-0', 'pt-0');
-      let text = item.material;
-      if(item.technique !== '' && item.technique !== undefined) { text += ` / ${item.technique}`;}
-      li.textContent = text;
-      document.getElementById('materialTechList').appendChild(li);
-    })
-  }
-
-  if(Object.keys(crono).length > 0 || data.user){
-    if(crono.start && crono.start.macro) {fieldMap.fromPeriodMacro = crono.start.macro;}
-    if(crono.start && crono.start.generic) {fieldMap.fromPeriodGeneric = crono.start.generic;}
-    if(crono.start && crono.start.specific) {fieldMap.fromPeriodSpecific = crono.start.specific;}
-    if(crono.end && crono.end.macro) {fieldMap.toPeriodMacro = crono.end.macro;}
-    if(crono.end && crono.end.generic) {fieldMap.toPeriodGeneric = crono.end.generic;}
-    if(crono.end && crono.end.specific) {fieldMap.toPeriodSpecific = crono.end.specific;}
-    if(crono.timeline) {fieldMap.timeline_serie = `Reference timeline: ${crono.timeline}`;}
-  }
-
-  if(Object.keys(storagePlace).length > 0 || data.user){
-    if(storagePlace.id) {
-      const btInstitutionFilter = document.getElementById('btInstitutionFilter');
-      btInstitutionFilter.dataset.institutionId = storagePlace.id;
-    }
-    if(storagePlace.name) {
-      fieldMap.storage_name = storagePlace.name;
-      const gMapLink = 'http://maps.google.com/maps?q='+storagePlace.name.replace(/ /g,"+");
-      const gMap = document.getElementById('gMapLink');
-      gMap.href = gMapLink;
-    }
-    if(storagePlace.city) {fieldMap.storage_address = `${storagePlace.city}, ${storagePlace.address}`;}
-    if(storagePlace.url) {fieldMap.storage_link = storagePlace.url;}
-    if(storagePlace.logo){
-      const img = document.getElementById('institutionImg');
-      img.src = `img/logo/${storagePlace.logo}`;
-    }
-  }
-
-  if(Object.keys(findplace).length > 0 || data.user){
-    if(isValidValue(findplace.parish)) {fieldMap.fpparish = findplace.parish;}
-    if(isValidValue(findplace.toponym)) {fieldMap.fptoponym = findplace.toponym;}
-    if(isValidValue(findplace.notes)) {fieldMap.fpnotes = findplace.notes;}
-
-    for (let i = 0; i <= 5; i++) {
-      const el = document.getElementById('fpgid' + i);
-      if (isValidValue(el) && findplace['gid' + i] !== undefined) {
-        el.textContent = findplace['gid' + i];
-      }
-    }
-    let coo = 'not defined';
-    if(isValidValue(findplace.latitude) && isValidValue(findplace.longitude)){
-      const lat = parseFloat(findplace.latitude).toFixed(4);
-      const lon = parseFloat(findplace.longitude).toFixed(4);
-      coo = `${lat} / ${lon}`;
-    }
-    document.getElementById("fpcoordinates").innerText = coo;
-  }
-
-  if(Object.keys(measure).length > 0 || data.user ){
-    if(isValidValue(measure.length)) {fieldMap.length = measure.length;}
-    if(isValidValue(measure.width)) {fieldMap.width = measure.width;}
-    if(isValidValue(measure.depth)) {fieldMap.depth = measure.depth;}
-    if(isValidValue(measure.diameter)) {fieldMap.diameter = measure.diameter;}
-    if(isValidValue(measure.weight)) {fieldMap.weight = measure.weight;}
-    if(isValidValue(measure.notes)) {fieldMap.measures_notes = measure.notes;}
-  }else{
-    const div = document.getElementById('measureSection');
-    div.remove();
-  }
-
-  if(Object.keys(metadata).length > 0 || data.user){
-    if(metadata.author) {fieldMap.artifact_author = `${metadata.author.first_name} ${metadata.author.last_name}`;}
-    if(metadata.owner) {fieldMap.artifact_owner = metadata.owner.name;}
-    if(metadata.license) {
-      const link = document.getElementById('artifactLicenseLink');
-      link.href = metadata.license.link;
-      link.textContent = `${metadata.license.license} (${metadata.license.acronym})`;
-    }
-  }
-
+  fillArtifactFields(data.artifact, fieldMap, hasUser);
+  fillMaterialTech(data.artifact_material_technique, hasUser);
+  fillCronoFields(data.crono, fieldMap, hasUser);
+  fillStoragePlaceFields(data.storage_place, fieldMap, hasUser);
+  fillFindplaceFields(data.artifact_findplace, fieldMap, hasUser);
+  fillMeasureFields(data.artifact_measure, fieldMap, hasUser);
+  fillMetadataFields(data.artifact_metadata, fieldMap, hasUser);
   Object.entries(fieldMap).forEach(([key, value]) => {
     const el = document.getElementById(key);
-    if(el){
-      el.textContent = (value !== undefined && value !== null) ? value : 'Not defined';
-    }
-    
+    if (el) el.textContent = value ?? 'Not defined';
   });
+}
 
+async function loadAdminBoundaryLayer(data, mapElement) {
+  let selectedBound = null;
+  let selectedLevel = null;
+  for (let i = 5; i >= 0; i--) {
+    if (isValidValue(data.artifact_findplace[`bounds_${i}`])) {
+      selectedBound = data.artifact_findplace[`bounds_${i}`];
+      selectedLevel = i;
+      break;
+    }
+  }
+  if (!selectedBound || selectedLevel === null) return;
+  try {
+    const adminData = await fetchAdminBoundaries(selectedLevel, `g.gid_${selectedLevel} = '${selectedBound}'`, true);
+    if (!adminData?.data?.items) return;
+    const adminLayer = createGeoJsonLayer(adminData.data.items, {
+      level: selectedLevel,
+      style: { color: 'red', weight: 2, fillOpacity: 0.1 },
+      simplify: false
+    });
+    if (adminLayer) {
+      adminLayer.addTo(mapElement.map);
+      mapElement.artifactAdminLayer = adminLayer;
+    }
+  } catch (error) {
+    console.warn('Error loading admin boundary:', error);
+  }
+}
+
+function addFindplaceMarker(data, mapElement) {
+  const { latitude, longitude } = data.artifact_findplace;
+  if (!isValidValue(latitude) || !isValidValue(longitude)) return;
+  const lat = parseFloat(latitude);
+  const lon = parseFloat(longitude);
+  if (isNaN(lat) || isNaN(lon)) return;
+  const findplaceIcon = L.icon({
+    iconUrl: 'img/ico/findPlace.png',
+    iconSize: [40, 40],
+    iconAnchor: [15, 15],
+    popupAnchor: [0, -15]
+  });
+  L.marker([lat, lon], { icon: findplaceIcon }).addTo(mapElement.map);
 }
 
 let mapElement = null;
 export async function artifactMap(data) {
   try {
-    if (mapElement && mapElement.map) {
-      try { 
-        mapElement.map.off(); 
-        mapElement.map.remove(); 
-      } catch (e) { 
-        console.warn('Error removing previous map:', e); 
-      }
+    if (mapElement?.map) {
+      try { mapElement.map.off(); mapElement.map.remove(); } catch (e) { console.warn('Error removing previous map:', e); }
       mapElement = null;
     }
     mapElement = await initMap('geographic');
-    await Promise.all([
-      layerControl(mapElement, { baseLayers: true})
-    ]);
-
+    layerControl(mapElement, { baseLayers: true });
     document.getElementsByName('baseLayer').forEach(input => {
       input.addEventListener('change', (event) => toggleBaseLayer(event, mapElement));
     });
 
-    let selectedBound = null;
-    let selectedLevel = null;
-    for (let i = 5 ; i >= 0; i--) {
-      const boundsKey = `bounds_${i}`;
-      if (isValidValue(data.artifact_findplace[boundsKey])) {
-        selectedBound = data.artifact_findplace[boundsKey];
-        selectedLevel = i;
-        break;
-      }
-    }
-    if (selectedBound && selectedLevel !== null) {
-      try {
-        const adminData = await fetchAdminBoundaries(selectedLevel, `g.gid_${selectedLevel} = '${selectedBound}'`, true);
-        if (adminData && adminData.data && adminData.data.items) {
-          const adminLayer = createGeoJsonLayer(adminData.data.items, {
-            level: selectedLevel,
-            style: { color: 'red', weight: 2, fillOpacity: 0.1 },
-            simplify: false
-          });
-          if (adminLayer) {
-            adminLayer.addTo(mapElement.map);
-            mapElement.artifactAdminLayer = adminLayer;
-          }
-        }
-      } catch (error) {
-        console.warn('Error loading admin boundary:', error);
-      }
-    }
+    await loadAdminBoundaryLayer(data, mapElement);
+    addFindplaceMarker(data, mapElement);
 
-    if (isValidValue(data.artifact_findplace.latitude) && isValidValue(data.artifact_findplace.longitude)) {
-      const findplaceIcon = L.icon({
-        iconUrl: 'img/ico/findPlace.png',
-        iconSize:     [40, 40],
-        iconAnchor:   [15, 15],
-        popupAnchor:  [0, -15]
-      });
-      const lat = parseFloat(data.artifact_findplace.latitude);
-      const lon = parseFloat(data.artifact_findplace.longitude);
-      if (!isNaN(lat) && !isNaN(lon)) {
-        const marker = L.marker([lat, lon], {icon:findplaceIcon});
-        marker.addTo(mapElement.map);
-      }
-    }
-
-    mapElement.map.whenReady(() => {
-      setTimeout(() => {
-        mapElement.map.invalidateSize();
-        // Enhanced safety checks
-        const hasLayers = Object.keys(mapElement.map._layers).length > 0;
-        const hasValidBounds = mapElement.map.getBounds && mapElement.map.getBounds().isValid();
-        const hasValidCenter = mapElement.map.getCenter && mapElement.map.getCenter() && !isNaN(mapElement.map.getCenter().lat) && !isNaN(mapElement.map.getCenter().lng);
-        
-        if (hasLayers || hasValidBounds) {
-          try {
-            calculateMaxBoundsAndZoom(mapElement.map);
-          } catch (error) {
-            console.warn('Error in calculateMaxBoundsAndZoom:', error);
-            // Fallback: set a default view
-            mapElement.map.setView([0, 0], 2);
-          }
-        } else if (!hasValidCenter) {
-          // Ensure a valid center if no layers/bounds
-          mapElement.map.setView([0, 0], 2);
-        }
-      }, 500);
-    });
-
+    mapElement.map.whenReady(mapReady);
     const maxZoomBtn = document.getElementById('maxZoomBtn');
-    if (maxZoomBtn) {
-      maxZoomBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        // Enhanced safety checks for button click
-        const hasLayers = Object.keys(mapElement.map._layers).length > 0;
-        const hasValidBounds = mapElement.map.getBounds && mapElement.map.getBounds().isValid();
-        const hasValidCenter = mapElement.map.getCenter && mapElement.map.getCenter() && !isNaN(mapElement.map.getCenter().lat) && !isNaN(mapElement.map.getCenter().lng);
-        
-        if (hasLayers || hasValidBounds) {
-          try {
-            calculateMaxBoundsAndZoom(mapElement.map);
-          } catch (error) {
-            console.warn('Error in calculateMaxBoundsAndZoom:', error);
-            mapElement.map.setView([0, 0], 2);
-          }
-        } else if (!hasValidCenter) {
-          mapElement.map.setView([0, 0], 2);
-        }
-      });
-    }
+    if (maxZoomBtn) maxZoomBtn.addEventListener('click', maxZoomListener);
 
     return mapElement;
   } catch (error) {
     console.error('Error initializing map:', error);
+  }
+}
+
+function mapReady(){
+  setTimeout(() => {
+    mapElement.map.invalidateSize();
+    // Enhanced safety checks
+    const hasLayers = Object.keys(mapElement.map._layers).length > 0;
+    const hasValidBounds = mapElement.map.getBounds?.().isValid();
+    const hasValidCenter = mapElement.map.getCenter?.() && !isNaN(mapElement.map.getCenter().lat) && !isNaN(mapElement.map.getCenter().lng);
+  
+    if (hasLayers || hasValidBounds) {
+      try {
+        calculateMaxBoundsAndZoom(mapElement.map);
+      } catch (error) {
+        console.warn('Error in calculateMaxBoundsAndZoom:', error);
+        // Fallback: set a default view
+        mapElement.map.setView([0, 0], 2);
+      }
+    } else if (!hasValidCenter) {
+      // Ensure a valid center if no layers/bounds
+      mapElement.map.setView([0, 0], 2);
+    }
+  }, 500);
+}
+
+function maxZoomListener(e){
+  e.preventDefault();
+  // Enhanced safety checks for button click
+  const hasLayers = Object.keys(mapElement.map._layers).length > 0;
+  const hasValidBounds = mapElement.map.getBounds?.().isValid();
+  const hasValidCenter = mapElement.map.getCenter?.() && !isNaN(mapElement.map.getCenter().lat) && !isNaN(mapElement.map.getCenter().lng);
+  
+  if (hasLayers || hasValidBounds) {
+    try {
+      calculateMaxBoundsAndZoom(mapElement.map);
+    } catch (error) {
+      console.warn('Error in calculateMaxBoundsAndZoom:', error);
+      mapElement.map.setView([0, 0], 2);
+    }
+  } else if (!hasValidCenter) {
+    mapElement.map.setView([0, 0], 2);
   }
 }
 
@@ -280,7 +254,7 @@ function createImageSection(images, usr, tabPane) {
   imgWrap.id = 'imgDiv';
   const fragment = document.createDocumentFragment();
   images.forEach(item => {
-    if (!item || !item.path) return;
+    if (!item?.path) return;
     const imgCard = document.createElement('div');
     imgCard.classList.add('imgCard', 'bg-white', 'rounded', 'border', 'p-2', 'mb-3');
 
@@ -317,8 +291,8 @@ function createImageSection(images, usr, tabPane) {
       deleteBtn.title = 'Delete Image';
       deleteBtn.addEventListener('click', () => {
         const deleteAlert = 'Are you sure you want to delete the image? If you confirm the image will be permanently deleted from the server and it will not be possible to restore it';
-        confirmAction(deleteAlert, () => {
-          const res = deleteMedia(item.file, item.path || null);
+        confirmAction(deleteAlert, async () => {
+          const res = await deleteMedia(item.file, item.path || null);
           if (res) { imgCard.remove(); }
         });
       });
@@ -349,7 +323,7 @@ function createDocumentSection(documents, usr, tabPane) {
     docItem.classList.add('docItem');
 
     // Sezione path
-    if (item.path && item.path.trim()) {
+    if (item.path?.trim()) {
       const divLabel = document.createElement('div');
       const divLink = document.createElement('div');
       divLabel.classList.add('divLabel');
@@ -373,7 +347,7 @@ function createDocumentSection(documents, usr, tabPane) {
     }
 
     // Sezione url
-    if (item.url && item.url.trim()) {
+    if (item.url?.trim()) {
       const divLabel = document.createElement('div');
       const divLink = document.createElement('div');
       divLabel.classList.add('divLabel');
@@ -397,7 +371,7 @@ function createDocumentSection(documents, usr, tabPane) {
     }
 
     // Sezione text
-    if (item.text && item.text.trim()) {
+    if (item.text?.trim()) {
       const divLabel = document.createElement('div');
       const divLink = document.createElement('div');
       divLabel.classList.add('divLabel');
@@ -438,8 +412,8 @@ function createDocumentSection(documents, usr, tabPane) {
       deleteBtn.title = 'Delete Document';
       deleteBtn.addEventListener('click', () => {
         const deleteAlert = 'Are you sure you want to delete the document? If you confirm the document will be permanently deleted from the server and it will not be possible to restore it';
-        confirmAction(deleteAlert, () => {
-          const res = deleteMedia(item.id);
+        confirmAction(deleteAlert, async () => {
+          const res = await deleteMedia(item.id);
           if (res) { li.remove(); }
         });
       });
@@ -463,7 +437,7 @@ function createVideoSection(videos, usr, tabPane) {
   videoWrap.id = 'videoDiv';
   const fragment = document.createDocumentFragment();
   videos.forEach(item => {
-    if (!item || !item.url || !item.url.includes('youtube.com/watch?v=')) return;
+    if (!item?.url?.includes('youtube.com/watch?v=')) return;
     const videoCard = document.createElement('div');
     videoCard.classList.add('videoCard', 'bg-white', 'rounded', 'border', 'p-2', 'mb-3', 'embed-responsive', 'embed-responsive-16by9');
 
@@ -497,8 +471,8 @@ function createVideoSection(videos, usr, tabPane) {
       deleteBtn.title = 'Delete Video';
       deleteBtn.addEventListener('click', () => {
         const deleteAlert = 'Are you sure you want to delete the video? If you confirm the video will be permanently deleted from the server and it will not be possible to restore it';
-        confirmAction(deleteAlert, () => {
-          const res = deleteMedia(item.id);
+        confirmAction(deleteAlert, async () => {
+          const res = await deleteMedia(item.id);
           if (res) { videoCard.remove(); }
         });
       });
@@ -565,14 +539,14 @@ export async function lineChart(id,type, container){
     
     result.data.forEach((v) => { statData.push([v.crono, v.tot]) })
     google.charts.setOnLoadCallback(function(){
-      var data = google.visualization.arrayToDataTable(statData);
-      var options = {
+      let data = google.visualization.arrayToDataTable(statData);
+      let options = {
         title: type + ' Chronological distribution',
         curveType: 'function',
         legend: { position: 'bottom' },
         pointsVisible: true
       };
-      var chart = new google.visualization.LineChart(document.getElementById('lineChart'));
+      let chart = new google.visualization.LineChart(document.getElementById('lineChart'));
       chart.draw(data, options);
     });
     return true;
@@ -598,13 +572,12 @@ export async function columnChart(id, type, container){
     container.innerHTML='';
     result.data.forEach((v) => { statData.push([v.name, v.tot, 'color: '+v.color]) });
     google.charts.setOnLoadCallback(function(){
-      var data = google.visualization.arrayToDataTable(statData);
-      var options = {
+      let data = google.visualization.arrayToDataTable(statData);
+      let options = {
         title: 'Number of '+type + ' by Institution',
         legend: { position: 'none' },
-        // bar:{groupWidth:"95%" }
       };
-      var chart = new google.visualization.ColumnChart(document.getElementById('columnChart'));
+      let chart = new google.visualization.ColumnChart(document.getElementById('columnChart'));
       chart.draw(data, options);
     });
   } catch (error) {

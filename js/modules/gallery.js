@@ -3,12 +3,15 @@ import { collection } from "./collection.js";
 import { createGalleryItem,getCollectStatusBtn} from "../components/galleryCard.js";
 import { bsAlert } from "../components/bsComponents.js";
 
-const stateManager = await collectionState();
-const coll = await collection();
+let stateManager;
+let coll;
 
-export function initGallery(onShowCollection = async () => {}) { 
+export async function initGallery(onShowCollection = async () => {}) {
+  stateManager = await collectionState();
+  coll = await collection();
+
   const galleryEl = document.getElementById('wrapGallery');
-  if (!galleryEl){ 
+  if (!galleryEl){
     console.error('Gallery element not found');
     return;
   }
@@ -23,8 +26,6 @@ export function initGallery(onShowCollection = async () => {}) {
     allLoaded: false,
     items: [],
   };
-  console.log('Initialized gallery state:', galleryState);
-  
 
   let observer = null;
 
@@ -35,49 +36,48 @@ export function initGallery(onShowCollection = async () => {}) {
       });
     }, { threshold: 0.5 });
   }
-  
-async function fetchGallery() {
-  const currentState = stateManager.getState();
-  if (galleryState.loading || galleryState.allLoaded) return;
-  galleryState.loading = true;
-  galleryEl.classList.add('loading');
-  
-  try {
-    const body = {
-      class: galleryState.class,
-      action: 'getGallery',
-      filterArr: currentState.searchFilters.filter,  // Leggi l'array costruito da getFilter()
-      page: galleryState.page,
-      limit: galleryState.limit,
-      sortBy: currentState.searchFilters.sortBy,
-      sortDir: currentState.searchFilters.sortDir
-    };
-    const result = await fetchApi({url: galleryState.endpoint, body: body});     
-    const data = result.data;
-    if (data.length < galleryState.limit) { galleryState.allLoaded = true; }
-    buildGallery(data);
-    galleryState.page += 1;
-  } catch (error) {
-    console.error('Error fetching gallery data:', error);
-  } finally {
-    galleryState.loading = false;
-    galleryEl.classList.remove('loading');
-    if (galleryState.allLoaded) {
-      const endMessage = document.createElement('div');
-      endMessage.className = 'end-message';
-      endMessage.textContent = 'No more items to load.';
-      galleryEl.appendChild(endMessage);
+
+  async function fetchGallery() {
+    const currentState = stateManager.getState();
+    if (galleryState.loading || galleryState.allLoaded) return;
+    galleryState.loading = true;
+    galleryEl.classList.add('loading');
+
+    try {
+      const body = {
+        class: galleryState.class,
+        action: 'getGallery',
+        filterArr: currentState.searchFilters.filter,
+        page: galleryState.page,
+        limit: galleryState.limit,
+        sortBy: currentState.searchFilters.sortBy,
+        sortDir: currentState.searchFilters.sortDir
+      };
+      const result = await fetchApi({url: galleryState.endpoint, body: body});
+      const data = result.data;
+      if (data.length < galleryState.limit) { galleryState.allLoaded = true; }
+      buildGallery(data);
+      galleryState.page += 1;
+    } catch (error) {
+      console.error('Error fetching gallery data:', error);
+    } finally {
+      galleryState.loading = false;
+      galleryEl.classList.remove('loading');
+      if (galleryState.allLoaded && !galleryEl.querySelector('.end-message')) {
+        const endMessage = document.createElement('div');
+        endMessage.className = 'end-message';
+        endMessage.textContent = 'No more items to load.';
+        galleryEl.appendChild(endMessage);
+      }
     }
   }
-}
 
   function buildGallery(data) {
-    const items = data.gallery;
-    console.log('Fetched items:', items);
-    
+    const items = data?.gallery ?? [];
+    const tot = data?.tot?.[0]?.tot ?? 0;
+
     galleryState.items = galleryState.items.concat(items);
     galleryState.itemsCount += items.length;
-    const tot = data.tot[0].tot || 0;
 
     if (items.length === 0) {
       if (observer) observer.disconnect();
@@ -101,7 +101,6 @@ async function fetchGallery() {
 
     setCount(galleryState.itemsCount, tot);
 
-    // Riavvia l'osservatore per puntare alla nuova ultima immagine
     if (observer) {
       observer.disconnect();
       const lastCard = galleryEl.querySelector('.galleryItem:last-child');
@@ -120,31 +119,11 @@ async function fetchGallery() {
     setCount(0, 0);
   }
 
-  async function collectItemBtnFunction(item, btn, onShowCollection) {
-    const currentState = stateManager.getState();
-    btn.style.display = 'none';
-    const uncollectButton = btn.nextElementSibling;
-    if (uncollectButton?.classList.contains("uncollectItemBtn")) {
-      uncollectButton.style.display = 'inline-block';
-    }
-    let key = currentState.activeCollectionKey;
-    if (!key) {
-      key = await coll.createCollection();
-      bsAlert("A new collection named 'My Collection' has been created. You can edit its metadata later.", "info", 4000);
-      if (typeof onShowCollection === 'function') await onShowCollection();
-      await new Promise(resolve => setTimeout(resolve, 4100));
-    }
-
-    await coll.addItem(key, item);
-    getCollectStatusBtn();
-    if (typeof onShowCollection === 'function') await onShowCollection();
-  }
-  
   async function uncollectItemBtnFunction(btn, onShowCollection) {
     const currentState = stateManager.getState();
     btn.style.display = 'none';
     const collectButton = btn.previousElementSibling;
-    if (collectButton && collectButton.classList.contains("collectItemBtn")) {
+    if (collectButton?.classList.contains("collectItemBtn")) {
       collectButton.style.display = 'inline-block';
     }
     const itemId = btn.dataset.item;
@@ -155,12 +134,12 @@ async function fetchGallery() {
     }
 
     await coll.removeItem(itemId);
-    const postRemoveState = stateManager.getState();  // Refresh after removing
-    postRemoveState.activeCollection = postRemoveState.collections[key];
-    delete postRemoveState.collectStatus[itemId];
-    stateManager.updateState({ 
-      activeCollection: postRemoveState.activeCollection,
-      collectStatus: postRemoveState.collectStatus
+    const postRemoveState = stateManager.getState();
+    const updatedCollectStatus = { ...postRemoveState.collectStatus };
+    delete updatedCollectStatus[itemId];
+    stateManager.updateState({
+      activeCollection: postRemoveState.collections[key],
+      collectStatus: updatedCollectStatus
     });
 
     getCollectStatusBtn();
@@ -168,31 +147,48 @@ async function fetchGallery() {
     if (activeTab) {
       const card = btn.closest('.galleryItem');
       if (card) card.remove();
-    } else {
-      if (typeof onShowCollection === 'function') await onShowCollection();
-    }
+    } else if (typeof onShowCollection === 'function') await onShowCollection();
   }
 
   fetchGallery();
 
   return {
     reset,
-    onCollect: collectItemBtnFunction,
+    onCollect: (item, btn) => collectItemBtnFunction(item, btn, onShowCollection),
     onUnCollect: uncollectItemBtnFunction,
     load: fetchGallery,
     getState: () => ({ ...galleryState })
   };
 }
 
+async function collectItemBtnFunction(item, btn, onShowCollection) {
+  const currentState = stateManager.getState();
+  btn.style.display = 'none';
+  const uncollectButton = btn.nextElementSibling;
+  if (uncollectButton?.classList.contains("uncollectItemBtn")) {
+    uncollectButton.style.display = 'inline-block';
+  }
+  let key = currentState.activeCollectionKey;
+  if (!key) {
+    key = await coll.createCollection();
+    bsAlert("A new collection named 'My Collection' has been created. You can edit its metadata later.", "info", 4000);
+    if (typeof onShowCollection === 'function') await onShowCollection();
+    await new Promise(resolve => setTimeout(resolve, 4100));
+  }
+  await coll.addItem(key, item);
+  getCollectStatusBtn();
+  if (typeof onShowCollection === 'function') await onShowCollection();
+}
+
 function setCount(loaded, tot) {
   const currentState = stateManager.getState();
   const features = currentState.searchFilters.feature || {};
-  
+
   const featureText = document.getElementById('mapGalleryText');
   const countEl = document.getElementById('countItems');
   const countTitle = document.getElementById('itemsNumber');
-  
-  if (featureText) { 
+
+  if (featureText) {
     featureText.textContent = `${features.name || 'The collection'} has ${tot} related artifacts`;
   }
   if (countEl) { countEl.textContent = `${loaded} / ${tot}`; }

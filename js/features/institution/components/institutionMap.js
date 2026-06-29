@@ -58,9 +58,10 @@ export function initMapReset(mapElement) {
   });
 }
 
-export function placeMarker(mapElement, lat, lon, zoom = 17) {
+export function placeMarker(mapElement, lat, lon, zoom = 17, icon = null) {
   if (mapElement.marker) mapElement.map.removeLayer(mapElement.marker);
-  mapElement.marker = L.marker([lat, lon]).addTo(mapElement.map);
+  const opts = icon ? { icon } : {};
+  mapElement.marker = L.marker([lat, lon], opts).addTo(mapElement.map);
   mapElement.map.setView([lat, lon], zoom);
   const latEl = document.getElementById('latitude');
   const lonEl = document.getElementById('longitude');

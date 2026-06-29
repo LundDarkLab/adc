@@ -1,6 +1,15 @@
 import { fetchApi } from '../../../shared/utils/fetch.js';
 import mapConfig from '../../../shared/components/map/mapConfig.js';
 
+export async function getArtifactsForInstitution(institutionId, isLogged) {
+  const filterArr = [`artifact.storage_place = ${institutionId}`];
+  if (!isLogged) filterArr.push('artifact.status = 2');
+  const response = await fetchApi({
+    body: { class: 'Collection', action: 'getGallery', filterArr, getAll: true }
+  });
+  return response.data?.gallery ?? [];
+}
+
 export async function getInstitution(id) {
   const response = await fetchApi({
     body: { class: 'Institution', action: 'getInstitutions', filters: { id: parseInt(id) } }

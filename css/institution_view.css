@@ -53,3 +53,35 @@ main{
 .list-group-item > span.label {
   font-weight: bold;
 }
+
+#cardContainerWrap {
+  container-type: inline-size;
+  container-name: gallery;
+}
+
+#cardContainer {
+  position: relative;
+  width: 100%;
+  height: auto;
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 16px;
+  align-content: start;
+  padding-bottom: 24px;
+}
+
+@container gallery (min-width: 400px) {
+  #cardContainer { grid-template-columns: repeat(2, 1fr); }
+}
+
+@container gallery (min-width: 600px) {
+  #cardContainer { grid-template-columns: repeat(3, 1fr); }
+}
+
+@container gallery (min-width: 1100px) {
+  #cardContainer { grid-template-columns: repeat(4, 1fr); }
+}
+
+@container gallery (min-width: 1400px) {
+  #cardContainer { grid-template-columns: repeat(5, 1fr); }
+}
