@@ -1,11 +1,13 @@
 export function initPasswordUI(ids = {}) {
   const {
-    togglePwd  = 'toggle-pwd',
-    genPwd     = 'gen-pwd',
-    newPwd     = 'new_password',
-    confirmPwd = 'confirm_password',
-    barId      = 'password-strength',
-    textId     = 'score-text',
+    togglePwd    = 'toggle-pwd',
+    togglePwdIco = 'toggle-pwd-ico',
+    genPwd       = 'gen-pwd',
+    newPwd       = 'new_password',
+    confirmPwd   = 'confirm_password',
+    barId        = 'password-strength',
+    textId       = 'score-text',
+    pwdMatch     = 'pwd-match',
   } = ids;
 
   const toggleEl = document.getElementById(togglePwd);
@@ -15,6 +17,11 @@ export function initPasswordUI(ids = {}) {
       document.querySelectorAll('.pwd').forEach(el => {
         el.type = isChecked ? 'text' : 'password';
       });
+      const icon = document.getElementById(togglePwdIco);
+      if(icon){
+        icon.classList.toggle('mdi-eye',    !isChecked);
+        icon.classList.toggle('mdi-eye-off', isChecked);
+      }
     });
   }
 
@@ -24,8 +31,15 @@ export function initPasswordUI(ids = {}) {
   const confirmPwdEl = document.getElementById(confirmPwd);
   const barEl  = document.getElementById(barId);
   const textEl = document.getElementById(textId);
+  const pwdMatchEl = document.getElementById(pwdMatch);
+
   if (newPwdEl && barEl && textEl) {
-    initStrengthMeter(newPwdEl, barEl, textEl);
+    initStrengthMeter(newPwdEl, barEl, textEl, pwdMatchEl);
+  }
+
+  if (pwdMatchEl) {
+    newPwdEl?.addEventListener('input', () => checkMatch(newPwdEl, confirmPwdEl, pwdMatchEl));
+    confirmPwdEl?.addEventListener('input', () => checkMatch(newPwdEl, confirmPwdEl, pwdMatchEl));
   }
 
   const genPwdEl = document.getElementById(genPwd);
@@ -40,8 +54,17 @@ export function initPasswordUI(ids = {}) {
       confirmPwdEl.dispatchEvent(new Event('input'));
     }
   });
+}
 
-
+function checkMatch(newPwdEl, confirmPwdEl, pwdMatchEl) {
+  pwdMatchEl.classList.remove('text-danger', 'text-success');
+  if (!confirmPwdEl?.value) {
+    pwdMatchEl.innerText = '';
+    return;
+  }
+  const match = newPwdEl.value === confirmPwdEl.value;
+  pwdMatchEl.innerText = match ? 'Passwords match' : 'Passwords do not match';
+  pwdMatchEl.classList.add(match ? 'text-success' : 'text-danger');
 }
 
 function generatePwd() {
@@ -91,7 +114,7 @@ function blockSpaces(el) {
   });
 }
 
-function initStrengthMeter(input, bar, text) {
+function initStrengthMeter(input, bar, text, pwdMatchEl) {
   const rules = [
     { id: 'rule-length',  test: v => v.length >= 10 },
     { id: 'rule-upper',   test: v => /[A-Z]/.test(v) },
@@ -100,10 +123,11 @@ function initStrengthMeter(input, bar, text) {
   ];
 
   function resetUI() {
-    rules.forEach(({ id }) => document.getElementById(id)?.classList.remove('rule-ok'));
+    rules.forEach(({ id }) => document.getElementById(id)?.classList.remove('text-success'));
     for (let i = 0; i <= 4; i++) bar.classList.remove(`strength-${i}`);
     bar.value = 0;
     text.innerText = '';
+    if (pwdMatchEl) pwdMatchEl.innerText = '';
   }
 
   input.addEventListener('input', () => {
@@ -119,7 +143,7 @@ function initStrengthMeter(input, bar, text) {
     let allMet = true;
     rules.forEach(({ id, test }) => {
       const ok = test(val);
-      document.getElementById(id)?.classList.toggle('rule-ok', ok);
+      document.getElementById(id)?.classList.toggle('text-success', ok);
       if (!ok) allMet = false;
     });
 

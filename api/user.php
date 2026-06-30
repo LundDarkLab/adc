@@ -1,6 +1,8 @@
 <?php
 require __DIR__ . '/vendor/autoload.php';
 use \Adc\User;
+use \Adc\MailService;
+use \Adc\RecordManager;
 $obj = new User();
 $funzione = $_POST['trigger'];
 unset($_POST['trigger']);
@@ -26,11 +28,11 @@ function activeUsers($obj){return json_encode($obj->activeUsers(
 ));}
 
 // function mailTemplate($obj){ return json_encode($obj->mailTemplate($_POST)); }
-function sendCustomMail($obj){ return json_encode($obj->sendCustomMail($_POST)); }
-function fetchMailTemplate($obj){ return json_encode($obj->fetchMailTemplate($_POST['type'])); }
+function sendCustomMail($obj){ $m = new MailService(); return json_encode($m->sendCustomMail($_POST)); }
+function fetchMailTemplate($obj){ $m = new MailService(); return json_encode($m->fetchMailTemplate($_POST['type'])); }
 
-function createRecord($obj){ return json_encode($obj->createRecord($_POST)); }
-function readRecord($obj){ return json_encode($obj->readRecord($_POST)); }
-function updateRecord($obj){ return json_encode($obj->updateRecord($_POST)); }
-function deleteRecord($obj){ return json_encode($obj->deleteRecord($_POST)); }
+function createRecord($obj){ $rm = new RecordManager(); return json_encode($rm->createRecord($_POST)); }
+function readRecord($obj){ $rm = new RecordManager(); return json_encode($rm->readRecord($_POST)); }
+function updateRecord($obj){ $rm = new RecordManager(); return json_encode($rm->updateRecord($_POST)); }
+function deleteRecord($obj){ $rm = new RecordManager(); return json_encode($rm->deleteRecord($_POST)); }
 ?>

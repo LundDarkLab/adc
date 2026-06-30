@@ -1,14 +1,16 @@
-<?php require 'init.php'; ?>
+<?php
+  require 'init.php';
+  if (isset($_SESSION['id'])) { header('Location: dashboard.php');}
+?>
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
   <head>
-    <?php require "assets/meta.php"; ?>
-    <link rel="stylesheet" href="css/login.css">
     <title>Dynamic Collection - login page</title>
+    <?php require "assets/meta.php"; ?>
   </head>
   <body>
-    <?php require "assets/header.php"; ?>
-    <?php require "assets/menu.php"; ?>
+    <header id="header"></header>
+    <div id="sideMenu"></div>
     <main>
       <div class="container my-5">
         <div class="row">
@@ -25,18 +27,17 @@
                   <label class="form-label" for="password">Password</label>
                   <div class="input-group mb-3">
                     <input type="password" id="password" name="password" class="form-control pwd">
-                    <button class="btn btn-outline-secondary" type="button" id="toggle-pwd">
-                      <i class="mdi mdi-eye"></i>
-                    </button>
+                    <input type="checkbox" class="btn-check" id="toggle-pwd" autocomplete="off">
+                    <label class="btn btn-sm btn-outline-secondary" for="toggle-pwd" aria-label="toggle password"><i id="toggle-pwd-ico" class="mdi mdi-eye"></i></label>
                   </div>
                   <div class="outputMsg my-3"></div>
                   <button type="submit" name="loginBtn" class="btn btn-primary w-100" data-form="login">login</button>
-                  <button type="button" id="toggleRescue" class="btn btn-secondary w-100 mt-2">forgot password</button>
+                  <button type="button" id="toggleRescue" class="btn btn-secondary w-100 mt-2 toggleRescueBtn">forgot password</button>
                 </form>
               </div>
             </div>
 
-            <div class="card border-0 mb-4" id="rescuePwdCard">
+            <div class="card border-0 mb-4 d-none" id="rescuePwdCard">
               <div class="card-body">
                 <h4 class="card-title text-center mb-4">
                   <i class="mdi mdi-key-variant"></i> Reset Password
@@ -47,7 +48,7 @@
                   <input type="email" class="form-control mb-3" id="email4Rescue" name="email4Rescue" required>
                   <div class="outputMsg my-3"></div>
                   <button type="submit" name="rescuePwdBtn" class="btn btn-primary w-100" data-form="rescuePwd">send me a new password</button>
-                  <button type="button" id="toggleLogin" class="btn btn-secondary w-100 mt-2">cancel request</button>
+                  <button type="button" id="toggleLogin" class="btn btn-secondary w-100 mt-2 toggleRescueBtn">cancel request</button>
                 </form>
               </div>
             </div>
@@ -105,13 +106,9 @@
             </div>
           </div>
         </div>
-        
-
     </main>
-    <?php
-      require "assets/footer.php";
-      require "assets/js.html";
-    ?>
-    <script src="js/login.js" charset="utf-8"></script>
+    <footer id="footer"></footer>
+    <script>window.pageType = "login";</script>
+    <script src="js/main.js" type="module" charset="utf-8"></script>
   </body>
 </html>

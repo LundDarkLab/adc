@@ -95,6 +95,7 @@
                 <div class="mb-3">
                   <label for="confirm_password">Confirm Password</label>
                   <input type="password" name="confirm_password" id="confirm_password" class="form-control form-control-sm pwd" autocomplete="new-password" required>
+                  <p id="pwd-match" class="fw-bold my-2"></p>
                 </div>
               </div>
               <div class="card-footer">

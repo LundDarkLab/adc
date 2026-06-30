@@ -61,6 +61,12 @@ async function loadZxcvbn(){
 }
 
 const pageRoutes = {
+  // LOGIN
+  'login': {
+    css: ['css/login.css'],
+    dependencies: [],
+    init: () => import('./features/person/pages/login.js').then(m => m.initPage())
+  },
   // SETTINGS
   'settings': {
     css: ['css/settings.css'],
@@ -162,7 +168,7 @@ try {
     loadCSS(bootstrap.cssHref, bootstrap.cssIntegrity, bootstrap.cssCrossOrigin),
     loadCSS(mdi.cssHref, mdi.cssIntegrity, mdi.cssCrossOrigin),
     loadCSS('css/main.css', '', ''),
-loadScript(bootstrap.jsSrc, bootstrap.jsIntegrity, bootstrap.jsCrossOrigin)
+    loadScript(bootstrap.jsSrc, bootstrap.jsIntegrity, bootstrap.jsCrossOrigin)
   ]);
   const [initHeader, initSideMenu, initFooter, bsModule] = await Promise.all([
     import('./shared/components/headerMenu/initHeaderMenu.js'),

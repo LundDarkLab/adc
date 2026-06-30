@@ -24,6 +24,8 @@ $availableClasses = [
   'Timeline' => Adc\Timeline::class,
   'User' => Adc\User::class,
   'Vocabulary' => Adc\Vocabulary::class,
+  'MailService' => Adc\MailService::class,
+  'RecordManager' => Adc\RecordManager::class,
 ];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

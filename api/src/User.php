@@ -2,12 +2,12 @@
 namespace Adc;
 session_start();
 use \Adc\Person;
-use \PHPMailer\PHPMailer\PHPMailer;
+use \Adc\MailService;
 class User extends Conn{
-  public $mail;
-  public $person;
+  protected MailService $mailer;
+  public Person $person;
   public function __construct(){
-    $this->mail = new PHPMailer(true);
+    $this->mailer = new MailService();
     $this->person = new Person();
   }
 
@@ -49,7 +49,7 @@ class User extends Conn{
         "link"=>"https://dyncolldev.ht.lu.se/plus/reset_password.php?key=".$token,
         "mailBody"=>1
       );
-      $this->sendMail($datiMail);
+      $this->mailer->sendMail($datiMail);
       $this->pdo()->commit();
       return ["res"=> 1, "output"=>'Ok, user has been successfully created.'];
     } catch (\Exception $e) {
@@ -77,9 +77,9 @@ class User extends Conn{
   }
 
   public function checkAdmin(){
-    $sql = "select count(*) tot from user;";
+    $sql = "select count(*) tot from user where role = :role;";
     $stmt = $this->pdo()->prepare($sql);
-    $stmt->execute();
+    $stmt->execute([':role' => 1]);
     $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
     return $res[0]['tot'];
   }
@@ -94,7 +94,7 @@ class User extends Conn{
     return $out[0];
   }
 
-  protected function checkPwd($toVerify,$hash){
+  protected function checkPwd(string $toVerify, string $hash){
     if (!password_verify($toVerify,$hash)) { throw new \Exception("The password is incorrect, please try again or request a new password", 1); }
     return true;
   }
@@ -142,7 +142,7 @@ class User extends Conn{
     return str_shuffle($pwd);
   }
 
-  protected function genToken(string $email){ return md5($email).rand(10,9999); }
+  protected function genToken(string $email){ return bin2hex(random_bytes(24)); }
 
   public function getUsers(){
     $sql="select * from user_artifact_view order by name asc;";
@@ -201,7 +201,7 @@ class User extends Conn{
         "link"=>"https://dyncolldev.ht.lu.se/plus/reset_password.php?key=".$token,
         "mailBody"=>2
       );
-      $this->sendMail($datiMail);
+      $this->mailer->sendMail($datiMail);
       return ["error" => 0, "output"=>"A reset link has been sent to provided email. The link will expires in 1 day"];
     } catch (\Exception $e) {
       return ["error"=>1, "output"=>$e->getMessage()];
@@ -230,125 +230,4 @@ class User extends Conn{
     }
   }
 
-  public function fetchMailTemplate(string $type) :array{
-    try {
-      $templates = $this->simple("select * from mail_template where type = '$type' order by object asc;");
-      return ["error" => 0, "message" => "ok, email templates fetched", "templates"=>$templates];
-    } catch (\Throwable $th) {
-      return ["error"=>1, "message"=>$th->getMessage(), "dati"=>$type];
-    }
-  }
-
-  public function createRecord(array $post){
-    try {
-      $post['values']['created_by'] = $_SESSION['id'];
-      $this->create($post['table'], $post['values']);
-      return ["error"=>0, "message" => "Record has been successfully created", "post"=>$post];
-    } catch (\Throwable $th) {
-      return ["error"=>1, "message"=>$th->getMessage(), "dati"=>$post];
-    }
-  }
-
-  public function readRecord(array $post) :array{
-    try {
-      $items = $this->read($post['table'],$post['conditions']);
-      return ["error"=>0, "items" => $items];
-    } catch (\Throwable $th) {
-      return ["error"=>1, "message"=>$th->getMessage(), "dati"=>$post];
-    }
-  }
-
-  public function updateRecord(array $post){
-    try {
-      $this->update($post['table'], $post['values'], $post['conditions']);
-      return ["error"=>0, "message" => "Record has been successfully updated", "post"=>$post];
-    } catch (\Throwable $th) {
-      return ["error"=>1, "message"=>$th->getMessage(), "dati"=>$post];
-    }
-  }
-
-  public function deleteRecord(array $post) :array{
-    try {
-      return $this->delete($post['table'],$post['conditions']);
-    } catch (\Throwable $th) {
-      return ["error"=>1, "message"=>$th->getMessage(), "dati"=>$post];
-    }
-  }
-
-
-  public function sendCustomMail(array $dati) :array{
-    try {
-      $mailParams = Config::mailParams();
-      $this->mail->isSMTP();
-      // only for testing, print messages only in the console, do not use in production!!!!
-      //$this->mail->SMTPDebug = SMTP::DEBUG_SERVER;
-    
-      $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-      $this->mail->SMTPAuth = true;
-      $this->mail->Host = $mailParams['MAILHOST'];
-      $this->mail->Port = $mailParams['MAILPORT'];
-      $this->mail->Username = $mailParams['MAILUSER'];
-      $this->mail->Password = $mailParams['MAILPASSWORD'];
-      $this->mail->setFrom($mailParams['MAILSETFROM'], $mailParams['MAILSETFROMNAME']);
-      
-      $this->mail->CharSet = 'UTF-8';
-      $this->mail->Encoding = 'base64';
-      $this->mail->Subject = $dati['object'];
-      $this->mail->Body = $dati['body'];
-      $this->mail->AltBody = $this->htmlToPlainText($dati['body']);
-
-      foreach ($dati['recipients'] as $recipient) { $this->mail->addBCC($recipient, $recipient);}
-      if(!$this->mail->send()){throw new \Exception('Mailer Error: '. $this->mail->ErrorInfo,0);}
-      return ["error" => 0, "message" => "Email has been sent correctly"];
-    } catch (\Throwable $th) {
-      return ["error"=>1, "message"=>$th->getMessage()];
-    }
-  }
-
-  public function sendMail(array $dati){
-    if($dati['mailBody']===1){
-      $titolo = "New account";
-      $body = file_get_contents('config/mailBody/newUser.html');
-      $body = str_replace('%name%', $dati['name'], $body);
-      $body = str_replace('%link%', $dati['link'], $body);
-    }
-    elseif($dati['mailBody']===2){
-      $titolo="Reset my password";
-      $body = file_get_contents('config/mailBody/rescuePwd.html');
-      $body = str_replace('%name%', $dati['name'], $body);
-      $body = str_replace('%link%', $dati['link'], $body);
-    }
-
-    $mailParams = Config::mailParams();
-    $this->mail->isSMTP();
-    
-    // only for testing, print messages only in the console, do not use in production!!!!
-    // $this->mail->SMTPDebug = SMTP::DEBUG_SERVER;
-    
-    $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-    $this->mail->SMTPAuth = true;
-    $this->mail->Host = $mailParams['MAILHOST'];
-    $this->mail->Port = $mailParams['MAILPORT'];
-    $this->mail->Username = $mailParams['MAILUSER'];
-    $this->mail->Password = $mailParams['MAILPASSWORD'];
-    $this->mail->setFrom($mailParams['MAILSETFROM'], $mailParams['MAILSETFROMNAME']);
-    $this->mail->addAddress($dati['email'], $dati['name']);
-    $this->mail->Subject = $titolo;
-    $this->mail->msgHTML($body, __DIR__);
-    $this->mail->AltBody = $this->htmlToPlainText($body);
-    if (!$this->mail->send()) {
-      throw new \Exception('Mailer Error: '. $this->mail->ErrorInfo,0);
-    }
-    return true;
-  }
-
-  private function htmlToPlainText($str){
-    $str = str_replace('&nbsp;', ' ', $str);
-    $str = html_entity_decode($str, ENT_QUOTES | ENT_COMPAT , 'UTF-8');
-    $str = html_entity_decode($str, ENT_HTML5, 'UTF-8');
-    $str = html_entity_decode($str);
-    $str = htmlspecialchars_decode($str);
-    $str = strip_tags($str);
-    return $str;
-  }
 }
