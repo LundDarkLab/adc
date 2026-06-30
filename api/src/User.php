@@ -39,14 +39,14 @@ class User extends Conn{
       $this->prepared($userSql, $usr);
 
       $token = $this->genToken($dati['email']);
-      $tokenData = array("email"=>$dati['email'], "token"=>$token);
+      $tokenData = array("email"=>$dati['email'], "token"=>$this->hashToken($token));
       $tokenSql = $this->buildInsert("reset_password", $tokenData);
       $this->prepared($tokenSql, $tokenData);
 
       $datiMail = array(
         "email"=>$dati['email'],
         "name"=>$dati['first_name']." ".$dati['last_name'],
-        "link"=>"https://dyncolldev.ht.lu.se/plus/reset_password.php?key=".$token,
+        "link"=>"https://dyncoll.ht.lu.se/reset_password.php?key=".$token,
         "mailBody"=>1
       );
       $this->mailer->sendMail($datiMail);
@@ -85,9 +85,9 @@ class User extends Conn{
   }
 
   protected function checkEmail(string $email){
-    $sql = "select u.id, p.id person, concat(coalesce(p.first_name,''),' ',coalesce(p.last_name,'')) as name, p.email, p.institution, u.role, u.password_hash from person p inner join user u on u.person = p.id where p.email = '".$email."' and u.is_active = 1;";
+    $sql = "select u.id, p.id person, concat(coalesce(p.first_name,''),' ',coalesce(p.last_name,'')) as name, p.email, p.institution, u.role, u.password_hash from person p inner join user u on u.person = p.id where p.email = :email and u.is_active = 1;";
     $stmt = $this->pdo()->prepare($sql);
-    $stmt->execute();
+    $stmt->execute([':email' => $email]);
     $out = $stmt->fetchAll(\PDO::FETCH_ASSOC);
     $x = count($out);
     if ($x == 0) { throw new \Exception("The email is not in the database or your account is disabled. Please try again, if the problem persists please contact the project manager", 1); }
@@ -101,9 +101,9 @@ class User extends Conn{
 
   protected function checkResetRequest(string $email){
     // Controlla se esiste una richiesta attiva (non scaduta)
-    $sql = "SELECT * FROM reset_password WHERE email = '" . $email . "' AND exp_date > DATE_SUB(NOW(), INTERVAL 1 DAY)";
+    $sql = "SELECT * FROM reset_password WHERE email = :email AND exp_date > DATE_SUB(NOW(), INTERVAL 1 DAY)";
     $stmt = $this->pdo()->prepare($sql);
-    $stmt->execute();
+    $stmt->execute([':email' => $email]);
     $activeRequests = $stmt->fetchAll(\PDO::FETCH_ASSOC);
     
     if (count($activeRequests) > 0) {
@@ -119,13 +119,12 @@ class User extends Conn{
   }
 
   public function checkToken(array $payload){
-    // Cerca token VALIDI (non scaduti)
-    $sql = "SELECT * FROM reset_password WHERE token = '".$payload['token']."' and exp_date > now();";
+    // Cerca token VALIDI (non scaduti); confronta l'hash SHA-256 del token ricevuto
+    $tokenHash = $this->hashToken($payload['token']);
+    $sql = "SELECT * FROM reset_password WHERE token = :token AND exp_date > now();";
     $stmt = $this->pdo()->prepare($sql);
-    $stmt->execute();
+    $stmt->execute([':token' => $tokenHash]);
     $out = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-    error_log("checkToken query: ".$sql);
-    error_log("checkToken count:".count($out));
     // Se non trova nessun record, il token è scaduto o non esiste
     if (empty($out)) {
         throw new \Exception("Sorry, but your token is expired or invalid! Please try requesting a new password again", 1);
@@ -143,6 +142,8 @@ class User extends Conn{
   }
 
   protected function genToken(string $email){ return bin2hex(random_bytes(24)); }
+
+  private function hashToken(string $token): string { return hash('sha256', $token); }
 
   public function getUsers(){
     $sql="select * from user_artifact_view order by name asc;";
@@ -192,13 +193,13 @@ class User extends Conn{
       $usr = $this->checkEmail($dati['email']);
       $this->checkResetRequest($dati['email']);
       $token = $this->genToken($dati['email']);
-      $resArr = array("email" => $dati['email'], "token" => $token);
+      $resArr = array("email" => $dati['email'], "token" => $this->hashToken($token));
       $sql = $this->buildInsert("reset_password", $resArr);
       $this->prepared($sql, $resArr);
       $datiMail=array(
         "email"=>$dati['email'],
         "name"=>$usr['name'],
-        "link"=>"https://dyncolldev.ht.lu.se/plus/reset_password.php?key=".$token,
+        "link"=>"https://dyncoll.ht.lu.se/reset_password.php?key=".$token,
         "mailBody"=>2
       );
       $this->mailer->sendMail($datiMail);
@@ -218,7 +219,7 @@ class User extends Conn{
       $sql = "update person, user set user.password_hash = :password_hash where user.person = person.id and person.email = :email";
       $this->prepared($sql, $array);
       
-      $array = array( "token"=>$dati['token'], "email"=>$dati['email']);
+      $array = array( "token"=>$this->hashToken($dati['token']), "email"=>$dati['email']);
       $sql = "delete from reset_password where token = :token and email = :email;";
       $this->prepared($sql, $array);
 

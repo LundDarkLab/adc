@@ -101,7 +101,7 @@ class Api{
     $filter = array_map(function($key, $value) { return "$key = $value";}, array_keys($array), $array);
     $where = implode(' AND ', $filter);
     return "select 
- concat('https://dyncolldev.ht.lu.se/plus/artifact_view.php?item=',artifact.id) as link,
+ concat('https://dyncoll.ht.lu.se/artifact_view.php?item=',artifact.id) as link,
  model.doi,
  artifact.name,
  class.value as class,

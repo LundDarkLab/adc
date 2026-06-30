@@ -894,7 +894,7 @@ DROP TABLE IF EXISTS `reset_password`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `reset_password` (
   `email` varchar(100) NOT NULL,
-  `token` varchar(255) NOT NULL,
+  `token` varchar(255) NOT NULL COMMENT 'SHA-256 hash del token inviato via email (mai il token raw)',
   `exp_date` varchar(250) NOT NULL DEFAULT ((now() + interval 1 day)),
   PRIMARY KEY (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;

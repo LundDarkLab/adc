@@ -57,7 +57,18 @@ export async function rescuePwd(email) {
   const result = await fetchApi({
     body: { class: 'User', action: 'rescuePwd', email }
   });
-  // Backend usa 'error' invece di 'res' — normalizziamo per coerenza con le altre funzioni
   if (result?.data) result.data.res = result.data.error === 0 ? 0 : 1;
   return result;
+}
+
+export async function checkToken(token){
+  return await fetchApi({
+    body: { class: 'User', action: 'checkToken', token: token }
+  });
+}
+
+export async function resetPassword(token, email, password) {
+  return await fetchApi({
+    body: { class: 'User', action: 'resetPassword', token, email, password_hash: password }
+  });
 }

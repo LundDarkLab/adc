@@ -71,7 +71,7 @@
               <div class="card-body">
                 <div class="mb-3">
                   <input type="checkbox" class="btn-check" id="toggle-pwd" autocomplete="off">
-                  <label class="btn btn-sm btn-outline-secondary" for="toggle-pwd">toggle password visibility</label>
+                  <label class="btn btn-sm btn-outline-secondary" for="toggle-pwd">toggle password</label>
                   
                   <button type="button" class="btn btn-sm btn-outline-secondary" id="gen-pwd">generate password</button>
                 </div>

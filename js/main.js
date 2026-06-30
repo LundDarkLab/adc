@@ -67,6 +67,12 @@ const pageRoutes = {
     dependencies: [],
     init: () => import('./features/person/pages/login.js').then(m => m.initPage())
   },
+  //RESET PASSWORD
+  'reset_password': {
+    css: ['css/reset_password.css'],
+    dependencies: [loadZxcvbn],
+    init: () => import('./features/person/pages/reset_password.js').then(m => m.initPage())
+  },
   // SETTINGS
   'settings': {
     css: ['css/settings.css'],

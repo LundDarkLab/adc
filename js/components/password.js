@@ -114,13 +114,15 @@ function blockSpaces(el) {
   });
 }
 
+const PASSWORD_RULES = [
+  { id: 'rule-length',  test: v => v.length >= 10 },
+  { id: 'rule-upper',   test: v => /[A-Z]/.test(v) },
+  { id: 'rule-number',  test: v => /\d/.test(v) },
+  { id: 'rule-special', test: v => /[^a-zA-Z0-9\s]/.test(v) },
+];
+
 function initStrengthMeter(input, bar, text, pwdMatchEl) {
-  const rules = [
-    { id: 'rule-length',  test: v => v.length >= 10 },
-    { id: 'rule-upper',   test: v => /[A-Z]/.test(v) },
-    { id: 'rule-number',  test: v => /\d/.test(v) },
-    { id: 'rule-special', test: v => /[^a-zA-Z0-9\s]/.test(v) },
-  ];
+  const rules = PASSWORD_RULES;
 
   function resetUI() {
     rules.forEach(({ id }) => document.getElementById(id)?.classList.remove('text-success'));
