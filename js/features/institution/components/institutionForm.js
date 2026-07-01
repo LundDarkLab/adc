@@ -12,14 +12,6 @@ export async function loadCategories() {
 }
 
 export function initColorPicker() {
-  const colorPicker = document.getElementById('colorPicker');
-  const isStoragePlace = document.getElementById('is_storage_place');
-  colorPicker.hidden = true;
-
-  isStoragePlace.addEventListener('change', () => {
-    colorPicker.hidden = !isStoragePlace.checked;
-  });
-
   document.getElementById('randomColor').addEventListener('click', () => {
     document.getElementById('color').value = '#' + Math.floor(Math.random() * 0xFFFFFF).toString(16).padStart(6, '0');
   });

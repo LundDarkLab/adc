@@ -49,10 +49,9 @@ async function loadInstitutionData(mapElement) {
 
   if (institution.is_storage_place == 1) {
     document.getElementById('is_storage_place').checked = true;
-    document.getElementById('colorPicker').hidden = false;
-    document.getElementById('color').value = institution.color || '#000000';
   }
-
+  
+  document.getElementById('color').value = institution.color || '#000000';
   document.getElementById('category').value = institution.category_id;
   document.getElementById('name').value = institution.name;
   document.getElementById('abbreviation').value = institution.abbreviation;

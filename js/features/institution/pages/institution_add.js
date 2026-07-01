@@ -48,7 +48,7 @@ function initFormSubmit() {
     fd.append('class', 'Institution');
     fd.append('action', 'addInstitution');
     fd.append('is_storage_place', isStoragePlace ? 1 : 0);
-    fd.append('color', isStoragePlace ? document.getElementById('color').value : '');
+    fd.append('color', document.getElementById('color').value);
     fd.append('category', document.getElementById('category').value);
     fd.append('name', document.getElementById('name').value);
     fd.append('abbreviation', document.getElementById('abbreviation').value);
