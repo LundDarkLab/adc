@@ -67,7 +67,7 @@ async function initModel(modelOrObject, onReady) {
     handleUserPermissions(isLoggedUser, mainData);
     renderModelMetadata(isLoggedUser,mainData);
     initObjectToggleToolbar(object);
-    initObjectMetadata(object);
+    initObjectMetadata(modelId, object);
     await syncAnnotations(modelId);
   }
   initListeners();

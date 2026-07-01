@@ -59,10 +59,7 @@ async function artifactSelect(){
   const adminLevels = await adminLevelOptions(0, {}, null);
   
   // output.push({timeline:timeline});
-  output.push({author:author});
-  output.push({storage_place:storage_place});
-  output.push({owner:storage_place});
-  output.push({gid_0:adminLevels});
+  output.push({author:author}, {storage_place:storage_place}, {owner:storage_place}, {gid_0:adminLevels});
   return output;
 
 }
@@ -76,12 +73,12 @@ export async function handleCategorySpecOptions(cat){
       filters: {category_class: cat}
     };
     const response = await fetchApi({ body: payload });
-    if (response.error === 1) throw new Error(`Error fetching category list`);
-      return response.data;
-    } catch (error) {
-      bsAlert(error, 'danger', 3000);
-      return false;
-    }
+    if (response.error === 1) {throw new Error(`Error fetching category list`);}
+    return response.data;
+  } catch (error) {
+    bsAlert(error, 'danger', 3000);
+    return false;
+  }
 }
 
 export async function adminLevelOptions(gid, filter, selected=false){

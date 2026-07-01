@@ -125,7 +125,7 @@ function toggleObject(obj, btn){
   btn.classList.toggle('hidden');
 }
 
-export function initObjectMetadata(data) {
+export function initObjectMetadata(model,data) {
   const thumbBody = document.querySelector('#paradata-modal .thumbnail-body');
   thumbBody.innerHTML = '';
 
@@ -139,12 +139,13 @@ export function initObjectMetadata(data) {
       div.style.backgroundImage = `url('/archive/thumb/${obj.thumbnail}')`;
     }
 
-    div.addEventListener('click', () => showObjectMetadata(obj));
+    div.addEventListener('click', () => showObjectMetadata(model, obj));
     thumbBody.appendChild(div);
   });
 }
 
-export function showObjectMetadata(data){
+export function showObjectMetadata(model, data){
+  console.log('showObjectMetadata', data);
   const thumbRow = `
     <tr>
       <td colspan="2" style="padding:0">
@@ -192,7 +193,7 @@ export function showObjectMetadata(data){
     size: 'modal-lg',
     buttons: [
       { text: 'Close', class: 'btn-secondary', action: 'close' },
-      // { text: 'Edit', class: 'btn-primary', action: () => window.open(`model_object_edit.php?id=${data.id}`) }
+      { text: 'Edit', class: 'btn-primary', action: () => window.open(`model_object_edit.php?model=${model}&item=${data.id}`) }
     ]
   });
 }

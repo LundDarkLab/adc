@@ -1,0 +1,23 @@
+.tdhop{
+  height: calc(100vh - 115px - 100px) !important;
+}
+
+#wrap3d{
+  position: relative;
+  overflow: hidden;
+}
+#wrap3d>#alertBg{
+  position: absolute;
+  top: 0;
+  left:0;
+  width:100%;
+  height:100%;
+  background: rgba(0,0,0,.3);
+  z-index: 20;
+  display: flex;
+  flex-direction: row;
+  align-content: center;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}

@@ -318,41 +318,5 @@
   </div>
 
 </div>
-  <!-- <div id="paradata-modal" class="d-none">
-    <div class="paradata-header border-bottom d-flex justify-content-between align-items-center mb-3">
-      <h5>Model metadata</h5>
-      <button type="button" class="btn-close btParadataToggle" aria-label="Close" id="dismiss-paradata-modal"></button>
-    </div>
-    <div class="paradata-body">
-      <div id="model-metadata" class="mb-3">
-        <ul class="list-group list-group-flush">
-          <li class="list-group-item">
-            <span>Status</span>
-            <span id="model-status" class="alert p-1 mb-0 text-center w-100"></span>
-          </li>
-          <li class="list-group-item"><span>Name</span><span id="model-name"></span></li>
-          <li class="list-group-item"><span>Description</span><span id="model-description"></span></li>
-          <li class="list-group-item"><span>Note</span><span id="model-note"></span></li>
-          <li class="list-group-item"><span>UUID</span><span id="model-uuid" data-bs-toggle="tooltip" data-bs-title="copy to clipboard"></span></li>
-          <li class="list-group-item" id="doiItem">
-            <span>DOI</span>
-            <span>
-              <a href="" target="_blank" id="model-doi"><span class="visually-hidden">DOI link</span></a>
-            </span>
-          </li>
-          <li class="list-group-item"><span>Citation</span><span id="model-citation"></span></li>
-        </ul>
-        <nav id="toolBarModel" class="my-3 pb-2 border-bottom">
-          <a href="#" class="btn btn-sm btn-adc-blue editModelBtn" id="">edit</a>
-          <button type="button" class="btn btn-sm btn-adc-blue" id="modelStatus">change status</button>
-          <button type="button" class="btn btn-sm btn-danger float-end" id="deleteModel">delete</button>
-        </nav>
-      </div>
-      <div id="objects-metadata">
-        <h5>Objects</h5>
-        <div id="thumbList"></div>
-      </div>
-    </div>
-  </div> -->
 </div>
 

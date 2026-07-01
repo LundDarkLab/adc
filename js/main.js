@@ -160,6 +160,12 @@ const pageRoutes = {
     dependencies: [],
     init: () => import('./features/model/pages/models.js').then(m => m.initPage())
   },
+  // MODEL OBJECT
+  'object_edit': {
+    css: ['css/object_edit.css'],
+    dependencies: [load3DHopDependencies],
+    init: () => import('./features/model_object/pages/objectEdit.js').then(m => m.initModelObjectPage())
+  },
   // TIMELINE
   'timeline': {
     css: ['css/timeline.css'],
