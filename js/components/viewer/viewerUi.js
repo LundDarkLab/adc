@@ -193,7 +193,7 @@ export function showObjectMetadata(model, data){
     size: 'modal-lg',
     buttons: [
       { text: 'Close', class: 'btn-secondary', action: 'close' },
-      { text: 'Edit', class: 'btn-primary', action: () => window.open(`model_object_edit.php?model=${model}&item=${data.id}`) }
+      { text: 'Edit', class: 'btn-primary', action: () => window.location.href = `model_object_edit.php?model=${model}&item=${data.id}` }
     ]
   });
 }
