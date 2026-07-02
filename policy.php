@@ -5,8 +5,9 @@
     <?php require("assets/meta.php"); ?>
   </head>
   <body>
-    <?php require("assets/header.php"); ?>
-    <?php require("assets/menu.php"); ?>
+    <?php require("assets/configuration/logged.php"); ?>
+    <header id="header"></header>
+    <div id="sideMenu"></div>
     <main class="animated mainSection">
       <div class="container">
 
@@ -62,9 +63,8 @@
         </div>
       </div>
     </main>
-    <?php 
-    require("assets/footer.php");
-    require("assets/js.html"); 
-    ?>
+    <footer id="footer"></footer>
+    <?php require("assets/js.html"); ?>
+    <script type="module" src="js/legacyNav.js"></script>
   </body>
 </html>

@@ -12,10 +12,9 @@
   <link rel="stylesheet" href="css/map.css">
 </head>
 <body>
-  <?php 
-    require("assets/header.php"); 
-    // require("assets/loadingDiv.html");
-  ?>
+  <?php require("assets/configuration/logged.php"); ?>
+  <header id="header"></header>
+  <div id="sideMenu"></div>
   <main class="animated mainSection" id="mapWrap">
     <div id="mapGuide" class="card">
       <div class="card-body">
@@ -92,13 +91,14 @@
   </main>
   <?php
     require("assets/toastDiv.html");
-    require("assets/menu.php");
     require("assets/js.html");
   ?>
+  <footer id="footer"></footer>
   <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js" integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM=" crossorigin=""></script>
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
   <script src='https://unpkg.com/@turf/turf/turf.min.js'></script>
 
+  <script type="module" src="js/legacyNav.js"></script>
   <script src="js/map.js" charset="utf-8" type="module"></script>
 </body>
 </html>

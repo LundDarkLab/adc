@@ -135,10 +135,6 @@ footer a:hover{
   transform: scale(1.15);
 }
 
-#footerMenu > a:last-child{
-  display: none !important;
-}
-
 #itemTool{
   position:fixed; 
   top:70px; 

@@ -5,8 +5,9 @@
     <?php require("assets/meta.php"); ?>
   </head>
   <body>
-    <?php require("assets/header.php"); ?>
-    <?php require("assets/menu.php"); ?>
+    <?php require("assets/configuration/logged.php"); ?>
+    <header id="header"></header>
+    <div id="sideMenu"></div>
     <main class="d-flex flex-column align-items-center">
       <form class="form-sm" name="addUser">
         <h2 id="title" class="mb-3"></h2>
@@ -37,7 +38,9 @@
         <a href="index.php" class="btn btn-secondary">cancel request</a>
       </form>
     </main>
+    <footer id="footer"></footer>
     <?php require("assets/js.html"); ?>
+    <script type="module" src="js/legacyNav.js"></script>
     <script src="js/addUser.js" charset="utf-8"></script>
   </body>
 </html>

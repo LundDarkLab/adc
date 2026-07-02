@@ -2,10 +2,9 @@
 @import './map.css';
 
 main {
-  position: absolute;
-  top:120px;
-  bottom:0;
-  margin:0 0 !important;
+  position: relative;
+  margin:120px 0 0 0 !important;
+  min-height: calc(100vh - 120px);
   padding: 0px;
 }
 

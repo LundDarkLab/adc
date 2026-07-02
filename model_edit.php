@@ -9,7 +9,9 @@
     <link rel="stylesheet" href="css/model_add.css">
   </head>
   <body>
-    <?php require("assets/header.php"); ?>
+    <?php require("assets/configuration/logged.php"); ?>
+    <header id="header"></header>
+    <div id="sideMenu"></div>
     <main class="<?php echo $mainClass; ?>">
       <div class="container">
         <form id="editModelForm">
@@ -64,10 +66,11 @@
     </main>
     
     <?php
-      require("assets/toastDiv.html"); 
-      require("assets/menu.php");
+      require("assets/toastDiv.html");
       require("assets/js.html");
     ?>
+    <footer id="footer"></footer>
+    <script type="module" src="js/legacyNav.js"></script>
     <script src="js/model_edit.js" charset="utf-8"></script>
   </body>
 </html>

@@ -13,7 +13,9 @@ function initNav(){
   const userMenu = document.getElementById("userMenu");
   const toggleMenuBtn = document.getElementById("toggleMenu");
   const backdrop = document.getElementById("backdrop");
-  const loggedValue = document.querySelector("[name=logged]").value;
+  const isLoggedEl = document.getElementById("isLogged");
+  if(!toggleMenuBtn || !isLoggedEl) return;
+  const loggedValue = isLoggedEl.value === 'true' ? 1 : 0;
   const device = checkDevice();
   if(userMenu) {userMenu.classList.add('closed');}
   

@@ -18,10 +18,9 @@
     <link rel="stylesheet" href="css/dashboard.css">
   </head>
   <body>
-    <?php
-      require "assets/header.php";
-    ?>
-    
+    <header id="header"></header>
+    <div id="sideMenu"></div>
+
     <main class="mainSection">
       <div id="dashboardWrap">
         <!-- <div id="issuesSection" class="dashboardSection alert">
@@ -130,11 +129,11 @@
         </div>
       </div>
     </main>
-    <?php require "assets/menu.php"; ?>
-    <?php require "./assets/footer.php"; ?>
+    <footer id="footer"></footer>
     <?php require "assets/js.html"; ?>
     <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js" integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM=" crossorigin=""></script>
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <script type="module" src="js/legacyNav.js"></script>
     <script src="js/dashboard.js" type="module" charset="utf-8"></script>
   </body>
 </html>

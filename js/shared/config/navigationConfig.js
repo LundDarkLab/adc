@@ -3,7 +3,7 @@ export const mainLinks = [
   { label: 'map', href: 'map.php', title:"Interactive map", icon: 'mdi-map' },
   { label: 'credits', href:'https://www.darklab.lu.se/digital-collections/dynamic-collections/credits/', title:'link to the Darklab Credit page [external link]', icon:'mdi-account-group'},
   { label: 'legal', href: 'policy.php', title:"Privacy policy", icon: 'mdi-shield-check' },
-  { label: 'db model', href: 'db_model.php', title:"Database architecture", icon: 'mdi-database' },
+  { label: 'docs', href:'https://lunddarklab.github.io/adc/', title:'platform documentation [external link]', icon:'mdi-book-open-variant'},
   { label: 'login', href: 'login.php', title:"Login to your account", icon: 'mdi-login-variant' }
 ];
 

@@ -10,11 +10,12 @@ if (!isset($_SESSION['id'])) { header('Location: 403.php');}
     <link rel="stylesheet" href="css/mailComposer.css">
   </head>
   <body>
-    <?php 
-      require("assets/header.php");
-      require("assets/menu.php");
+    <?php
+      require("assets/configuration/logged.php");
       require("assets/loadingDiv.html");
-    ?> 
+    ?>
+    <header id="header"></header>
+    <div id="sideMenu"></div>
     <main class="animated mainSection">
       <div class="container">
         <div class="row">
@@ -103,8 +104,10 @@ if (!isset($_SESSION['id'])) { header('Location: 403.php');}
     </main>
     <div id="toast-container" class="toast-container position-fixed top-0 start-50 translate-middle-x p-3"></div>
     <?php require("assets/deleteModal.html"); ?>
+    <footer id="footer"></footer>
     <?php require("assets/js.html"); ?>
     <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+    <script type="module" src="js/legacyNav.js"></script>
     <script src="js/mailComposer.js"></script>
   </body>
 </html>

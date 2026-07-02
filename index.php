@@ -13,10 +13,12 @@
   </head>
   <body>
     <?php
-      require "assets/header.php";
+      require "assets/configuration/logged.php";
       require "assets/loadingDiv.html";
       require "assets/itemtool.html";
     ?>
+    <header id="header"></header>
+    <div id="sideMenu"></div>
     <div id="statToggle" class="">
       <button type="button" class="btn btn-lg btn-dark" id="statToggleBtn">
         <span class="mdi mdi-chevron-left"></span>
@@ -185,10 +187,8 @@
         </div>
       </div>
     </main>
-    <?php
-      require "assets/menu.php";
-      require "assets/js.html";
-    ?>
+    <footer id="footer"></footer>
+    <?php require "assets/js.html"; ?>
   </body>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" integrity="sha384-+mbV2IY1Zk/X1p/nWllGySJSUN8uMs+gUAN10Or95UBH0fpj6GfKgPmgC5EXieXG" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
@@ -197,5 +197,6 @@
   <script src="https://www.gstatic.com/charts/loader.js"></script>
   <script src="js/maps/geo_config.js?v=<?php echo filemtime('js/maps/geo_config.js'); ?>" charset="utf-8"></script>
   <script src="js/maps/geo_function.js?v=<?php echo filemtime('js/maps/geo_function.js'); ?>" charset="utf-8"></script>
+  <script type="module" src="js/legacyNav.js"></script>
   <script src="js/index.js?v=<?php echo filemtime('js/index.js'); ?>" charset="utf-8" type="module"></script>
 </html>

@@ -11,10 +11,11 @@ if (!isset($_SESSION['id'])) { header('Location: 403.php');}
   </head>
   <body>
     <?php
-      require "assets/header.php";
-      require "assets/menu.php";
+      require "assets/configuration/logged.php";
       require "assets/loadingDiv.html";
     ?>
+    <header id="header"></header>
+    <div id="sideMenu"></div>
     <div id="itemTool" class="animated mainSection large">
       <select name="" id="listTableSelect" class="form-control w-50 mx-auto">
         <option value="" selected disabled>-- choose a table --</option>
@@ -63,7 +64,9 @@ if (!isset($_SESSION['id'])) { header('Location: 403.php');}
     </main>
     <div id="toast-container" class="toast-container position-fixed top-0 start-50 translate-middle-x p-3"></div>
     <?php require "assets/deleteModal.html"; ?>
+    <footer id="footer"></footer>
     <?php require "assets/js.html"; ?>
+    <script type="module" src="js/legacyNav.js"></script>
     <script src="js/vocabularies.js"></script>
   </body>
 </html>

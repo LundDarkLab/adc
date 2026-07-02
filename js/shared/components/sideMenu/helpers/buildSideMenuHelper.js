@@ -12,7 +12,7 @@ export async function buildSideMenu() {
 
     createLinkElements(linkWrap, dashBoardBtn);
     createLinkElements(linkWrap, mainSectionMenu, 'add resource')
-    if(parseInt(checkLogged.userRole) === 1){
+    if(parseInt(checkLogged.userRole) < 3){
       createLinkElements(linkWrap, adminSectionMenu, 'admin section');
     }
     createLinkElements(linkWrap, userAccountMenu, 'my account');

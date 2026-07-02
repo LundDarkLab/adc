@@ -182,19 +182,9 @@ try {
     loadCSS('css/main.css', '', ''),
     loadScript(bootstrap.jsSrc, bootstrap.jsIntegrity, bootstrap.jsCrossOrigin)
   ]);
-  const [initHeader, initSideMenu, initFooter, bsModule] = await Promise.all([
-    import('./shared/components/headerMenu/initHeaderMenu.js'),
-    import('./shared/components/sideMenu/initSideMenu.js'),
-    import('./shared/components/footer/initFooter.js'),
-    import('./shared/components/bsComponents/initBsComponents.js')
-  ]);
-  
-  await Promise.all([
-    initSideMenu.initSideMenu(),
-    initHeader.initHeaderMenu(),
-    initFooter.initFooter()
-  ]);
-  bsModule.bsTooltips();
+  const { initNavigation } = await import('./shared/components/initNavigation.js');
+  await initNavigation();
+
   const route = pageRoutes[window.pageType];
   
   if (route) {
