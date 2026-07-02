@@ -1,9 +1,9 @@
-import { bsAlert } from "./components/bsComponents.js";
-import { initMap, addLayers, refreshClusters } from "./modules/initMaps.js";
-import { collectionState } from "./modules/collectionStorage.js";
-import { showLoading } from "./helpers/helper.js";
-import { domEl, layerControl, openGallery, openPopUp, showGalleryForProps,collectionControl} from "./components/mapsComponent.js";
-import { toggleLayer, toggleBaseLayer, handleAdminLevel, calculateMaxBoundsAndZoom} from "./helpers/mapHelper.js";
+import { bsAlert } from "../../components/bsComponents.js";
+import { initMap, addLayers, refreshClusters } from "../../modules/initMaps.js";
+import { collectionState } from "../../modules/collectionStorage.js";
+import { showLoading } from "../../helpers/helper.js";
+import { domEl, layerControl, openGallery, openPopUp, showGalleryForProps,collectionControl} from "../../components/mapsComponent.js";
+import { toggleLayer, toggleBaseLayer, toggleAdminLevel, preloadAdminLevel, calculateMaxBoundsAndZoom} from "../../helpers/mapHelper.js";
 
 const turf = window.turf;
 const L = window.L;
@@ -12,7 +12,7 @@ let map;
 async function initializeMap() {
   try {
     showLoading(true);
-    if (map && map.map) {
+    if (map?.map) {
       try { 
         map.map.off(); 
         map.map.remove(); 
@@ -43,13 +43,11 @@ async function initializeMap() {
     // Ottieni le collection per i controlli
     const stateManager = await collectionState();
     const currentState = stateManager.getState();    
-    await Promise.all([
-      calculateMaxBoundsAndZoom(map.map),
-      layerControl(map, { baseLayers: true, poi: ['findplace', 'institutions'], admin: availableLevels }),
-    ]);
+    calculateMaxBoundsAndZoom(map.map);
+    layerControl(map, { baseLayers: true, poi: ['findplace', 'institutions'], admin: availableLevels });
     // Aggiungi il controllo collezione se ci sono collezioni
     collectionControl(currentState.collections, currentState.activeCollectionKey);
-    const controlElements = [domEl.controlDiv, domEl.mapGalleryWrap, domEl.mapInfo, domEl.collectionDiv].filter(el => el);
+    const controlElements = [domEl.controlDiv, domEl.mapGalleryWrap, domEl.mapInfo, domEl.collectionDiv].filter(Boolean);
     controlElements.forEach(element => {
       L.DomEvent.disableClickPropagation(element);
       L.DomEvent.disableScrollPropagation(element);
@@ -79,7 +77,7 @@ async function initializeMap() {
     document.getElementsByName('admin').forEach(input => {
       input.addEventListener('change', async function() {
         const level = parseInt(this.value);
-        await handleAdminLevel(map, level, this.checked, true, result.onClickCallback.admin);
+        await toggleAdminLevel(map, level, this.checked, result.onClickCallback.admin);
       });
     });
 
@@ -117,14 +115,12 @@ async function initializeMap() {
         if (collectionTitleBtn) collectionTitleBtn.innerHTML = `Active collection: <strong>${title}</strong>`;
       });
     });
-
-    document
   
     // Preload livello 0 in background
     setTimeout(async () => {
       if (!map.adminGroup[0]) {
         try {
-          await handleAdminLevel(map, 0, false, false, result.onClickCallback.admin);
+          await preloadAdminLevel(map, 0, result.onClickCallback.admin);
         } catch (error) {
           console.error('Error preloading level 0:', error);
         }
@@ -139,9 +135,9 @@ async function initializeMap() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
+export async function initPage() {
   await initializeMap();
-});
+}
 
 document.addEventListener('collectionUpdated', async () => {
   await refreshCollectionMarkers()
@@ -209,7 +205,7 @@ async function refreshCollectionMarkers() {
 
     document.getElementsByName('admin').forEach(input => {
       input.addEventListener('change', function() {
-        handleAdminLevel(map, parseInt(this.value), this.checked);
+        toggleAdminLevel(map, parseInt(this.value), this.checked);
       });
     });
     return true;

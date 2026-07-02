@@ -13,8 +13,84 @@ export async function fetchCollection(){
   return currentState;
 }
 
+function persistCollectionColor(collection, colors) {
+  const currentState = stateManager.getState();
+  const collectionKey = Object.keys(currentState.collections).find(key =>
+    currentState.collections[key].metadata.title === collection.metadata.title
+  );
+  if (!collectionKey) return;
+
+  const updatedCollection = {
+    ...currentState.collections[collectionKey],
+    metadata: {
+      ...currentState.collections[collectionKey].metadata,
+      color: colors
+    }
+  };
+  const updatedCollections = {
+    ...currentState.collections,
+    [collectionKey]: updatedCollection
+  };
+
+  // Usa updateState per salvare nello storage
+  stateManager.updateState({ collections: updatedCollections });
+}
+
+function resolveCollectionColor(collection) {
+  // Check primary, not the object: legacy collections may have a color object with empty values
+  if (collection.metadata.color?.primary) return collection.metadata.color;
+
+  const colors = coll.generateCollectionColor();
+  persistCollectionColor(collection, colors);
+  return colors;
+}
+
+function createCollectionClusterLayer(colors) {
+  return L.markerClusterGroup({
+    singleMarkerMode: true,
+    disableClusteringAtZoom: 17,
+    iconCreateFunction: function(cluster) {
+      const count = cluster.getChildCount();
+      const size = 20 + (count * 2);
+      return new L.DivIcon({
+        html: createClusterIcon(count, size, colors),
+        className: 'custom-cluster',
+        iconSize: L.point(size, size)
+      });
+    }
+  });
+}
+
+function addCollectionItemMarkers(collectionLayer, items, onClickCallback) {
+  items.forEach(item => {
+    const marker = L.marker([item.latitude, item.longitude]);
+    marker.bindPopup(() => onClickCallback(item));
+    collectionLayer.addLayer(marker);
+  });
+}
+
+function addSingleCollectionMarkers(mapElement, collection, onClickCallback) {
+  if (!collection.items || !Array.isArray(collection.items)) return;
+
+  const validItems = collection.items.filter((item) => item.latitude !== null && item.longitude !== null);
+  if (validItems.length === 0) {
+    console.warn(`Nessun item con coordinate valide per la collection: ${collection.name}`);
+    return;
+  }
+
+  const colors = resolveCollectionColor(collection);
+  const collectionLayer = createCollectionClusterLayer(colors);
+  addCollectionItemMarkers(collectionLayer, validItems, onClickCallback);
+
+  // Salva il cluster nel mapElement usando il nome della collection
+  mapElement.collectionGroup[collection.metadata.title] = collectionLayer;
+
+  // Aggiungi il layer alla mappa (sarà controllato dalle checkbox)
+  mapElement.map.addLayer(collectionLayer);
+}
+
 export function addCollectionMarkers(mapElement, collections, onClickCallback) {
-  if (!mapElement || !mapElement.collectionGroup) {
+  if (!mapElement?.collectionGroup) {
     console.error('mapElement o collectionGroup non valido');
     return;
   }
@@ -22,69 +98,8 @@ export function addCollectionMarkers(mapElement, collections, onClickCallback) {
     console.warn('Collections non è un array:', collections);
     return;
   }
-  
-  collections.forEach(collection => {
-    if (!collection.items || !Array.isArray(collection.items)) return;
-    const validItems = collection.items.filter((item) => item.latitude !== null && item.longitude !== null);
-    if (validItems.length === 0) {
-      console.warn(`Nessun item con coordinate valide per la collection: ${collection.name}`);
-      return;
-    }
 
-    let colors = collection.metadata.color;
-    if (!colors) {
-      colors = coll.generateCollectionColor();
-      const currentState = stateManager.getState();
-      const collectionKey = Object.keys(currentState.collections).find(key => 
-        currentState.collections[key].metadata.title === collection.metadata.title
-      );
-      
-      if (collectionKey) {
-        const updatedCollection = {
-          ...currentState.collections[collectionKey],
-          metadata: {
-            ...currentState.collections[collectionKey].metadata,
-            color: colors
-          }
-        };
-        
-        const updatedCollections = {
-          ...currentState.collections,
-          [collectionKey]: updatedCollection
-        };
-        
-        // Usa updateState per salvare nello storage
-        stateManager.updateState({ collections: updatedCollections });
-      }
-    }
-
-    const collectionLayer = L.markerClusterGroup({
-      singleMarkerMode: true,
-      disableClusteringAtZoom:17,
-      iconCreateFunction: function(cluster) {
-        var count = cluster.getChildCount();
-        var size = 20 + (count * 2);
-        return new L.DivIcon({
-          html: createClusterIcon(count,size,colors),
-          className: 'custom-cluster',
-          iconSize: L.point(size, size)
-        });
-      }
-    });
-
-    // Aggiungi i marker al cluster
-    validItems.forEach(item => {
-      const marker = L.marker([item.latitude, item.longitude]);
-      marker.bindPopup(()=>onClickCallback(item));
-      collectionLayer.addLayer(marker);
-    });
-    
-    // Salva il cluster nel mapElement usando il nome della collection
-    mapElement.collectionGroup[collection.metadata.title] = collectionLayer;
-
-    // Aggiungi il layer alla mappa (sarà controllato dalle checkbox)
-    mapElement.map.addLayer(collectionLayer);    
-  });
+  collections.forEach(collection => addSingleCollectionMarkers(mapElement, collection, onClickCallback));
 }
 
 export async function fetchFindPlace(id=null){
@@ -103,7 +118,7 @@ export function addFindPlaceMarkers(mapElement, data, onClickCallback) {
     console.error('mapElement o findPlaceGroup non valido');
     return;
   }
-  if (!data || data.error !== 0 || !data.data?.items?.length) {
+  if (data?.error !== 0 || !data.data?.items?.length) {
     console.warn('Nessun dato valido per marker:', data);
     return;
   }
@@ -112,8 +127,8 @@ export function addFindPlaceMarkers(mapElement, data, onClickCallback) {
     singleMarkerMode: true,
     disableClusteringAtZoom: 17,
     iconCreateFunction: function(cluster) {
-      var count = cluster.getChildCount();
-      var size = 20 + (count * 2);
+      let count = cluster.getChildCount();
+      let size = 20 + (count * 2);
       return new L.DivIcon({
         html: '<div style="background: radial-gradient(circle, rgba(0,128,0,0.6) 0%, rgba(0,100,0,0.9) 100%); border: 2px solid rgba(255,255,255,0.5); color: white; border-radius: 50%; width: ' + size + 'px; height: ' + size + 'px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; box-shadow: 0 0 5px rgba(0,0,0,0.3);">' + count + '</div>',
         className: 'custom-cluster-green',
@@ -151,7 +166,7 @@ export async function fetchInstitution(id=null){
   try {
     const body ={ class: 'Geom', action: 'getInstitutionPoint' }
     if(id && id !== '' && id !== null && id !== undefined){ body.id = id; }
-    const result = await fetchApi({ url: ENDPOINT, body });
+    const result = await fetchApi({ body });
     return result;
   } catch (error) {
     bsAlert('Error loading institutions: ' + error.message, 'danger');
@@ -164,7 +179,7 @@ export function addInstitutionMarkers(mapElement, data, onClickCallback) {
     console.error('mapElement o institutionsGroup non valido');
     return;
   }
-  if (!data || data.error !== 0 || !data.data?.items?.length) {
+  if (data?.error !== 0 || !data.data?.items?.length) {
     console.warn('Nessun dato valido per marker:', data);
     return;
   }
@@ -175,8 +190,8 @@ export function addInstitutionMarkers(mapElement, data, onClickCallback) {
       singleMarkerMode: true,
       disableClusteringAtZoom:17,
       iconCreateFunction: function(cluster) {
-        var count = cluster.getChildCount();
-        var size = 20 + (count * 2);
+        let count = cluster.getChildCount();
+        let size = 20 + (count * 2);
         return new L.DivIcon({
           html: createClusterIcon(count,size,colors),
           className: 'custom-cluster-orange',
@@ -223,7 +238,7 @@ export async function getSimpleBoundary(level, gid){
 export async function getAvailableLevels(levels) {
   try {
     const body = { class: 'Geom', action: 'getAvailableLevels', levels:levels };
-    const result = await fetchApi({ url: ENDPOINT, body });
+    const result = await fetchApi({ body });
     return result;
   } catch (error) {
     bsAlert('Error loading admin boundaries: ' + error.message, 'danger');
@@ -234,7 +249,7 @@ export async function fetchAdminBoundaries(level, filter = '', status = false) {
   try {
     const body = { class: 'Geom', action: 'getBoundaries', level: level, filter: filter };
     if(status){body.status = status;}
-    const result = await fetchApi({ url: ENDPOINT, body });
+    const result = await fetchApi({ body });
     return result;
   } catch (error) {
     bsAlert(`Error loading admin level ${level}: ` + error.message, 'danger', 5000);
@@ -263,34 +278,44 @@ export function toggleBaseLayer(event,map){
   };
 }
 
-export async function handleAdminLevel(mapElement, level, checked, add = true, onClickCallback = null) {
-  if (checked || !add) {
-    if (mapElement.adminGroup[level]) {
-      if (add) {
-        toggleLayer(mapElement.map, mapElement.adminGroup[level].layer, checked);
-      }
-    } else {
-      if (add) showLoading(true);
-      const geoData = await fetchAdminBoundaries(level);
-      if (add) showLoading(false);
-      
-      if (geoData && geoData.data && geoData.data.items) {
-        const levelGroup = L.featureGroup();
-        const geoJsonLayer = createGeoJsonLayer(geoData.data.items, { level, onClickCallback });
-        if (geoJsonLayer) {
-          geoJsonLayer.addTo(levelGroup);
-          mapElement.adminGroup[level] = { layer: levelGroup, geoJson: geoJsonLayer };
-          if (add) {
-            toggleLayer(mapElement.map, levelGroup, checked);
-          }        
-        }
-      }
-    }
-  } else {
-    if (mapElement.adminGroup[level]) {
-      toggleLayer(mapElement.map, mapElement.adminGroup[level].layer, checked);
-    }
+async function ensureAdminLevelLayer(mapElement, level, onClickCallback) {
+  if (mapElement.adminGroup[level]) {
+    return mapElement.adminGroup[level].layer;
   }
+
+  const geoData = await fetchAdminBoundaries(level);
+  if (!geoData?.data?.items) return null;
+
+  const levelGroup = L.featureGroup();
+  const geoJsonLayer = createGeoJsonLayer(geoData.data.items, { level, onClickCallback });
+  if (!geoJsonLayer) return null;
+
+  geoJsonLayer.addTo(levelGroup);
+  mapElement.adminGroup[level] = { layer: levelGroup, geoJson: geoJsonLayer };
+  return levelGroup;
+}
+
+// Mostra/nasconde il layer del livello admin secondo `checked`, caricandolo (con loading) se serve.
+export async function toggleAdminLevel(mapElement, level, checked, onClickCallback = null) {
+  if (!checked && !mapElement.adminGroup[level]) return;
+
+  if (mapElement.adminGroup[level]) {
+    toggleLayer(mapElement.map, mapElement.adminGroup[level].layer, checked);
+    return;
+  }
+
+  showLoading(true);
+  const layer = await ensureAdminLevelLayer(mapElement, level, onClickCallback);
+  showLoading(false);
+  if (layer) {
+    toggleLayer(mapElement.map, layer, checked);
+  }
+}
+
+// Carica e mette in cache il layer del livello admin in background, senza mostrarlo sulla mappa.
+export async function preloadAdminLevel(mapElement, level, onClickCallback = null) {
+  if (mapElement.adminGroup[level]) return;
+  await ensureAdminLevelLayer(mapElement, level, onClickCallback);
 }
 
 export function createGeoJsonLayer(data, options = {}) {
@@ -301,7 +326,7 @@ export function createGeoJsonLayer(data, options = {}) {
   const features = data.map(item => {
     if (item.geom) {
       const geom = JSON.parse(item.geom);
-      const simplified = options.simplify !== false ? turf.simplify(geom, { tolerance: options.tolerance || 0.05, highQuality: true }) : geom;
+      const simplified = options.simplify === false ? geom : turf.simplify(geom, { tolerance: options.tolerance || 0.05, highQuality: true });
       return {
         type: "Feature",
         geometry: simplified,
@@ -314,7 +339,7 @@ export function createGeoJsonLayer(data, options = {}) {
       };
     }
     return null;
-  }).filter(f => f);
+  }).filter(Boolean);
 
   if (features.length === 0) return null;
 
@@ -335,7 +360,7 @@ export function calculateMaxBoundsAndZoom(map) {
     if (layer.getBounds && typeof layer.getBounds === 'function') {
       try {
         const bounds = layer.getBounds();
-        if (bounds && bounds.isValid && bounds.isValid()) {
+        if (bounds?.isValid?.()) {
           overallBounds.extend(bounds);
           hasValidBounds = true;
         }
@@ -379,29 +404,39 @@ const zoomThresholds = {
   6: { min: 22, max: 24 }
 };
 let activeThreshold = null;
-export function zoomEvent(currentZoom, mapElement) {
+
+function updateActiveThreshold(currentZoom) {
   for (const [level, range] of Object.entries(zoomThresholds)) {
     if (currentZoom >= range.min && currentZoom <= range.max) {
       activeThreshold = level;
     }
   }
-  for(let l = 0; l <= 6; l++){
-    const levelCheckbox = document.getElementById(`admin-level-${l}`);
-    if(!levelCheckbox) {return;}
-    const adminLayer = mapElement.adminGroup[l]?.layer;
-    if(l < activeThreshold){
-      levelCheckbox.disabled = true;
-      if(adminLayer && mapElement.map.hasLayer(adminLayer)){
-        toggleLayer(mapElement.map, adminLayer, false);
-      }
-    } else {
-      levelCheckbox.disabled = false;
-      if(levelCheckbox.checked){
-        if(adminLayer && !mapElement.map.hasLayer(adminLayer)){
-          toggleLayer(mapElement.map, adminLayer, true);
-        }
-      }
+}
+
+// Aggiorna checkbox e visibilità del layer di un singolo livello admin. Ritorna false se la checkbox non esiste.
+function syncAdminLevelCheckbox(mapElement, level, isBelowThreshold) {
+  const levelCheckbox = document.getElementById(`admin-level-${level}`);
+  if (!levelCheckbox) return false;
+
+  const adminLayer = mapElement.adminGroup[level]?.layer;
+  levelCheckbox.disabled = isBelowThreshold;
+
+  if (isBelowThreshold) {
+    if (adminLayer && mapElement.map.hasLayer(adminLayer)) {
+      toggleLayer(mapElement.map, adminLayer, false);
     }
+  } else if (levelCheckbox.checked && adminLayer && !mapElement.map.hasLayer(adminLayer)) {
+    toggleLayer(mapElement.map, adminLayer, true);
+  }
+
+  return true;
+}
+
+export function zoomEvent(currentZoom, mapElement) {
+  updateActiveThreshold(currentZoom);
+  for (let l = 0; l <= 6; l++) {
+    const checkboxExists = syncAdminLevelCheckbox(mapElement, l, l < activeThreshold);
+    if (!checkboxExists) return;
   }
 }
 

@@ -17,6 +17,7 @@ if (!isset($_SESSION['id'])) { header('Location: 403.php');}
     <header id="header"></header>
     <div id="sideMenu"></div>
     <div id="itemTool" class="animated mainSection large">
+      <label for="listTableSelect" class="invisible">Select a table:</label>
       <select name="" id="listTableSelect" class="form-control w-50 mx-auto">
         <option value="" selected disabled>-- choose a table --</option>
       </select>

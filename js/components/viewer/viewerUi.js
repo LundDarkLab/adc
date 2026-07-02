@@ -125,7 +125,7 @@ function toggleObject(obj, btn){
   btn.classList.toggle('hidden');
 }
 
-export function initObjectMetadata(model,data) {
+export function initObjectMetadata(model, data, isLoggedUser) {
   const thumbBody = document.querySelector('#paradata-modal .thumbnail-body');
   thumbBody.innerHTML = '';
 
@@ -139,12 +139,12 @@ export function initObjectMetadata(model,data) {
       div.style.backgroundImage = `url('/archive/thumb/${obj.thumbnail}')`;
     }
 
-    div.addEventListener('click', () => showObjectMetadata(model, obj));
+    div.addEventListener('click', () => showObjectMetadata(model, obj, isLoggedUser));
     thumbBody.appendChild(div);
   });
 }
 
-export function showObjectMetadata(model, data){
+export function showObjectMetadata(model, data, isLoggedUser){
   console.log('showObjectMetadata', data);
   const thumbRow = `
     <tr>
@@ -187,13 +187,17 @@ export function showObjectMetadata(model, data){
       </tbody>
     </table>`;
 
+  const buttons = [
+    { text: 'Close', class: 'btn-secondary', action: 'close' }
+  ];
+  if (isLoggedUser) {
+    buttons.push({ text: 'Edit', class: 'btn-primary', action: () => window.location.href = `model_object_edit.php?model=${model}&item=${data.id}` });
+  }
+
   bsModal({
     title: 'Object details',
     body: body,
     size: 'modal-lg',
-    buttons: [
-      { text: 'Close', class: 'btn-secondary', action: 'close' },
-      { text: 'Edit', class: 'btn-primary', action: () => window.location.href = `model_object_edit.php?model=${model}&item=${data.id}` }
-    ]
+    buttons: buttons
   });
 }

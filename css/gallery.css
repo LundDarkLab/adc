@@ -73,7 +73,7 @@ p.headerTxt{
   top:5px;
   left:5px;
   width: 100%;
-  margin: 0;
+  margin: 0 !important;
   z-index: 2;
 }
 

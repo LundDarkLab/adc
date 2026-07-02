@@ -1,18 +1,13 @@
 <?php require 'init.php'; ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <?php require("assets/meta.php"); ?>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI=" crossorigin=""/>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
-
-  <link rel="stylesheet" href="./js/maps/mousePosition/mousePosition.css">
-  <link rel="stylesheet" href="./js/maps/mapScale/mapScale.css">
-  <link rel="stylesheet" href="css/map.css">
+  <title>Dynamic Collection - Map page</title>
+  <?php require "assets/meta.php"; ?>
 </head>
 <body>
-  <?php require("assets/configuration/logged.php"); ?>
+  <?php require "assets/configuration/logged.php"; ?>
   <header id="header"></header>
   <div id="sideMenu"></div>
   <main class="animated mainSection" id="mapWrap">
@@ -54,7 +49,7 @@
     <div id="map" class="mainSection">
       <div id="mapGalleryWrap" class="card">
         <div id="mapGalleryTitle">
-          <h5 class="card-title m-0 p-0" id="mapGalleryText"></h5>
+          <h5 class="card-title m-0 p-0" id="mapGalleryText"><span class="visually-hidden">Map Gallery</span></h5>
           <button class="btn-close float-end" id="closeGallery"></button>
         </div>
         <p id="countItems"></p>
@@ -68,7 +63,7 @@
             <ul class="dropdown-menu dropdown-menu-end" id="collectionListDropdown"></ul>
           </div>
         </div>
-      </div>  
+      </div>
       <div id="layerSwitcher" class="card">
         <div id="layerSwitcherToggle" class="">
           <button class="btn btn-sm btn-white m-0 w-100" data-bs-toggle="collapse" data-bs-target="#layerSwitcherContent" aria-expanded="false" aria-controls="layerSwitcherContent"><span class="float-start">Layers</span> <span class="mdi mdi-chevron-double-down float-end"></span></button>
@@ -85,20 +80,12 @@
           <div>
             <button class="btn btn-primary btn-sm form-control btn-adc-blue" id="mapGuideBtn">Map Guide</button>
           </div>
-        </div>        
+        </div>
       </div>
     </div>
   </main>
-  <?php
-    require("assets/toastDiv.html");
-    require("assets/js.html");
-  ?>
   <footer id="footer"></footer>
-  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js" integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM=" crossorigin=""></script>
-  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-  <script src='https://unpkg.com/@turf/turf/turf.min.js'></script>
-
-  <script type="module" src="js/legacyNav.js"></script>
-  <script src="js/map.js" charset="utf-8" type="module"></script>
+  <script>window.pageType = "map";</script>
+  <script src="js/main.js" type="module" charset="utf-8"></script>
 </body>
 </html>

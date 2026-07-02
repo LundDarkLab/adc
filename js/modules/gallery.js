@@ -2,6 +2,7 @@ import { collectionState } from "./collectionStorage.js";
 import { collection } from "./collection.js";
 import { createGalleryItem,getCollectStatusBtn} from "../components/galleryCard.js";
 import { bsAlert } from "../components/bsComponents.js";
+import { fetchApi } from "../shared/utils/fetch.js";
 
 let stateManager;
 let coll;
@@ -17,7 +18,6 @@ export async function initGallery(onShowCollection = async () => {}) {
   }
 
   const galleryState = {
-    endpoint: ENDPOINT,
     class: 'Collection',
     page: 1,
     limit: 20,
@@ -53,7 +53,7 @@ export async function initGallery(onShowCollection = async () => {}) {
         sortBy: currentState.searchFilters.sortBy,
         sortDir: currentState.searchFilters.sortDir
       };
-      const result = await fetchApi({url: galleryState.endpoint, body: body});
+      const result = await fetchApi({ body });
       const data = result.data;
       if (data.length < galleryState.limit) { galleryState.allLoaded = true; }
       buildGallery(data);

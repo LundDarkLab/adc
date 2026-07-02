@@ -387,9 +387,10 @@ export async function collection(){
 
     if (metadata && typeof metadata === 'object') {
       collection.metadata = { ...collection.metadata, ...metadata };
-      collection.metadata.color = generateCollectionColor();
       console.log('dopo merge:', JSON.stringify(collection.metadata));
     }
+    // Always generate a color, even when no metadata is passed (e.g. collect from the map)
+    collection.metadata.color = generateCollectionColor();
     // Modifica: aggiorna prima currentState, poi passa a updateState
     const newCollections = { ...currentState.collections, [key]: collection };
     console.log('collection salvata:', JSON.stringify(collection.metadata));

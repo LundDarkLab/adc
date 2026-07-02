@@ -7,13 +7,24 @@
 
 /* MAP */
 #mapWrap{ margin:0 !important;}
-#map{
-  position:absolute; 
-  top:70px; 
-  left:0; 
-  width:100%; 
+/* Selettori con ancestor #mapWrap per vincere sempre su js/shared/components/map/map.css,
+   che definisce le stesse regole per la mappa "embedded" delle pagine institution/artifact
+   e viene caricato dopo, a parità di specificità, tramite loadLeafletDependencies(). */
+#mapWrap #map{
+  position:relative;
+  margin-top:70px;
+  width:100dvw;
   height:calc(100vh - 70px);
   background-color: var(--bs-secondary);
+}
+#mapWrap #baseLayerControl{
+  position: static;
+  background: none;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  z-index: auto;
 }
 #loadingMap{
   position: absolute;

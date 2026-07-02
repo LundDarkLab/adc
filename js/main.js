@@ -95,6 +95,12 @@ const pageRoutes = {
     dependencies: [loadLeafletDependencies],
     init: () => import('./features/institution/pages/institution_view.js').then(m => m.initPage())
   },
+  // MAP
+  'map': {
+    css: ['css/map.css'],
+    dependencies: [loadLeafletDependencies, () => loadScript('https://unpkg.com/@turf/turf/turf.min.js')],
+    init: () => import('./features/map/map.js').then(m => m.initPage())
+  },
   // DASHBOARD
   'dashboard': {
     css: ['css/dashboard.css'],

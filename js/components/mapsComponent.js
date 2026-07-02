@@ -8,6 +8,42 @@ const stateManager = await collectionState();
 const coll = await collection();
 let galleryInstance = null;
 
+async function toggleViaGallery(item, btn, isCollected) {
+  if (isCollected) {
+    await window.onUncollect(btn, null);
+  } else {
+    await window.onCollect(item, btn, null);
+  }
+}
+
+// Fallback when the gallery has not been opened yet
+async function toggleViaCollectionModule(item, btn, isCollected, activeCollectionKey) {
+  if (isCollected) {
+    await coll.removeItem(item.id);
+  } else {
+    if (!activeCollectionKey) {
+      console.warn('No active collection');
+      return;
+    }
+    await coll.addItem(activeCollectionKey, item);
+  }
+  updateCollectButton(btn, isCollected);
+  document.dispatchEvent(new CustomEvent('collectionUpdated'));
+}
+
+function updateCollectButton(btn, wasCollected) {
+  if (!btn) return;
+  if (wasCollected) {
+    btn.classList.remove('btn-danger');
+    btn.classList.add('btn-adc-blue');
+    btn.textContent = 'Collect';
+  } else {
+    btn.classList.remove('btn-adc-blue');
+    btn.classList.add('btn-danger');
+    btn.textContent = 'Uncollect';
+  }
+}
+
 window.collectToggle = async function(itemKey, btn) {
   try {
     const item = window.popupItems.get(itemKey);
@@ -16,42 +52,16 @@ window.collectToggle = async function(itemKey, btn) {
       return;
     }
     const currentState = stateManager.getState();
-    const isCollected = currentState.collectStatus && currentState.collectStatus[item.id];
-    
-    // Usa sempre le funzioni dalla gallery SE esistono, altrimenti usa il modulo collection direttamente
+    const isCollected = currentState.collectStatus?.[item.id];
+
+    // Prefer the gallery handlers when available, otherwise use the collection module directly
     if (window.onCollect && window.onUncollect) {
-      if (isCollected) {
-        await window.onUncollect(btn, null);
-      } else {
-        await window.onCollect(item, btn, null);
-      }
+      await toggleViaGallery(item, btn, isCollected);
     } else {
-      // Fallback quando la gallery non è stata ancora aperta
-      if (isCollected) {
-        await coll.removeItem(item.id);
-      } else {
-        if (!currentState.activeCollectionKey) {
-          console.warn('No active collection');
-          return;
-        }
-        await coll.addItem(currentState.activeCollectionKey, item);
-      }
-      // Aggiorna lo stato del bottone manualmente
-      if (btn) {
-        if (isCollected) {
-          btn.classList.remove('btn-danger');
-          btn.classList.add('btn-adc-blue');
-          btn.textContent = 'Collect';
-        } else {
-          btn.classList.remove('btn-adc-blue');
-          btn.classList.add('btn-danger');
-          btn.textContent = 'Uncollect';
-        }
-      }
-      document.dispatchEvent(new CustomEvent('collectionUpdated'));
+      await toggleViaCollectionModule(item, btn, isCollected, currentState.activeCollectionKey);
     }
   } catch (error) {
-    console.error('Errore in collectToggle:', error);
+    console.error('Error in collectToggle:', error);
   }
 };
 
@@ -86,62 +96,122 @@ export function betterScale(L){
     },
     onAdd: function (t) {
       this._map = t;
-      var e = "leaflet-control-better-scale",
+      let e = "leaflet-control-better-scale",
       i = L.DomUtil.create("div", e),
       n = this.options,
       s = L.DomUtil.create("div", e + "-ruler", i);
-      L.DomUtil.create("div", e + "-ruler-block " + e + "-upper-first-piece", s), L.DomUtil.create("div", e + "-ruler-block " + e + "-upper-second-piece", s), L.DomUtil.create("div", e + "-ruler-block " + e + "-lower-first-piece", s), L.DomUtil.create("div", e + "-ruler-block " + e + "-lower-second-piece", s);
-      return this._addScales(n, e, i), this.ScaleContainer = i, t.on(n.updateWhenIdle ? "moveend" : "move", this._update, this), t.whenReady(this._update, this), i
+      L.DomUtil.create("div", e + "-ruler-block " + e + "-upper-first-piece", s);
+      L.DomUtil.create("div", e + "-ruler-block " + e + "-upper-second-piece", s);
+      L.DomUtil.create("div", e + "-ruler-block " + e + "-lower-first-piece", s);
+      L.DomUtil.create("div", e + "-ruler-block " + e + "-lower-second-piece", s);
+      this._addScales(n, e, i);
+      this.ScaleContainer = i;
+      t.on(n.updateWhenIdle ? "moveend" : "move", this._update, this);
+      t.whenReady(this._update, this);
+      return i;
     },
     onRemove: function (t) {
       t.off(this.options.updateWhenIdle ? "moveend" : "move", this._update, this)
     },
     _addScales: function (t, e, i) {
-      this._iScale = L.DomUtil.create("div", e + "-label-div", i), this._iScaleLabel = L.DomUtil.create("div", e + "-label", this._iScale), this._iScaleFirstNumber = L.DomUtil.create("div", e + "-label " + e + "-first-number", this._iScale), this._iScaleSecondNumber = L.DomUtil.create("div", e + "-label " + e + "-second-number", this._iScale)
+      this._iScale = L.DomUtil.create("div", e + "-label-div", i);
+      this._iScaleLabel = L.DomUtil.create("div", e + "-label", this._iScale);
+      this._iScaleFirstNumber = L.DomUtil.create("div", e + "-label " + e + "-first-number", this._iScale);
+      this._iScaleSecondNumber = L.DomUtil.create("div", e + "-label " + e + "-second-number", this._iScale);
     },
     _update: function () {
-      var t = this._map.getBounds(),
+      let t = this._map.getBounds(),
       e = t.getCenter().lat,
       i = 6378137 * Math.PI * Math.cos(e * Math.PI / 180),
       n = i * (t.getNorthEast().lng - t.getSouthWest().lng) / 180,
       o = this._map.getSize(),
       s = this.options,
       a = 0;
-      o.x > 0 && (a = n * (s.maxWidth / o.x)), this._updateScales(s, a)
+      if (o.x > 0) {
+        a = n * (s.maxWidth / o.x);
+      }
+      this._updateScales(s, a)
     },
     _updateScales: function (t, e) {
-      t.metric && e && this._updateMetric(e), t.imperial && e && this._updateImperial(e)
+      if (t.metric && e) {
+        this._updateMetric(e);
+      }
+      if (t.imperial && e) {
+        this._updateImperial(e);
+      }
     },
     _updateMetric_old: function (t) {
-      var e = this._getRoundNum(t);
-      this._iScale.style.width = this._getScaleWidth(e / t) + "px", this._iScaleLabel.innerHTML = 1e3 > e ? e + " m" : e / 1e3 + " km"
+      let e = this._getRoundNum(t);
+      this._iScale.style.width = this._getScaleWidth(e / t) + "px";
+      this._iScaleLabel.innerHTML = 1e3 > e ? e + " m" : e / 1e3 + " km";
     },
     _updateMetric: function (t) {
-      var e, i, n, o, s, a = t,
+      let e, i, n, o, s,
+      a = t,
       r = this._iScaleFirstNumber,
       h = this._iScaleSecondNumber,
       l = this._iScale,
       u = this._iScaleLabel;
-      u.innerHTML = "0", a > 500 ? (e = a / 1000, i = this._getRoundNum(e), o = this._getRoundNum(e / 2), l.style.width = this._getScaleWidth(i / e) + "px", r.innerHTML = o, h.innerHTML = i + "km") : (n = this._getRoundNum(a), s = this._getRoundNum(a / 2), l.style.width = this._getScaleWidth(n / a) + "px", r.innerHTML = s, h.innerHTML = n + "m")
+      u.innerHTML = "0";
+      if (a > 500) {
+        e = a / 1000;
+        i = this._getRoundNum(e);
+        o = this._getRoundNum(e / 2);
+        l.style.width = this._getScaleWidth(i / e) + "px";
+        r.innerHTML = o;
+        h.innerHTML = i + "km";
+      } else {
+        n = this._getRoundNum(a);
+        s = this._getRoundNum(a / 2);
+        l.style.width = this._getScaleWidth(n / a) + "px";
+        r.innerHTML = s;
+        h.innerHTML = n + "m";
+      }
     },
     _updateImperial: function (t) {
-      var e, i, n, o, s, a = 3.2808399 * t,
+      let e, i, n, o, s,
+      a = 3.2808399 * t,
       r = this._iScaleFirstNumber,
       h = this._iScaleSecondNumber,
       l = this._iScale,
       u = this._iScaleLabel;
-      u.innerHTML = "0", a > 2640 ? (e = a / 5280, i = this._getRoundNum(e), o = this._getRoundNum(e / 2), l.style.width = this._getScaleWidth(i / e) + "px", r.innerHTML = o, h.innerHTML = i + "mi") : (n = this._getRoundNum(a), s = this._getRoundNum(a / 2), l.style.width = this._getScaleWidth(n / a) + "px", r.innerHTML = s, h.innerHTML = n + "ft")
+      u.innerHTML = "0";
+      if (a > 2640) {
+        e = a / 5280;
+        i = this._getRoundNum(e);
+        o = this._getRoundNum(e / 2);
+        l.style.width = this._getScaleWidth(i / e) + "px";
+        r.innerHTML = o;
+        h.innerHTML = i + "mi";
+      } else {
+        n = this._getRoundNum(a);
+        s = this._getRoundNum(a / 2);
+        l.style.width = this._getScaleWidth(n / a) + "px";
+        r.innerHTML = s;
+        h.innerHTML = n + "ft";
+      }
     },
     _getScaleWidth: function (t) {
       return Math.round(this.options.maxWidth * t) - 10
     },
     _getRoundNum: function (t) {
       if (t >= 2) {
-        var e = Math.pow(10, (Math.floor(t) + "").length - 1),
+        let e = Math.pow(10, (Math.floor(t) + "").length - 1),
         i = t / e;
-        return i = i >= 10 ? 10 : i >= 5 ? 5 : i >= 3 ? 3 : i >= 2 ? 2 : 1, e * i
+        if (i >= 10) {
+          i = 10;
+        } else if (i >= 5) {
+          i = 5;
+        } else if (i >= 3) {
+          i = 3;
+        } else if (i >= 2) {
+          i = 2;
+        } else {
+          i = 1;
+        }
+        return e * i;
       }
-      return (Math.round(100 * t) / 100).toFixed(1)
+      return Math.round(100 * t) / 100
     }
   });
     
@@ -176,10 +246,10 @@ export function mousePosition(L){
     },
 
     _onMouseMove: function (e) {
-      var lng = this.options.lngFormatter ? this.options.lngFormatter(e.latlng.lng) : L.Util.formatNum(e.latlng.lng, this.options.numDigits);
-      var lat = this.options.latFormatter ? this.options.latFormatter(e.latlng.lat) : L.Util.formatNum(e.latlng.lat, this.options.numDigits);
-      var value = this.options.lngFirst ? lng + this.options.separator + lat : lat + this.options.separator + lng;
-      var prefixAndValue = this.options.prefix + ' ' + value;
+      let lng = this.options.lngFormatter ? this.options.lngFormatter(e.latlng.lng) : L.Util.formatNum(e.latlng.lng, this.options.numDigits);
+      let lat = this.options.latFormatter ? this.options.latFormatter(e.latlng.lat) : L.Util.formatNum(e.latlng.lat, this.options.numDigits);
+      let value = this.options.lngFirst ? lng + this.options.separator + lat : lat + this.options.separator + lng;
+      let prefixAndValue = this.options.prefix + ' ' + value;
       this._container.innerHTML = prefixAndValue;
     }
   });
@@ -230,8 +300,8 @@ export function myToolBar(L){
       btnElement.id = options.id || '';
       
       if (options.tooltip) {
-        btnElement.setAttribute('data-bs-toggle', 'tooltip');
-        btnElement.setAttribute('data-bs-placement', options.tooltipPlacement || 'right');
+        btnElement.dataset.bsToggle = 'tooltip';
+        btnElement.dataset.bsPlacement = options.tooltipPlacement || 'right';
       }
       
       const icon = document.createElement('i');
@@ -243,7 +313,7 @@ export function myToolBar(L){
         L.DomEvent.on(btnElement, 'click', L.DomEvent.preventDefault);
         L.DomEvent.on(btnElement, 'click', (e) => {
           // Nascondi la tooltip prima di eseguire l'onClick
-          if (options.tooltip && window.bootstrap && window.bootstrap.Tooltip) {
+          if (options.tooltip && window.bootstrap?.Tooltip) {
             const tooltipInstance = window.bootstrap.Tooltip.getInstance(btnElement);
             if (tooltipInstance) {
               tooltipInstance.hide();
@@ -256,7 +326,7 @@ export function myToolBar(L){
       this._container.appendChild(btnElement);
 
       // Inizializza la tooltip di Bootstrap se richiesta
-      if (options.tooltip && window.bootstrap && window.bootstrap.Tooltip) {
+      if (options.tooltip && window.bootstrap?.Tooltip) {
         new window.bootstrap.Tooltip(btnElement);
       }
       
@@ -270,7 +340,7 @@ export function myToolBar(L){
         if (tooltipInstance) {
           tooltipInstance.dispose();
         }
-        this._container.removeChild(btn);
+        btn.remove();
       }
     }
   });
@@ -280,133 +350,118 @@ export function myToolBar(L){
   };
 }
 
-export function layerControl(mapElement, options={}) {  
-  // Pulisci i contenitori prima di ricreare i controlli per evitare duplicazioni
-  if (domEl.baseLayerControl) domEl.baseLayerControl.innerHTML = '';
-  if (domEl.poiControl) domEl.poiControl.innerHTML = '';
-  if (domEl.collectionsControl) domEl.collectionsControl.innerHTML = '';
-  if (domEl.adminControl) domEl.adminControl.innerHTML = '';
+function createFormCheck({ type, name, id, value, checked, labelText, container }) {
+  const div = document.createElement('div');
+  div.className = 'form-check';
+  const input = document.createElement('input');
+  input.className = 'form-check-input';
+  input.type = type;
+  input.name = name;
+  input.id = id;
+  input.value = value;
+  input.checked = checked;
+  const label = document.createElement('label');
+  label.className = 'form-check-label';
+  label.htmlFor = input.id;
+  label.textContent = labelText;
+  div.appendChild(input);
+  div.appendChild(label);
+  container.appendChild(div);
+  return input;
+}
 
-  //Base Layers
-  if(options.baseLayers === true){
-    for (const el of Object.entries(mapElement.layerControl.baseLayers)) {
-      const div = document.createElement('div');
-      div.className = 'form-check';
-      const input = document.createElement('input');
-      input.className = 'form-check-input';
-      input.type = 'radio';
-      input.name = 'baseLayer';
-      input.id = `baseLayer-${el[0]}`;
-      input.value = el[0];
-      input.checked = el[1].tile === mapElement.osm;
-      const label = document.createElement('label');
-      label.className = 'form-check-label';
-      label.htmlFor = input.id;
-      label.textContent = el[1].label;
-      div.appendChild(input);
-      div.appendChild(label);
-      domEl.baseLayerControl.appendChild(div);
-
-      input.addEventListener('change', (ev) => {
-        const selectedLayerKey = ev.target.value;
-        for (const layerEntry of Object.values(mapElement.layerControl.baseLayers)) {
-          mapElement.map.removeLayer(layerEntry.tile);
-        }
-        const selectedLayer = mapElement.layerControl.baseLayers[selectedLayerKey].tile;
-        mapElement.map.addLayer(selectedLayer);
-      });
-    }
+function switchBaseLayer(mapElement, selectedLayerKey) {
+  for (const layerEntry of Object.values(mapElement.layerControl.baseLayers)) {
+    mapElement.map.removeLayer(layerEntry.tile);
   }
-  
-  //Poi Layers
-  if(options.poi && options.poi !== 'undfined'){
-    const includePoi = options.poi || Object.entries(mapElement.layerControl.poi);
-    for (const el of includePoi) {
-      const obj = mapElement.layerControl.poi[el];    
-      if(obj && obj.layer){
-        const div = document.createElement('div');
-        div.className = 'form-check';
-        const input = document.createElement('input');
-        input.className = 'form-check-input';
-        input.type = 'checkbox';
-        input.name = 'poi';
-        input.id = `${el}-checkBox`;
-        input.value = el;
-        input.checked = true;
-        const label = document.createElement('label');
-        label.className = 'form-check-label';
-        label.htmlFor = input.id;
-        label.textContent = `${obj.label} (${obj.layer.getLayers().length})`;
-        div.appendChild(input);
-        div.appendChild(label);
-        domEl.poiControl.appendChild(div);
-      }
-    }
-  }
+  mapElement.map.addLayer(mapElement.layerControl.baseLayers[selectedLayerKey].tile);
+}
 
-  if (mapElement.collectionGroup && Object.keys(mapElement.collectionGroup).length > 0) {
-    Object.entries(mapElement.collectionGroup).forEach(([collectionName, collectionLayer]) => {
-      const currentState = stateManager.getState();
-      const collections = currentState.collections || {};
-      const collection = Object.values(collections).find(coll => coll.metadata.title === collectionName);
-      
-      const div = document.createElement('div');
-      div.className = 'form-check';
-      const input = document.createElement('input');
-      input.className = 'form-check-input';
-      input.type = 'checkbox';
-      input.name = 'collection';
-      input.id = `${collectionName}-checkBox`;
-      input.value = collectionName;
-      input.checked = true;
-      if (collection?.metadata?.color?.primary) {
-        const color = collection.metadata.color.primary;
-        // Applica subito se è checked
-        if (input.checked) {
-          input.style.backgroundColor = color;
-          input.style.borderColor = color;
-          input.style.accentColor = color;
-        }
-        // input.addEventListener('change', function() {
-        //   if (this.checked) {
-        //     this.style.backgroundColor = color;
-        //     this.style.borderColor = color;
-        //     this.style.accentColor = color;
-        //   }
-        // });
-      }
-      const label = document.createElement('label');
-      label.className = 'form-check-label';
-      label.htmlFor = input.id;
-      label.textContent = `${collectionName} (${collectionLayer.getLayers().length})`;
-      div.appendChild(input);
-      div.appendChild(label);
-      domEl.collectionsControl.appendChild(div);
-      domEl.collectionsControl.classList.remove('d-none');
+function buildBaseLayerControls(mapElement) {
+  for (const [key, layer] of Object.entries(mapElement.layerControl.baseLayers)) {
+    const input = createFormCheck({
+      type: 'radio',
+      name: 'baseLayer',
+      id: `baseLayer-${key}`,
+      value: key,
+      checked: layer.tile === mapElement.osm,
+      labelText: layer.label,
+      container: domEl.baseLayerControl,
+    });
+    input.addEventListener('change', (ev) => switchBaseLayer(mapElement, ev.target.value));
+  }
+}
+
+function buildPoiControls(mapElement, includePoi) {
+  for (const el of includePoi) {
+    const obj = mapElement.layerControl.poi[el];
+    if (!obj?.layer) continue;
+    createFormCheck({
+      type: 'checkbox',
+      name: 'poi',
+      id: `${el}-checkBox`,
+      value: el,
+      checked: true,
+      labelText: `${obj.label} (${obj.layer.getLayers().length})`,
+      container: domEl.poiControl,
     });
   }
+}
 
-  if(options.admin && options.admin !== 'undfined'){
-    const includeAdmin = options.admin || Object.entries(mapElement.layerControl.admin);
-    
-    for (const key of includeAdmin) {
-      const div = document.createElement('div');
-      div.className = 'form-check';
-      const input = document.createElement('input');
-      input.className = 'form-check-input';
-      input.type = 'checkbox';
-      input.name = 'admin';
-      input.id = `admin-level-${key.level}`;
-      input.value = key.level;
-      input.checked = false;
-      const label = document.createElement('label');
-      label.className = 'form-check-label';
-      label.htmlFor = input.id;
-      label.textContent = `${key.name} (${key.count})`;
-      div.appendChild(input);
-      div.appendChild(label);
-      domEl.adminControl.appendChild(div);
+function buildCollectionControls(mapElement) {
+  const collections = stateManager.getState().collections || {};
+  Object.entries(mapElement.collectionGroup).forEach(([collectionName, collectionLayer]) => {
+    const collection = Object.values(collections).find(c => c.metadata.title === collectionName);
+    const input = createFormCheck({
+      type: 'checkbox',
+      name: 'collection',
+      id: `${collectionName}-checkBox`,
+      value: collectionName,
+      checked: true,
+      labelText: `${collectionName} (${collectionLayer.getLayers().length})`,
+      container: domEl.collectionsControl,
+    });
+    const color = collection?.metadata?.color?.primary;
+    if (color && input.checked) {
+      input.style.backgroundColor = color;
+      input.style.borderColor = color;
+      input.style.accentColor = color;
     }
+    domEl.collectionsControl.classList.remove('d-none');
+  });
+}
+
+function buildAdminControls(includeAdmin) {
+  for (const key of includeAdmin) {
+    createFormCheck({
+      type: 'checkbox',
+      name: 'admin',
+      id: `admin-level-${key.level}`,
+      value: key.level,
+      checked: false,
+      labelText: `${key.name} (${key.count})`,
+      container: domEl.adminControl,
+    });
+  }
+}
+
+export function layerControl(mapElement, options={}) {
+  // Clear containers before recreating the controls to avoid duplicates
+  for (const container of [domEl.baseLayerControl, domEl.poiControl, domEl.collectionsControl, domEl.adminControl]) {
+    if (container) container.innerHTML = '';
+  }
+
+  if (options.baseLayers === true) {
+    buildBaseLayerControls(mapElement);
+  }
+  if (options.poi) {
+    buildPoiControls(mapElement, options.poi);
+  }
+  if (mapElement.collectionGroup && Object.keys(mapElement.collectionGroup).length > 0) {
+    buildCollectionControls(mapElement);
+  }
+  if (options.admin) {
+    buildAdminControls(options.admin);
   }
 }
 
@@ -443,7 +498,7 @@ async function buildGallery(filter, props) {
   if (!props) return;
   
   // Resetta la gallery se esiste già
-  if (galleryInstance && galleryInstance.reset) {
+  if (galleryInstance?.reset) {
     galleryInstance.reset();
   }
   
@@ -458,7 +513,7 @@ async function buildGallery(filter, props) {
   });
 
   // Ricrea sempre la galleryInstance
-  galleryInstance = initGallery();
+  galleryInstance = await initGallery();
   domEl.mapGalleryWrap.galleryInstance = galleryInstance;
   
   window.onCollect = galleryInstance.onCollect;
@@ -502,10 +557,10 @@ export function openPopUp(properties, smallPopUp = false) {
   popupContent += `<p class="m-0 mb-1">${properties.nation} / ${properties.county}</p>`;
   popupContent += `<p class="m-0 mb-1">${properties.institution}</p>`;
   popupContent += `<p class="m-0 mb-1">${properties.start} / ${properties.end}</p>`;
-  popupContent += `<p class="txt-adc-dark">${properties.description}</p>`;
+  popupContent += `<p class="">${properties.description}</p>`;
   popupContent += "</div>";
 
-  const isCollected = currentState.collectStatus && currentState.collectStatus[properties.id];
+  const isCollected = currentState.collectStatus?.[properties.id];
   const buttonClass = isCollected ? 'btn-danger' : 'btn-adc-blue';
   const buttonText = isCollected ? 'Uncollect' : 'Collect';
 
@@ -525,8 +580,6 @@ export function openPopUp(properties, smallPopUp = false) {
 }
 
 export function collectionControl(collections, currentCollection) {
-  console.log(collections, currentCollection);
-  
   if (collections && Object.values(collections).length > 0) {
     if (!domEl.collectionDiv) {
       console.error('Elemento collectionDiv non trovato');
