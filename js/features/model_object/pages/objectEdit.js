@@ -16,7 +16,7 @@ export async function initModelObjectPage() {
 
   fillFormFields(objectData.data);
   addHiddenIdFields(objectData.data);
-  initSelect(objectData);
+  initSelect(objectData.data);
   initThumbPreview(objectData.data.thumbnail);
   initExistingModelViewer(objectData.data);
 
@@ -85,6 +85,7 @@ function fillFormFields(objectData) {
 }
 
 async function initSelect(objectData){
+  console.log('initSelect', objectData);
   const authorSelect = document.getElementById('author');
   const ownerSelect = document.getElementById('owner');
   const licenseSelect = document.getElementById('license');
