@@ -22,6 +22,9 @@
           <li>
             <strong>Images & 3D Models:</strong> Individual licensing applies - see metadata for details
           </li>
+          <li>
+            <strong>Note:</strong> 3D models are viewable but not downloadable; where available, a DOI on the artefact page links to the external repository holding the dataset. - see <a href="https://www.darklab.lu.se/digital-collections/dynamic-collections/credits/" target="_blank" class="text-decoration-underline">credits</a> for details
+          </li>
         </ul>
       </div>
 

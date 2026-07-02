@@ -28,6 +28,10 @@ Thanks to the multiresolution format there is no practical limit for visualisati
 
 Content licensing uses open licenses: **CC BY**, **CC0** and **Public Domain**. Each model and media item carries its own license, shown in its metadata.
 
+### Can visitors download the 3D models?
+
+No. The platform streams models (in Nexus multiresolution format) for visualisation only; the files are not served for download. If the publishing institution has deposited the source dataset in an external repository (e.g. Zenodo or SND), the model's metadata includes a DOI linking to it, and the download conditions are set by that repository record. Screenshots can be produced with the viewer's integrated tools and reused with the credit line indicated on the <a href="https://www.darklab.lu.se/digital-collections/dynamic-collections/credits/" target="_blank" rel="noopener">Credits</a> page.
+
 ### Can I cite a model in a publication?
 
 Yes. Models can carry a **DOI** and a citation string in their main data. The artefact and model pages are stable URLs and the metadata are exposed as machine-readable JSON-LD (CIDOC-CRM) through the public API.
