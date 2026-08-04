@@ -98,31 +98,59 @@ footer{
   color: var(--white);
 }
 
-footer:before {
-  content: ' ';
-  display: block;
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0.6;
-  background-image: url("../img/logo/logo_DARKLab_dark.jpg");
-  background-size: auto;
-  background-repeat: no-repeat;
-  background-position: center;
-}
-
-#footerContent  {
+#footerContent {
   position: relative;
   margin: 0 auto;
-}
-
-#footerMenu{
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
-  align-items: flex-end;
+  gap: 32px;
+}
+
+/* Row 1: text columns — stacked on small screens, centred as blocks */
+#footerCols {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+}
+
+/* Each column is a centred block: the block is horizontally centred within
+   its column, while the text inside keeps its natural (left) alignment. */
+#footerCols > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: left;
+}
+
+#licenseFooter li{
+  margin-bottom: 5px;
+}
+
+#footerMenu {
+  align-items: center;
+  text-align: left;
+}
+
+/* Row 2: DARKLab logo, centred */
+#footerLogo {
+  display: flex;
+  justify-content: center;
+}
+#footerLogo img {
+  width: 150px;
+  height: auto;
+  border-radius: 8px;
+}
+
+/* Row 3: copyright line */
+#footerCopyright {
+  margin: 0;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  text-align: center;
+  font-size: 0.85rem;
+  opacity: 0.8;
 }
 
 footer a{
@@ -300,10 +328,11 @@ fieldset > legend{
 @media (min-width: 992px) {
   header #headerLink > a.currentPage{color:var(--blue); background-color: var(--white);}
   header #headerLink > a{display: inline-block;}
-  #footerContent  {
+  #footerCols {
     display: grid;
-    grid-template-columns: repeat(2,60% 40%);
-    gap: 10px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    align-items: start;
   }
 
 }
