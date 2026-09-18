@@ -230,6 +230,9 @@ function buildMaterialSpecificationTable(item, list, data, thRow, tbody){
           const input = createInput(obj[k], list, k, i);
           cell.appendChild(input);
         }
+        if (k === 'is_generic') {
+          cell.appendChild(createCheckbox(`${list}_input_${i}`, 'is_generic', obj[k]));
+        }
         if (k === 'material_class') {
           const select = document.createElement('select');
           select.className = `form-select form-select-sm ${list}_input_${i}`;
@@ -278,9 +281,11 @@ function createNewValueForm(list, options = []){
     case 'list_material_specs':
       { const lmsClass = divCol.cloneNode();
       const lmsValue = divCol.cloneNode();
+      const lmsGeneric = divCol.cloneNode();
       lmsClass.appendChild(createInputElement('form-select form-select-sm', 'material_class', '', true, 'select', options));
       lmsValue.appendChild(createInputElement('form-control form-control-sm', 'value', 'new value', true, 'text' ));
-      form.append(lmsClass,lmsValue);
+      lmsGeneric.appendChild(createCheckbox('', 'is_generic', 0, 'generic value of its class'));
+      form.append(lmsClass,lmsValue,lmsGeneric);
       break; }
     default:
       divCol.appendChild(createInputElement('form-control form-control-sm', 'value', 'Enter new value', true, 'text' ));
@@ -303,7 +308,7 @@ function createNewValueForm(list, options = []){
       const inputs = form.querySelectorAll('input, select');
       inputs.forEach((input) => {
         const name = input.dataset.name;
-        payload[name] = input.value;
+        payload[name] = inputValue(input);
       });
 
       addNewItem(list, payload);
@@ -337,7 +342,7 @@ async function updateVocabulary(data, list, index){
     const input = document.querySelectorAll(`.${list}_input_${index}`);
     input.forEach((el,i) => {
       let name = el.dataset.name;
-      payload[name] = el.value;
+      payload[name] = inputValue(el);
     });
     const body = { class: 'Vocabulary', action: 'updateItem', ...payload };
     const result = await fetchApi({url: ENDPOINT, body:body});
@@ -418,6 +423,36 @@ function createInput(value, className, dataName, index){
   input.type = 'text';
   input.value = value;
   return input;
+}
+
+/**
+ * Checkbox bound to a tinyint column (e.g. list_material_specs.is_generic).
+ * Never `required`: on a checkbox that would force the user to tick it.
+ * Its value is read through `inputValue`, not through `.value`.
+ */
+function createCheckbox(className, dataName, checked, label = ''){
+  const input = document.createElement('input');
+  input.type = 'checkbox';
+  input.className = `form-check-input ${className}`.trim();
+  input.dataset.name = dataName;
+  input.checked = Number(checked) === 1;
+  if (!label) { return input; }
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'form-check';
+  const lbl = document.createElement('label');
+  lbl.className = 'form-check-label';
+  lbl.textContent = label;
+  const id = `chk_${dataName}_${Math.random().toString(36).slice(2, 8)}`;
+  input.id = id;
+  lbl.htmlFor = id;
+  wrapper.append(input, lbl);
+  return wrapper;
+}
+
+/** Reads a form control, keeping checkboxes as the 0/1 the database expects. */
+function inputValue(el){
+  return el.type === 'checkbox' ? (el.checked ? 1 : 0) : el.value;
 }
 
 function createInputElement(className, dataName, placeholder = '', required = true, type = 'text', options = []) {

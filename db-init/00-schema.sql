@@ -582,6 +582,7 @@ DROP TABLE IF EXISTS `list_material_specs`;
 CREATE TABLE `list_material_specs` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `material_class` int NOT NULL,
+  `is_generic` tinyint(1) NOT NULL DEFAULT '0',
   `value` varchar(25) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `id` (`id`),

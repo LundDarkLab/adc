@@ -29,8 +29,6 @@ async function artifactSelect(){
   const output = [];
   const selectList = [
     {id:'category_class', list:'list_category_class' },
-    {id:'matClass', list:'list_material_class' },
-    {id:'matSpecs', list:'list_material_specs' },
     {id:'conservation_state', list:'list_conservation_state' },
     {id:'object_condition', list:'list_object_condition' },
     {id:'license', list:'license' },
@@ -54,6 +52,9 @@ async function artifactSelect(){
   }
 
   
+  const material = await materialOptions();
+  output.push({matClass: material.class}, {matSpecs: material.specs});
+
   const author = await usersList();
   const storage_place = await institutionsList();
   const adminLevels = await adminLevelOptions(0, {}, null);
@@ -62,6 +63,30 @@ async function artifactSelect(){
   output.push({author:author}, {storage_place:storage_place}, {owner:storage_place}, {gid_0:adminLevels});
   return output;
 
+}
+
+/**
+ * Options for the #material select.
+ * Both optgroups are filled with list_material_specs ids, because that is what
+ * artifact_material_technique.material references: the "generic value" group holds
+ * the spec rows mirroring their own class name (e.g. Wood -> spec 27), the
+ * "specific value" group holds the remaining ones (e.g. Silver -> spec 8).
+ * Never use list_material_class ids here: the two tables have overlapping ids.
+ */
+async function materialOptions(){
+  try {
+    const payload = {
+      class: 'Get',
+      action: 'getMaterial'
+    };
+    const response = await fetchApi({ body: payload });
+    if (response.error === 1) throw new Error('Error fetching material lists');
+    return { class: response.data?.class || [], specs: response.data?.specs || [] };
+  } catch (error) {
+    console.error('materialOptions error:', error);
+    bsAlert('materialOptions error: ' + error, 'danger', 3000);
+    return { class: [], specs: [] };
+  }
 }
 
 export async function handleCategorySpecOptions(cat){

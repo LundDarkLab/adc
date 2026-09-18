@@ -42,7 +42,7 @@ UNLOCK TABLES;
 
 LOCK TABLES `list_material_specs` WRITE;
 /*!40000 ALTER TABLE `list_material_specs` DISABLE KEYS */;
-INSERT INTO `list_material_specs` (`id`, `material_class`, `value`) VALUES (20,1,'Alloy'),(1,1,'Bronze'),(2,2,'Antlers'),(21,2,'Bone'),(3,2,'Horn'),(22,3,'Ceramics'),(23,4,'Leather'),(4,5,'Copper'),(5,5,'Gold'),(6,5,'Iron'),(7,5,'Lead'),(24,5,'Metal'),(8,5,'Silver'),(9,5,'White metal'),(25,6,'Plaster'),(10,7,'Amphibolite'),(11,7,'Basalt'),(12,7,'Diabase'),(13,7,'Flint'),(14,7,'Grindstone'),(15,7,'Quartzite'),(16,7,'Rock'),(17,7,'Sandstone'),(18,7,'Slate'),(19,7,'Soapstone'),(26,7,'Stone'),(27,8,'Wood'),(35,9,'not defined');
+INSERT INTO `list_material_specs` (`id`, `material_class`, `is_generic`, `value`) VALUES (20,1,1,'Alloy'),(1,1,0,'Bronze'),(2,2,0,'Antlers'),(21,2,1,'Bone'),(3,2,0,'Horn'),(22,3,1,'Ceramics'),(23,4,1,'Leather'),(4,5,0,'Copper'),(5,5,0,'Gold'),(6,5,0,'Iron'),(7,5,0,'Lead'),(24,5,1,'Metal'),(8,5,0,'Silver'),(9,5,0,'White metal'),(25,6,1,'Plaster'),(10,7,0,'Amphibolite'),(11,7,0,'Basalt'),(12,7,0,'Diabase'),(13,7,0,'Flint'),(14,7,0,'Grindstone'),(15,7,0,'Quartzite'),(16,7,0,'Rock'),(17,7,0,'Sandstone'),(18,7,0,'Slate'),(19,7,0,'Soapstone'),(26,7,1,'Stone'),(27,8,1,'Wood'),(35,9,1,'not defined');
 /*!40000 ALTER TABLE `list_material_specs` ENABLE KEYS */;
 UNLOCK TABLES;
 

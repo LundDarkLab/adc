@@ -60,10 +60,21 @@ class Get extends Conn{
     $out = "select ".$field." from ".$list." ".$where." order by ".$sort." asc;";
     return $this->simple($out);
   }
+  /**
+   * Options for the material select of the artifact form.
+   *
+   * Both groups come from list_material_specs, because that is the table
+   * artifact_material_technique.material points to: the ids of
+   * list_material_class must never reach the form, the two tables have
+   * overlapping id ranges (class 8 is Wood, spec 8 is Silver).
+   *
+   * 'class' holds the generic entries (Wood, Stone, ...), 'specs' the specific
+   * ones (Flint, Silver, ...); the caller renders them as two optgroups.
+   */
   public function getMaterial(){
     $out = [];
-    $sqlClass = "select s.id, s.value from list_material_class c inner join list_material_specs s on s.material_class = c.id where s.value = c.value order by 2 asc;";
-    $sqlSpecs = "select s.id, s.value from list_material_class c inner join list_material_specs s on s.material_class = c.id where s.value != c.value order by 2 asc;";
+    $sqlClass = "select id, value from list_material_specs where is_generic = 1 order by 2 asc;";
+    $sqlSpecs = "select id, value from list_material_specs where is_generic = 0 order by 2 asc;";
     $out['class'] = $this->simple($sqlClass);
     $out['specs'] = $this->simple($sqlSpecs);
     return $out;
@@ -117,11 +128,11 @@ class Get extends Conn{
     ];
     switch ($table) {
       case 'list_category_class':
-        $payload['columns'] = ["{$table}.id", "{$table}.value", "count(artifact.category_class) tot" ]; 
+        $payload['columns'] = ["{$table}.id", "{$table}.value", "count(artifact.category_class) tot" ];
         $payload['joins']= [
           ["table" => "artifact", "first" => "artifact.category_class", "operator" => "=", "second" => "{$table}.id","type" => "left"]
-        ]; 
-        $payload['orderBy'] = ["{$table}.value"=>"asc"]; 
+        ];
+        $payload['orderBy'] = ["{$table}.value"=>"asc"];
         $payload['groupBy'] = ["{$table}.id", "{$table}.value"];
         break;
 
@@ -146,12 +157,12 @@ class Get extends Conn{
         break;
 
       case 'list_material_specs':
-          $payload['columns'] = ["{$table}.id", "{$table}.material_class", "{$table}.value", "count(artifact_material_technique.material) tot" ];
+          $payload['columns'] = ["{$table}.id", "{$table}.material_class", "{$table}.is_generic", "{$table}.value", "count(artifact_material_technique.material) tot" ];
           $payload['joins']= [
             ["table" => "artifact_material_technique", "first" => "artifact_material_technique.material", "operator" => "=", "second" => "{$table}.id","type" => "left"]
           ];
           $payload['orderBy'] = ["{$table}.value"=>"asc"];
-          $payload['groupBy'] = ["{$table}.id", "{$table}.material_class", "{$table}.value"];
+          $payload['groupBy'] = ["{$table}.id", "{$table}.material_class", "{$table}.is_generic", "{$table}.value"];
           $out['lists'] = $this->read("list_material_class", ['*'], [], [], ['value'=>'asc']);
           break;
         
@@ -166,18 +177,18 @@ class Get extends Conn{
 
       default:
         $match = false;
-        foreach ($defaultJoin as $key => $value) {
+        foreach ($defaultJoin as  $value) {
           if(trim($table) == trim($value['join'])){
             $payload['columns'] = ["{$table}.id", "{$table}.value", "count({$value['table']}.{$value['column']}) tot" ];
             $payload['joins']= [
               ["table" => $value['table'], "first" => "{$value['table']}.{$value['column']}", "operator" => "=", "second" => "{$table}.id","type" => "left"]
-            ]; 
-            $payload['orderBy'] = ["{$table}.value"=>"asc"]; 
+            ];
+            $payload['orderBy'] = ["{$table}.value"=>"asc"];
             $payload['groupBy'] = ["{$table}.id", "{$table}.value"];
             $match = true;
             break;
           }
-        } 
+        }
         if (!$match) {return ['error' => true,'message' => "No matching join found for table: $table"];}
         break;
     }
@@ -247,7 +258,7 @@ class Get extends Conn{
         ];
         $payload['conditions'] = ["model_param.acquisition_method" => $id];
         $payload['orderBy'] = ["name"=>"asc"];
-        break;  
+        break;
 
       case "list_object_condition":
         $payload['conditions'] = ["object_condition" => $id];
@@ -290,4 +301,3 @@ class Get extends Conn{
   }
 
 }
-?>
