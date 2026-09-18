@@ -28,4 +28,15 @@ Options -Indexes
 
 <IfModule mod_headers.c>
     Header always set Content-Security-Policy "frame-src 'self' https://www.youtube.com https://player.vimeo.com; frame-ancestors 'self';"
+
+    # --- Stylesheets and scripts: always revalidate --------------------------
+    # Their URLs carry no version, and ES modules are imported by plain
+    # relative paths, so a browser holding an old copy would keep serving it
+    # after a deploy — the page would run yesterday's code against today's API.
+    # "no-cache" does not disable caching: it only forces a revalidation, which
+    # the ETag above turns into a 304 Not Modified, so nothing is re-downloaded
+    # unless the file really changed.
+    <FilesMatch "\.(js|css)$">
+      Header set Cache-Control "no-cache"
+    </FilesMatch>
 </IfModule>
